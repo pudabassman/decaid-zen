@@ -63,9 +63,9 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
   const tankPercent = water ? Math.round((water.currentLevel / budget.maxLevel) * 100) : null
   const tankLabel =
     budget.mlLeft !== null
-      ? ` · tank ${budget.mlLeft} ml`
+      ? `tank ${budget.mlLeft} ml`
       : water
-        ? ` · tank ${Math.round(water.currentLevel)} mm`
+        ? `tank ${Math.round(water.currentLevel)} mm`
         : ''
 
   const stats = shotStats(last)
@@ -274,8 +274,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
         </div>
         <div className="row" style={{ gap: 16 }}>
           <span className="cap" style={{ color: message ? 'var(--temp)' : undefined, marginRight: 6 }}>
-            {message ??
-              `${workflow?.profile?.title ?? 'no profile'}${tankLabel}${asleep ? ' · asleep' : ''}`}
+            {message ?? tankLabel}
           </span>
           <Button
             width={196}
