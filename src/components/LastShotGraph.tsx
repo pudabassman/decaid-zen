@@ -2,12 +2,12 @@ import { useEffect, useRef } from 'react'
 import type { ShotMeasurement, ShotRecord } from '../api/types'
 
 const baseSeries = (yieldByWeight: boolean) => [
-  { pick: (m: ShotMeasurement) => m.machine.mixTemperature, color: '#d9714f', min: 80, max: 100, band: 0.34, width: 1.6, unit: '°', digits: 1, step: 5 },
-  { pick: (m: ShotMeasurement) => m.machine.pressure, color: '#9fb055', min: 0, max: 12, band: 1, width: 2.2, unit: ' bar', digits: 1, step: 2 },
+  { pick: (m: ShotMeasurement) => m.machine.mixTemperature, color: '#d9714f', min: 80, max: 100, band: 0.34, width: 1.6, unit: '°', digits: 1, step: 5, rightMarks: true },
+  { pick: (m: ShotMeasurement) => m.machine.pressure, color: '#9fb055', min: 0, max: 12, band: 1, width: 2.2, unit: ' bar', digits: 1, step: 2, rightMarks: false },
   yieldByWeight
-    ? { pick: (m: ShotMeasurement) => m.scale?.weight ?? null, color: '#d3b06a', min: 0, max: 50, band: 1, width: 2.2, unit: ' g', digits: 1, step: 10 }
-    : { pick: (m: ShotMeasurement) => m.volume ?? null, color: '#d3b06a', min: 0, max: 80, band: 1, width: 2.2, unit: ' ml', digits: 0, step: 20 },
-  { pick: (m: ShotMeasurement) => m.machine.flow, color: '#4fbcc6', min: 0, max: 6, band: 1, width: 1.7, unit: ' ml/s', digits: 1, step: 1 },
+    ? { pick: (m: ShotMeasurement) => m.scale?.weight ?? null, color: '#d3b06a', min: 0, max: 50, band: 1, width: 2.2, unit: ' g', digits: 1, step: 10, rightMarks: true }
+    : { pick: (m: ShotMeasurement) => m.volume ?? null, color: '#d3b06a', min: 0, max: 80, band: 1, width: 2.2, unit: ' ml', digits: 0, step: 20, rightMarks: true },
+  { pick: (m: ShotMeasurement) => m.machine.flow, color: '#4fbcc6', min: 0, max: 6, band: 1, width: 1.7, unit: ' ml/s', digits: 1, step: 1, rightMarks: true },
 ]
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
@@ -139,6 +139,8 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
             weight: 1,
             tick: false,
           })
+
+          if (!s.rightMarks) break
 
           const above = Math.min(s.max, (Math.floor(raw / s.step) + 1) * s.step)
           const below = Math.max(s.min, (Math.ceil(raw / s.step) - 1) * s.step)
