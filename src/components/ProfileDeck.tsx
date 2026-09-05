@@ -48,6 +48,8 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const [candidate, setCandidate] = useState<string | null>(null)
   const [anchor, setAnchor] = useState(0)
   const dragging = useRef(false)
+  const moved = useRef(false)
+  const origin = useRef({ x: 0, y: 0 })
   const badge = useRef<HTMLButtonElement>(null)
 
   const activeIndex = Math.max(0, records.findIndex((r) => r.id === activeId))
@@ -90,15 +92,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
             style={{ height: Math.max(0, anchor - 6) }}
             onPointerUp={() => commit(null)}
           />
-          <div
-            className="deckfan"
-            style={{ bottom: Math.max(0, window.innerHeight - anchor + 14) }}
-            onPointerMove={(e) => {
-              if (!dragging.current) return
-              setCandidate(cardAt(e.clientX, e.clientY))
-            }}
-            onPointerUp={(e) => commit(cardAt(e.clientX, e.clientY) ?? candidate)}
-          >
+          <div className="deckfan" style={{ bottom: Math.max(0, window.innerHeight - anchor + 14) }}>
             <div style={{ position: 'relative', height: 184 }}>
               {records.map((record, i) => {
                 const on = record.id === highlighted
@@ -142,14 +136,34 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
       <button
         className="deckbadge"
         ref={badge}
-        onPointerDown={() => {
+        onPointerDown={(e) => {
           const rect = badge.current?.getBoundingClientRect()
           if (rect) setAnchor(rect.top)
+          badge.current?.setPointerCapture?.(e.pointerId)
           dragging.current = true
+          moved.current = false
+          origin.current = { x: e.clientX, y: e.clientY }
           setOpen(true)
         }}
-        onPointerUp={() => {
+        onPointerMove={(e) => {
+          if (!dragging.current) return
+          const dx = e.clientX - origin.current.x
+          const dy = e.clientY - origin.current.y
+          if (!moved.current && Math.hypot(dx, dy) < 8) return
+          moved.current = true
+          setCandidate(cardAt(e.clientX, e.clientY))
+        }}
+        onPointerUp={(e) => {
+          badge.current?.releasePointerCapture?.(e.pointerId)
+          if (!moved.current) {
+            dragging.current = false
+            return
+          }
+          commit(cardAt(e.clientX, e.clientY) ?? candidate)
+        }}
+        onPointerCancel={() => {
           dragging.current = false
+          moved.current = false
         }}
       >
         <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} width={74} height={30} aria-hidden="true">

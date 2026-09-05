@@ -31,8 +31,8 @@ export function useMachine() {
     setSnapshot(mockSnapshot())
     setScale(mockScale())
     setScaleConnected(true)
-    setWorkflow(mockWorkflow())
-    setWater(mockWater())
+    client.workflow().then(setWorkflow).catch(() => setWorkflow(mockWorkflow()))
+    client.waterLevels().then(setWater).catch(() => setWater(mockWater()))
   }, [])
 
   const machineStatus = useSocket<MachineSnapshot>('/machine/snapshot', (frame) => {
@@ -72,7 +72,6 @@ export function useMachine() {
   })
 
   const refreshWorkflow = useCallback(() => {
-    if (MOCK) return
     client.workflow().then(setWorkflow).catch(() => setWorkflow(null))
   }, [])
 

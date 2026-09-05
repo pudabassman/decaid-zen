@@ -12,7 +12,7 @@ import { LastShotGraph } from '../components/LastShotGraph'
 import { shotStats } from '../lib/shotStats'
 import { useAction } from '../lib/useAction'
 import { useSwipe } from '../lib/useSwipe'
-import { MOCK, mockGrinds, mockProfiles, mockShot } from '../lib/mock'
+import { MOCK } from '../lib/mock'
 import { useWaterBudget } from '../lib/waterBudget'
 import { matchRecord, profiles as profileApi, type ProfileRecord } from '../api/profiles'
 import { ProfileDeck } from '../components/ProfileDeck'
@@ -37,11 +37,6 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
   })
 
   useEffect(() => {
-    if (MOCK) {
-      setRecords(mockProfiles())
-      setGrinds(mockGrinds())
-      return
-    }
     profileApi.list().then(setRecords).catch(() => setRecords([]))
     profileApi.grindMemory().then((map) => setGrinds(map ?? {})).catch(() => undefined)
   }, [])
@@ -49,10 +44,6 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
   useEffect(() => {
     if (loaded.current) return
     loaded.current = true
-    if (MOCK) {
-      setLast(mockShot())
-      return
-    }
     client
       .latestShot()
       .then((summary) => (summary?.id ? client.shot(summary.id) : null))

@@ -1,6 +1,9 @@
 import type { MachineSnapshot, ScaleSnapshot, ShotRecord, WaterLevels, Workflow } from '../api/types'
 
-export const MOCK = typeof window !== 'undefined' && window.location.search.includes('mock')
+const search = typeof window === 'undefined' ? '' : window.location.search
+
+export const MOCK =
+  search.includes('mock') || (import.meta.env.DEV && !search.includes('live'))
 
 const at = (t: number) => new Date(Date.now() - (30 - t) * 1000).toISOString()
 
