@@ -234,7 +234,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
           {stats ? ` · ${stats.seconds.toFixed(1)} s` : ''}
         </span>
         {stats && (
-          <div className="row baseline" style={{ gap: 30 }}>
+          <div className="row baseline lastshotstats" style={{ gap: 30 }}>
             <Swatch color="var(--temp)" value={`${stats.endBrewTemp.toFixed(1)}°`} label="brew" />
             <Swatch color="var(--bar)" value={stats.peakPressure.toFixed(1)} label="peak bar" />
             <Swatch color="var(--weight)" value={stats.yieldValue.toFixed(1)} label={stats.yieldUnit === 'g' ? 'grams' : 'ml volume'} />

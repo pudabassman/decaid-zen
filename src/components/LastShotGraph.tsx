@@ -10,6 +10,9 @@ const baseSeries = (yieldByWeight: boolean) => [
   { pick: (m: ShotMeasurement) => m.machine.flow, color: '#4fbcc6', min: 0, max: 6, band: 1, width: 1.7 },
 ]
 
+/** headroom kept clear at the top of the plot for the caption and swatches */
+const PAD_TOP = 46
+
 export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const box = useRef<HTMLDivElement>(null)
@@ -69,7 +72,11 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
           const t = (Date.parse(point.machine.timestamp) - t0) / 1000
           const value = Math.max(s.min, Math.min(s.max, raw))
           const frac = (value - s.min) / (s.max - s.min)
-          const y = s.band === 1 ? (1 - frac) * h : (1 - frac) * h * s.band
+          const plot = Math.max(1, h - PAD_TOP)
+          const y =
+            s.band === 1
+              ? PAD_TOP + (1 - frac) * plot
+              : PAD_TOP + (1 - frac) * plot * s.band
           const x = (t / span) * w
           if (started) ctx.lineTo(x, y)
           else {

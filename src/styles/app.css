@@ -384,7 +384,8 @@ a { color: var(--flow); }
   z-index: 30;
 }
 
-.lastshotlabel {
+.lastshotlabel,
+.lastshotstats {
   transform: translateY(42px);
   position: relative;
   z-index: 2;
