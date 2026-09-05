@@ -9,9 +9,12 @@ import { client } from '../api/client'
 import type { Grinder, Workflow } from '../api/types'
 import {
   MAX_PREFERRED,
+  matchRecord,
+  preferredRecords,
   profiles as profileApi,
   type ProfileRecord,
 } from '../api/profiles'
+import { ProfileDeck } from '../components/ProfileDeck'
 import { useSwipe } from '../lib/useSwipe'
 import { useAction } from '../lib/useAction'
 
@@ -33,6 +36,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
   const [grinders, setGrinders] = useState<Grinder[]>([])
   const [records, setRecords] = useState<ProfileRecord[]>([])
   const [preferred, setPreferred] = useState<string[]>([])
+  const [grinds, setGrinds] = useState<Record<string, string>>({})
   const { run, message, busy } = useAction()
   const screen = useRef<HTMLDivElement>(null)
   useSwipe(screen, { onLeft: (fromRightEdge) => fromRightEdge && onDone() })
@@ -43,7 +47,25 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
     client.grinders().then(setGrinders).catch(() => setGrinders([]))
     profileApi.list().then(setRecords).catch(() => setRecords([]))
     profileApi.preferred().then((ids) => setPreferred(ids ?? [])).catch(() => undefined)
+    profileApi.grindMemory().then((map) => setGrinds(map ?? {})).catch(() => undefined)
   }, [])
+
+  const pickProfile = (record: ProfileRecord) => {
+    const remembered = grinds[record.id]
+    setDirty(true)
+    setDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            profile: record.profile,
+            context: {
+              ...prev.context,
+              ...(remembered ? { grinderSetting: remembered } : {}),
+            },
+          }
+        : prev,
+    )
+  }
 
   const togglePreferred = (id: string) => {
     const next = preferred.includes(id)
@@ -126,26 +148,37 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
             onMore={() => patch({ targetYield: +(target + 0.5).toFixed(1) })}
           />
         </Field>
-        <Field
-          label="Grinder"
-          value={ctx.grinderModel ?? ''}
-          placeholder="No grinder"
-          valueIsText
-          options={grinders.map((g) => g.model)}
-          onCommit={(next) => void chooseGrinder(next)}
-        />
-        <Field
-          label="Grind"
-          value={ctx.grinderSetting ?? ''}
-          placeholder="--"
-          numeric
-          onCommit={(next) => patch({ grinderSetting: next })}
+        <div
+          className="row"
+          style={{ gap: 48, padding: '26px 0', borderTop: '1px solid var(--rule-soft)' }}
         >
-          <Stepper
-            onLess={() => patch({ grinderSetting: shift(ctx.grinderSetting, -0.1) })}
-            onMore={() => patch({ grinderSetting: shift(ctx.grinderSetting, 0.1) })}
-          />
-        </Field>
+          <div style={{ flex: '1 1 0', minWidth: 0 }}>
+            <Field
+              bare
+              label="Grind"
+              value={ctx.grinderSetting ?? ''}
+              placeholder="--"
+              numeric
+              onCommit={(next) => patch({ grinderSetting: next })}
+            >
+              <Stepper
+                onLess={() => patch({ grinderSetting: shift(ctx.grinderSetting, -0.1) })}
+                onMore={() => patch({ grinderSetting: shift(ctx.grinderSetting, 0.1) })}
+              />
+            </Field>
+          </div>
+          <div style={{ flex: '1 1 0', minWidth: 0 }}>
+            <Field
+              bare
+              label="Grinder"
+              value={ctx.grinderModel ?? ''}
+              placeholder="No grinder"
+              valueIsText
+              options={grinders.map((g) => g.model)}
+              onCommit={(next) => void chooseGrinder(next)}
+            />
+          </div>
+        </div>
         <Field
           label="Roaster"
           value={ctx.coffeeRoaster ?? ''}
@@ -154,8 +187,17 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
           onCommit={(next) => patch({ coffeeRoaster: next })}
         />
         <div style={{ padding: '26px 0', borderTop: '1px solid var(--rule-soft)' }}>
+          <div className="row between" style={{ marginBottom: 16 }}>
+            <ProfileDeck
+              records={preferredRecords(records, preferred)}
+              activeId={matchRecord(records, draft?.profile)?.id ?? null}
+              grinds={grinds}
+              onPick={pickProfile}
+            />
+          </div>
+
           <div className="cap" style={{ marginBottom: 14 }}>
-            Deck profiles · {preferred.length || 'first'} of {MAX_PREFERRED}
+            On the deck · {preferred.length || 'first'} of {MAX_PREFERRED}
           </div>
           <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
             {records.map((record) => {
@@ -236,7 +278,7 @@ const shift = (value: string | undefined, delta: number) => {
 }
 
 function Field({
-  label, value, color, valueIsText, suffix, numeric, placeholder, options, onCommit, children,
+  label, value, color, valueIsText, suffix, numeric, placeholder, options, bare, onCommit, children,
 }: {
   label: string
   value: string
@@ -246,6 +288,7 @@ function Field({
   numeric?: boolean
   placeholder?: string
   options?: string[]
+  bare?: boolean
   onCommit?: (next: string) => void
   children?: React.ReactNode
 }) {
@@ -253,7 +296,11 @@ function Field({
   return (
     <div
       className="row between"
-      style={{ padding: '26px 0', borderTop: '1px solid var(--rule-soft)' }}
+      style={
+        bare
+          ? { gap: 20 }
+          : { padding: '26px 0', borderTop: '1px solid var(--rule-soft)' }
+      }
     >
       <div>
         <div className="cap" style={{ marginBottom: 8 }}>{label}</div>
