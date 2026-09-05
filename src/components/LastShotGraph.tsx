@@ -2,22 +2,20 @@ import { useEffect, useRef } from 'react'
 import type { ShotMeasurement, ShotRecord } from '../api/types'
 
 const baseSeries = (yieldByWeight: boolean) => [
-  { pick: (m: ShotMeasurement) => m.machine.mixTemperature, color: '#d9714f', min: 80, max: 100, band: 0.34, width: 1.6, unit: '°', digits: 1 },
-  { pick: (m: ShotMeasurement) => m.machine.pressure, color: '#9fb055', min: 0, max: 12, band: 1, width: 2.2, unit: '', digits: 1 },
+  { pick: (m: ShotMeasurement) => m.machine.mixTemperature, color: '#d9714f', min: 80, max: 100, band: 0.34, width: 1.6, unit: '°', digits: 1, step: 5 },
+  { pick: (m: ShotMeasurement) => m.machine.pressure, color: '#9fb055', min: 0, max: 12, band: 1, width: 2.2, unit: ' bar', digits: 1, step: 2 },
   yieldByWeight
-    ? { pick: (m: ShotMeasurement) => m.scale?.weight ?? null, color: '#d3b06a', min: 0, max: 50, band: 1, width: 2.2, unit: 'g', digits: 1 }
-    : { pick: (m: ShotMeasurement) => m.volume ?? null, color: '#d3b06a', min: 0, max: 80, band: 1, width: 2.2, unit: 'ml', digits: 0 },
-  { pick: (m: ShotMeasurement) => m.machine.flow, color: '#4fbcc6', min: 0, max: 6, band: 1, width: 1.7, unit: '', digits: 1 },
+    ? { pick: (m: ShotMeasurement) => m.scale?.weight ?? null, color: '#d3b06a', min: 0, max: 50, band: 1, width: 2.2, unit: ' g', digits: 1, step: 10 }
+    : { pick: (m: ShotMeasurement) => m.volume ?? null, color: '#d3b06a', min: 0, max: 80, band: 1, width: 2.2, unit: ' ml', digits: 0, step: 20 },
+  { pick: (m: ShotMeasurement) => m.machine.flow, color: '#4fbcc6', min: 0, max: 6, band: 1, width: 1.7, unit: ' ml/s', digits: 1, step: 1 },
 ]
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
 const PAD_TOP = 56
 /** the only y values worth naming: the pressure line's mid and high marks */
 const GRID_BARS = [4, 8]
-/** matching marks for the weight line, read off the right edge */
-const GRID_GRAMS = [20, 40]
 /** room kept at the right for the end-of-curve values */
-const PAD_RIGHT = 62
+const PAD_RIGHT = 72
 
 export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -43,7 +41,6 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       const plot = Math.max(1, h - PAD_TOP)
       const plotW = Math.max(1, w - PAD_RIGHT)
       const barY = (bar: number) => PAD_TOP + (1 - bar / 12) * plot
-      const gramY = (g: number) => PAD_TOP + (1 - g / 50) * plot
 
       ctx.strokeStyle = '#201e1a'
       ctx.lineWidth = 1
@@ -68,14 +65,6 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
         ctx.fillText(i === GRID_BARS.length - 1 ? `${bar} bar` : `${bar}`, 13, y)
       })
 
-      GRID_GRAMS.forEach((grams) => {
-        const y = Math.round(gramY(grams)) + 0.5
-        ctx.strokeStyle = '#45413a'
-        ctx.beginPath()
-        ctx.moveTo(plotW, y)
-        ctx.lineTo(plotW + 8, y)
-        ctx.stroke()
-      })
 
       const points = shot?.measurements ?? []
       if (points.length < 2) return
@@ -84,7 +73,7 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       const span = Math.max(1, (tEnd - t0) / 1000)
 
       const yieldByWeight = points.some((m) => (m.scale?.weight ?? 0) > 0)
-      const ends: Array<{ y: number; color: string; text: string }> = []
+      const column: Array<{ y: number; color: string; text: string; weight: number; tick: boolean }> = []
       for (const s of baseSeries(yieldByWeight)) {
         ctx.save()
         ctx.strokeStyle = s.color
@@ -115,40 +104,63 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
         ctx.stroke()
         ctx.restore()
 
+        const yFor = (value: number) => {
+          const clamped = Math.max(s.min, Math.min(s.max, value))
+          const frac = (clamped - s.min) / (s.max - s.min)
+          return s.band === 1 ? PAD_TOP + (1 - frac) * plot : PAD_TOP + (1 - frac) * plot * s.band
+        }
+
         for (let i = points.length - 1; i >= 0; i--) {
           const raw = s.pick(points[i])
           if (raw === null || raw === undefined) continue
-          const value = Math.max(s.min, Math.min(s.max, raw))
-          const frac = (value - s.min) / (s.max - s.min)
-          ends.push({
-            y: s.band === 1 ? PAD_TOP + (1 - frac) * plot : PAD_TOP + (1 - frac) * plot * s.band,
+
+          column.push({
+            y: yFor(raw),
             color: s.color,
             text: `${raw.toFixed(s.digits)}${s.unit}`,
+            weight: 1,
+            tick: false,
           })
+
+          const above = Math.min(s.max, (Math.floor(raw / s.step) + 1) * s.step)
+          const below = Math.max(s.min, (Math.ceil(raw / s.step) - 1) * s.step)
+          for (const mark of [above, below]) {
+            if (Math.abs(mark - raw) < s.step * 0.35) continue
+            column.push({
+              y: yFor(mark),
+              color: `${s.color}88`,
+              text: `${mark.toFixed(mark % 1 === 0 ? 0 : 1)}${s.unit}`,
+              weight: 0,
+              tick: true,
+            })
+          }
           break
         }
       }
 
-      const rightColumn = [
-        ...GRID_GRAMS.map((grams, i) => ({
-          y: gramY(grams),
-          color: '#7d7669',
-          text: i === GRID_GRAMS.length - 1 ? `${grams} g` : `${grams}`,
-        })),
-        ...ends,
-      ]
-      rightColumn.sort((a, b) => a.y - b.y)
-      for (let i = 1; i < rightColumn.length; i++) {
-        if (rightColumn[i].y - rightColumn[i - 1].y < 13) {
-          rightColumn[i].y = rightColumn[i - 1].y + 13
-        }
+      // end values claim their place first; a scale mark too close to one is dropped
+      column.sort((a, b) => b.weight - a.weight || a.y - b.y)
+      const placed: typeof column = []
+      for (const label of column) {
+        if (label.y < PAD_TOP + 4 || label.y > h - 4) continue
+        if (placed.some((other) => Math.abs(other.y - label.y) < 12)) continue
+        placed.push(label)
       }
+
       ctx.textAlign = 'start'
       ctx.textBaseline = 'middle'
-      ctx.font = "11px 'Jost', sans-serif"
-      for (const label of rightColumn) {
+      for (const label of placed) {
+        if (label.tick) {
+          ctx.strokeStyle = label.color
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.moveTo(plotW, Math.round(label.y) + 0.5)
+          ctx.lineTo(plotW + 7, Math.round(label.y) + 0.5)
+          ctx.stroke()
+        }
+        ctx.font = label.weight ? "11px 'Jost', sans-serif" : "9px 'Jost', sans-serif"
         ctx.fillStyle = label.color
-        ctx.fillText(label.text, plotW + 12, Math.min(h - 6, Math.max(PAD_TOP + 6, label.y)))
+        ctx.fillText(label.text, plotW + 11, label.y)
       }
 
       ctx.font = "10px 'Jost', sans-serif"
