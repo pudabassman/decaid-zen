@@ -15,8 +15,6 @@ const baseSeries = (yieldByWeight: boolean) => [
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
 const PAD_TOP = 56
-/** faint guides at 4 and 8 bar; the numbers live on the curves themselves */
-const GRID_BARS = [4, 8]
 /** floor and ceiling for the right-hand label gutter */
 const PAD_RIGHT_MIN = 40
 const PAD_RIGHT_MAX = 84
@@ -60,18 +58,20 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       const padRight = Math.round(
         Math.min(PAD_RIGHT_MAX, Math.max(PAD_RIGHT_MIN, widest + 15)),
       )
-      const plotW = Math.max(1, w - padRight)
-      const barY = (bar: number) => PAD_TOP + (1 - bar / 12) * plot
-
-      ctx.strokeStyle = '#201e1a'
-      ctx.lineWidth = 1
-      for (const bar of GRID_BARS) {
-        const y = Math.round(barY(bar)) + 0.5
-        ctx.beginPath()
-        ctx.moveTo(0, y)
-        ctx.lineTo(plotW, y)
-        ctx.stroke()
+      // and a left gutter for the target start values
+      let widestStart = 0
+      for (const s of sample) {
+        for (const point of measured) {
+          const raw = s.target(point)
+          if (raw === null || raw === undefined) continue
+          widestStart = Math.max(widestStart, ctx.measureText(`${raw.toFixed(s.digits)}${s.unit}`).width)
+          break
+        }
       }
+      const padLeft = widestStart ? Math.round(widestStart + 12) : 0
+      const plotW = Math.max(1, w - padRight)
+      const plotSpan = Math.max(1, plotW - padLeft)
+
 
 
       const points = shot?.measurements ?? []
@@ -99,7 +99,7 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
           const frac = (value - s.min) / (s.max - s.min)
           const y =
             s.band === 1 ? PAD_TOP + (1 - frac) * plot : PAD_TOP + (1 - frac) * plot * s.band
-          const x = (t / span) * plotW
+          const x = padLeft + (t / span) * plotSpan
           if (open) ctx.lineTo(x, y)
           else {
             ctx.moveTo(x, y)
@@ -130,7 +130,7 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
             s.band === 1
               ? PAD_TOP + (1 - frac) * plot
               : PAD_TOP + (1 - frac) * plot * s.band
-          const x = (t / span) * plotW
+          const x = padLeft + (t / span) * plotSpan
           if (started) ctx.lineTo(x, y)
           else {
             ctx.moveTo(x, y)
@@ -163,10 +163,11 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
             const first = targets[0]
             const last = targets[targets.length - 1]
             ctx.font = "10px 'Jost', sans-serif"
-            ctx.textAlign = 'start'
+            ctx.textAlign = 'end'
             ctx.textBaseline = 'middle'
             ctx.fillStyle = `${s.color}7a`
-            ctx.fillText(`${first.toFixed(s.digits)}${s.unit}`, 3, yFor(first))
+            ctx.fillText(`${first.toFixed(s.digits)}${s.unit}`, padLeft - 6, yFor(first))
+            ctx.textAlign = 'start'
             column.push({
               y: yFor(last),
               color: `${s.color}7a`,
@@ -209,7 +210,7 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       ctx.textBaseline = 'alphabetic'
       const tickEvery = span > 45 ? 20 : 10
       for (let t = tickEvery; t <= span - 4; t += tickEvery) {
-        const x = Math.round((t / span) * plotW) + 0.5
+        const x = Math.round(padLeft + (t / span) * plotSpan) + 0.5
         ctx.strokeStyle = '#45413a'
         ctx.beginPath()
         ctx.moveTo(x, h)
