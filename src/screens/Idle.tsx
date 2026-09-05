@@ -130,20 +130,12 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
         <span style={{ height: `${waterFill}%` }} />
       </div>
 
-      <div className="row between" style={{ marginBottom: 24 }}>
-        <div className="row" style={{ gap: 14 }}>
-          <span className="statusdot" />
-          <span className="cap strong">{snapshot?.state.state ?? 'connecting'}</span>
-        </div>
-        <div className="row baseline" style={{ gap: 34, opacity: asleep ? 0.45 : 1 }}>
-          <Reading label="Group" value={`${fmt(snapshot?.groupTemperature)}°`} />
-          <Reading label="Steam" value={`${fmt(snapshot?.steamTemperature)}°`} />
-          <Reading label="Scale" value={machine.scaleConnected ? `${fmt(scale?.weight ?? 0)} g` : 'none'} />
-        </div>
-      </div>
-
       <div style={{ marginBottom: 6 }}>
-        <div className="row" style={{ gap: 14, marginBottom: 18 }}>
+        <div
+          className="row between"
+          style={{ gap: 14, marginBottom: 30, alignItems: 'flex-end' }}
+        >
+          <div className="row" style={{ gap: 14 }}>
           <span className="cap">
             <EditableValue
               className="cap"
@@ -164,12 +156,19 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
               <span className="num">{listing.count}</span>
             </button>
           )}
-          {listing.status === 'checking' && (
-            <span className="cap">
-              searching
-              <Dots />
-            </span>
-          )}
+            {listing.status === 'checking' && (
+              <span className="cap">
+                searching
+                <Dots />
+              </span>
+            )}
+          </div>
+
+          <div className="row baseline" style={{ gap: 34, opacity: asleep ? 0.45 : 1 }}>
+            <Reading label="Group" value={`${fmt(snapshot?.groupTemperature)}°`} />
+            <Reading label="Steam" value={`${fmt(snapshot?.steamTemperature)}°`} />
+            <Reading label="Scale" value={machine.scaleConnected ? `${fmt(scale?.weight ?? 0)} g` : 'none'} />
+          </div>
         </div>
 
         <div className="row between" style={{ alignItems: 'flex-start' }}>
