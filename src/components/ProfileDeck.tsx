@@ -12,7 +12,7 @@ interface Props {
 
 const CARD_W = 232
 const STEP = 54
-/** where the card in play sits inside the frame */
+/** where the first seat starts inside the frame */
 const FRONT = 54
 const VIEW_W = 110
 const VIEW_H = 50
@@ -101,6 +101,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   // a drag rotates which profile sits in the front seat; the seats never move
   const count = Math.max(1, records.length)
   const wrap = (n: number) => ((n % count) + count) % count
+  const middle = Math.floor(count / 2)
   const slot = wrap(activeIndex - Math.round(pan / STEP))
   const highlighted = candidate ?? records[slot]?.id ?? activeId
 
@@ -119,7 +120,8 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
           >
             <div className="decktrack">
               {records.map((record, i) => {
-                const seat = wrap(i - slot)
+                // the profile in play holds the middle seat; the rest ring around it
+                const seat = wrap(i - slot + middle)
                 const on = record.id === highlighted
                 // a card that wraps round the back must not slide across the frame
                 const jumped = Math.abs(seat - (seats.current.get(record.id) ?? seat)) > 1
@@ -131,9 +133,9 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
                     className={`deckcard${on ? ' on' : ''}`}
                     style={{
                       left: FRONT + seat * STEP,
-                      zIndex: 60 - seat,
+                      zIndex: 60 - Math.abs(seat - middle),
                       transition: jumped ? 'none' : undefined,
-                      transform: `scale(${seat === 0 ? 1 : 0.95})`,
+                      transform: `scale(${seat === middle ? 1 : 0.95})`,
                       animationDelay: `${Math.min(i, 4) * 22}ms`,
                     }}
                     onPointerUp={(e) => {
