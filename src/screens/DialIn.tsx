@@ -117,6 +117,11 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
 
   return (
     <div className="screen" ref={screen}>
+      <div className="row between" style={{ marginBottom: 14 }}>
+        <span className="display" style={{ fontSize: 42, letterSpacing: '-0.01em' }}>Dial in</span>
+        <span className="cap">{draft?.name ?? 'workflow'}{dirty ? ' · unsaved' : ''}</span>
+      </div>
+
       <div style={{ marginBottom: 16 }}>
         <div className="row between" style={{ marginBottom: 10 }}>
           <div className="row" style={{ gap: 14 }}>
@@ -147,7 +152,6 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
               </span>
             )}
           </div>
-          <span className="cap">{draft?.name ?? 'workflow'}{dirty ? ' · unsaved' : ''}</span>
         </div>
 
         <div className="display" style={{ fontSize: 44, lineHeight: 1.04, letterSpacing: '-0.02em' }}>
@@ -203,7 +207,9 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
             alignItems: 'flex-end',
           }}
         >
-          <div style={{ flex: '1 1 0', minWidth: 0, borderBottom: '1px dashed var(--rule)' }}>
+          <div
+            style={{ flex: '0 1 auto', minWidth: 0, paddingRight: 12 }}
+          >
             <div className="row" style={{ gap: 40, marginBottom: 8 }}>
               <span className="cap" style={{ width: 96 }}>Grind</span>
               <span className="cap">Grinder</span>
@@ -221,7 +227,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
                   onCommit={(next) => patch({ grinderSetting: next })}
                 />
               </span>
-              <span style={{ flex: '1 1 0', minWidth: 0 }}>
+              <span style={{ minWidth: 0 }}>
                 <EditableValue
                   className="display bare"
                   style={{ fontSize: 38 }}
@@ -235,10 +241,12 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
               </span>
             </div>
           </div>
-          <Stepper
-            onLess={() => patch({ grinderSetting: shift(ctx.grinderSetting, -0.1) })}
-            onMore={() => patch({ grinderSetting: shift(ctx.grinderSetting, 0.1) })}
-          />
+          <span style={{ marginLeft: 'auto' }}>
+            <Stepper
+              onLess={() => patch({ grinderSetting: shift(ctx.grinderSetting, -0.1) })}
+              onMore={() => patch({ grinderSetting: shift(ctx.grinderSetting, 0.1) })}
+            />
+          </span>
         </div>
         <div style={{ padding: '26px 0', borderTop: '1px solid var(--rule-soft)' }}>
           <div className="row between" style={{ marginBottom: 16 }}>

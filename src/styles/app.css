@@ -172,8 +172,8 @@ a { color: var(--flow); }
 .notes:focus { outline: none; border-color: var(--ink); }
 .notes::placeholder { color: var(--muted); }
 
-.editable { cursor: text; border-bottom: 1px dashed var(--rule); padding-bottom: 2px; }
-.editable:hover, .editable:focus { border-bottom-color: var(--ink); outline: none; }
+.editable { cursor: text; }
+.editable:hover, .editable:focus { outline: none; }
 .editable.input {
   border: 0;
   border-bottom: 1px solid var(--ink);
