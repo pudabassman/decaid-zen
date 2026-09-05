@@ -415,3 +415,14 @@ a { color: var(--flow); }
   .deckcard, .deckveil { animation: none; }
   .deckfan.closing { transition: none; }
 }
+
+.deckcard.warp {
+  transition: transform 260ms ease, opacity 200ms ease, border-color 240ms ease;
+  animation: warpIn 220ms ease-out both;
+}
+@keyframes warpIn {
+  from { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deckcard.warp { animation: none; }
+}

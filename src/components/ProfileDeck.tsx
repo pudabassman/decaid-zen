@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { ProfileRecord } from '../api/profiles'
 import type { Profile } from '../api/types'
 import { MOCK } from '../lib/mock'
@@ -56,10 +57,17 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const moved = useRef(false)
   const origin = useRef({ x: 0, y: 0 })
   const badge = useRef<HTMLButtonElement>(null)
-  const seats = useRef<Map<string, number>>(new Map())
+  const previousSlot = useRef(0)
 
   const activeIndex = Math.max(0, records.findIndex((r) => r.id === activeId))
   const active = records[activeIndex]
+
+  const count = Math.max(1, records.length)
+  const wrap = (n: number) => ((n % count) + count) % count
+  const middle = Math.floor(count / 2)
+  const slot = wrap(activeIndex - Math.round(pan / STEP))
+  const cameFrom = previousSlot.current
+  const highlighted = candidate ?? records[slot]?.id ?? activeId
 
   useEffect(() => {
     if (!open) {
@@ -69,6 +77,10 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
     const rect = badge.current?.getBoundingClientRect()
     if (rect) setAnchor(rect.top)
   }, [open, records.length])
+
+  useEffect(() => {
+    previousSlot.current = slot
+  }, [slot])
 
   if (!records.length) return null
 
@@ -87,8 +99,32 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
       setCandidate(null)
       setPan(0)
       rotation.current = 0
-      seats.current.clear()
+      previousSlot.current = 0
     }, 190)
+  }
+
+  const startDrag = (e: ReactPointerEvent, el: HTMLElement | null) => {
+    const rect = badge.current?.getBoundingClientRect()
+    if (rect) setAnchor(rect.top)
+    el?.setPointerCapture?.(e.pointerId)
+    dragging.current = true
+    moved.current = false
+    origin.current = { x: e.clientX, y: e.clientY }
+    rotation.current = pan
+  }
+
+  const moveDrag = (e: ReactPointerEvent) => {
+    if (!dragging.current) return
+    const dx = e.clientX - origin.current.x
+    const dy = e.clientY - origin.current.y
+    if (!moved.current && Math.hypot(dx, dy) < 8) return
+    moved.current = true
+    if (Math.abs(dx) > Math.abs(dy)) {
+      setPan(rotation.current + dx)
+      setCandidate(null)
+      return
+    }
+    setCandidate(cardAt(e.clientX, e.clientY))
   }
 
   const commit = (id: string | null) => {
@@ -98,12 +134,6 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
     if (record && record.id !== activeId) onPick(record)
   }
 
-  // a drag rotates which profile sits in the front seat; the seats never move
-  const count = Math.max(1, records.length)
-  const wrap = (n: number) => ((n % count) + count) % count
-  const middle = Math.floor(count / 2)
-  const slot = wrap(activeIndex - Math.round(pan / STEP))
-  const highlighted = candidate ?? records[slot]?.id ?? activeId
 
   return (
     <div className="deckwrap">
@@ -117,28 +147,34 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
           <div
             className={`deckfan${closing ? ' closing' : ''}`}
             style={{ bottom: Math.max(0, window.innerHeight - anchor + 14) }}
+            onPointerDown={(e) => startDrag(e, e.currentTarget)}
+            onPointerMove={moveDrag}
+            onPointerUp={(e) => {
+              e.currentTarget.releasePointerCapture?.(e.pointerId)
+              if (!moved.current) return
+              commit(highlighted)
+            }}
           >
             <div className="decktrack">
               {records.map((record, i) => {
                 // the profile in play holds the middle seat; the rest ring around it
                 const seat = wrap(i - slot + middle)
                 const on = record.id === highlighted
-                // a card that wraps round the back must not slide across the frame
-                const jumped = Math.abs(seat - (seats.current.get(record.id) ?? seat)) > 1
-                seats.current.set(record.id, seat)
+                // a card that wraps round the back fades in there rather than sliding across
+                const warped = Math.abs(seat - wrap(i - cameFrom + middle)) > 1
                 return (
                   <button
                     key={record.id}
                     data-profile={record.id}
-                    className={`deckcard${on ? ' on' : ''}`}
+                    className={`deckcard${on ? ' on' : ''}${warped ? ' warp' : ''}`}
                     style={{
                       left: FRONT + seat * STEP,
                       zIndex: 60 - Math.abs(seat - middle),
-                      transition: jumped ? 'none' : undefined,
                       transform: `scale(${seat === middle ? 1 : 0.95})`,
                       animationDelay: `${Math.min(i, 4) * 22}ms`,
                     }}
                     onPointerUp={(e) => {
+                      if (moved.current) return
                       e.stopPropagation()
                       commit(record.id)
                     }}
@@ -167,29 +203,10 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
         className="deckbadge"
         ref={badge}
         onPointerDown={(e) => {
-          const rect = badge.current?.getBoundingClientRect()
-          if (rect) setAnchor(rect.top)
-          badge.current?.setPointerCapture?.(e.pointerId)
-          dragging.current = true
-          moved.current = false
-          origin.current = { x: e.clientX, y: e.clientY }
-          rotation.current = pan
+          startDrag(e, badge.current)
           setOpen(true)
         }}
-        onPointerMove={(e) => {
-          if (!dragging.current) return
-          const dx = e.clientX - origin.current.x
-          const dy = e.clientY - origin.current.y
-          if (!moved.current && Math.hypot(dx, dy) < 8) return
-          moved.current = true
-          if (Math.abs(dx) > Math.abs(dy)) {
-            // one seat per STEP dragged, with a little slack at either end
-            setPan(rotation.current + dx)
-            setCandidate(null)
-            return
-          }
-          setCandidate(cardAt(e.clientX, e.clientY))
-        }}
+        onPointerMove={moveDrag}
         onPointerUp={(e) => {
           badge.current?.releasePointerCapture?.(e.pointerId)
           if (!moved.current) {
