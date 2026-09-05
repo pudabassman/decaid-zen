@@ -228,7 +228,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
       </div>
 
       <div className="row between baseline" style={{ marginBottom: 12 }}>
-        <span className="cap strong">
+        <span className="cap strong lastshotlabel">
           Last shot
           {last ? ` · ${new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
           {stats ? ` · ${stats.seconds.toFixed(1)} s` : ''}

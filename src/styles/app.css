@@ -383,3 +383,10 @@ a { color: var(--flow); }
   background: rgba(19, 18, 16, 0.5);
   z-index: 30;
 }
+
+.lastshotlabel {
+  transform: translateY(42px);
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
