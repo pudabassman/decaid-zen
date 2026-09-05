@@ -17,7 +17,7 @@ const GRID_BARS = [4, 8]
 /** matching marks for the weight line, read off the right edge */
 const GRID_GRAMS = [20, 40]
 /** room kept at the right for the end-of-curve values */
-const PAD_RIGHT = 54
+const PAD_RIGHT = 62
 
 export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -68,18 +68,14 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
         ctx.fillText(i === GRID_BARS.length - 1 ? `${bar} bar` : `${bar}`, 13, y)
       })
 
-      ctx.textAlign = 'end'
-      GRID_GRAMS.forEach((grams, i) => {
+      GRID_GRAMS.forEach((grams) => {
         const y = Math.round(gramY(grams)) + 0.5
         ctx.strokeStyle = '#45413a'
         ctx.beginPath()
         ctx.moveTo(plotW, y)
-        ctx.lineTo(plotW - 8, y)
+        ctx.lineTo(plotW + 8, y)
         ctx.stroke()
-        ctx.fillStyle = '#7d7669'
-        ctx.fillText(i === GRID_GRAMS.length - 1 ? `${grams} g` : `${grams}`, plotW - 13, y)
       })
-      ctx.textAlign = 'start'
 
       const points = shot?.measurements ?? []
       if (points.length < 2) return
@@ -133,16 +129,26 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
         }
       }
 
-      ends.sort((a, b) => a.y - b.y)
-      for (let i = 1; i < ends.length; i++) {
-        if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13
+      const rightColumn = [
+        ...GRID_GRAMS.map((grams, i) => ({
+          y: gramY(grams),
+          color: '#7d7669',
+          text: i === GRID_GRAMS.length - 1 ? `${grams} g` : `${grams}`,
+        })),
+        ...ends,
+      ]
+      rightColumn.sort((a, b) => a.y - b.y)
+      for (let i = 1; i < rightColumn.length; i++) {
+        if (rightColumn[i].y - rightColumn[i - 1].y < 13) {
+          rightColumn[i].y = rightColumn[i - 1].y + 13
+        }
       }
       ctx.textAlign = 'start'
       ctx.textBaseline = 'middle'
       ctx.font = "11px 'Jost', sans-serif"
-      for (const end of ends) {
-        ctx.fillStyle = end.color
-        ctx.fillText(end.text, plotW + 8, Math.min(h - 6, Math.max(PAD_TOP + 6, end.y)))
+      for (const label of rightColumn) {
+        ctx.fillStyle = label.color
+        ctx.fillText(label.text, plotW + 12, Math.min(h - 6, Math.max(PAD_TOP + 6, label.y)))
       }
 
       ctx.font = "10px 'Jost', sans-serif"
