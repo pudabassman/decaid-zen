@@ -12,6 +12,8 @@ interface Props {
 
 const CARD_W = 232
 const STEP = 54
+/** where the card in play sits inside the frame */
+const FRONT = 54
 const VIEW_W = 110
 const VIEW_H = 50
 
@@ -92,7 +94,11 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
     if (record && record.id !== activeId) onPick(record)
   }
 
-  const highlighted = candidate ?? activeId
+  // how far the cards have been dragged, in seats and in leftover pixels
+  const seats = pan / STEP
+  const slot = Math.max(0, Math.min(records.length - 1, Math.round(activeIndex - seats)))
+  const drift = dragging.current ? pan - (activeIndex - slot) * STEP : 0
+  const highlighted = candidate ?? records[slot]?.id ?? activeId
 
   return (
     <div className="deckwrap">
@@ -107,28 +113,22 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
             className={`deckfan${closing ? ' closing' : ''}`}
             style={{ bottom: Math.max(0, window.innerHeight - anchor + 14) }}
           >
-            <div
-              style={{
-                position: 'relative',
-                height: 184,
-                transform: `translateX(${pan}px)`,
-                transition: dragging.current ? 'none' : 'transform 240ms ease',
-              }}
-            >
+            <div className="decktrack">
               {records.map((record, i) => {
+                const seat = i - slot
                 const on = record.id === highlighted
-                const offset = i <= activeIndex ? i * STEP : activeIndex * STEP + CARD_W - 40 + (i - activeIndex - 1) * STEP
-                const depth = Math.min(Math.abs(i - activeIndex), 3)
+                const depth = Math.min(Math.abs(seat), 3)
                 return (
                   <button
                     key={record.id}
                     data-profile={record.id}
                     className={`deckcard${on ? ' on' : ''}`}
                     style={{
-                      left: offset,
+                      left: FRONT + seat * STEP + drift,
                       zIndex: on ? 60 : 50 - depth,
                       transform: `scale(${on ? 1 : 0.95})`,
                       animationDelay: `${Math.min(i, 4) * 22}ms`,
+                      transition: dragging.current ? 'none' : 'left 240ms ease, transform 240ms ease',
                     }}
                     onPointerUp={(e) => {
                       e.stopPropagation()
@@ -174,10 +174,11 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
           if (!moved.current && Math.hypot(dx, dy) < 8) return
           moved.current = true
           if (Math.abs(dx) > Math.abs(dy)) {
-            const width = records.length * STEP + CARD_W
-            // always leave room to slide the deck under the thumb, even when it fits
-            const room = Math.max(180, width - (window.innerWidth - 120))
+            // one seat per STEP dragged, with a little slack at either end
+            const room = STEP * (records.length - 1) + STEP * 0.6
             setPan(Math.max(-room, Math.min(room, dx)))
+            setCandidate(null)
+            return
           }
           setCandidate(cardAt(e.clientX, e.clientY))
         }}
@@ -187,7 +188,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
             dragging.current = false
             return
           }
-          commit(cardAt(e.clientX, e.clientY) ?? candidate)
+          commit(cardAt(e.clientX, e.clientY) ?? highlighted)
         }}
         onPointerCancel={() => {
           dragging.current = false

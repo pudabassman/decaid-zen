@@ -332,6 +332,11 @@ a { color: var(--flow); }
   z-index: 61;
   touch-action: none;
 }
+.decktrack {
+  position: relative;
+  height: 184px;
+  overflow: hidden;
+}
 .deckcard {
   animation: cardIn 240ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   position: absolute;
