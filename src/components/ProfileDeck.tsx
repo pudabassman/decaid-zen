@@ -94,10 +94,8 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
     if (record && record.id !== activeId) onPick(record)
   }
 
-  // how far the cards have been dragged, in seats and in leftover pixels
-  const seats = pan / STEP
-  const slot = Math.max(0, Math.min(records.length - 1, Math.round(activeIndex - seats)))
-  const drift = dragging.current ? pan - (activeIndex - slot) * STEP : 0
+  // a drag rotates which profile sits in the front seat; the seats never move
+  const slot = Math.max(0, Math.min(records.length - 1, activeIndex - Math.round(pan / STEP)))
   const highlighted = candidate ?? records[slot]?.id ?? activeId
 
   return (
@@ -117,18 +115,16 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
               {records.map((record, i) => {
                 const seat = i - slot
                 const on = record.id === highlighted
-                const depth = Math.min(Math.abs(seat), 3)
                 return (
                   <button
                     key={record.id}
                     data-profile={record.id}
                     className={`deckcard${on ? ' on' : ''}`}
                     style={{
-                      left: FRONT + seat * STEP + drift,
-                      zIndex: on ? 60 : 50 - depth,
-                      transform: `scale(${on ? 1 : 0.95})`,
+                      left: FRONT + seat * STEP,
+                      zIndex: 60 - Math.abs(seat),
+                      transform: `scale(${seat === 0 ? 1 : 0.95})`,
                       animationDelay: `${Math.min(i, 4) * 22}ms`,
-                      transition: dragging.current ? 'none' : 'left 240ms ease, transform 240ms ease',
                     }}
                     onPointerUp={(e) => {
                       e.stopPropagation()
@@ -175,8 +171,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
           moved.current = true
           if (Math.abs(dx) > Math.abs(dy)) {
             // one seat per STEP dragged, with a little slack at either end
-            const room = STEP * (records.length - 1) + STEP * 0.6
-            setPan(Math.max(-room, Math.min(room, dx)))
+            setPan(dx)
             setCandidate(null)
             return
           }
