@@ -14,8 +14,9 @@ const baseSeries = (yieldByWeight: boolean) => [
 const PAD_TOP = 56
 /** the only y values worth naming: the pressure line's mid and high marks */
 const GRID_BARS = [4, 8]
-/** room kept at the right for the end-of-curve values */
-const PAD_RIGHT = 72
+/** floor and ceiling for the right-hand label gutter */
+const PAD_RIGHT_MIN = 40
+const PAD_RIGHT_MAX = 84
 
 export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -39,7 +40,24 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       ctx.clearRect(0, 0, w, h)
 
       const plot = Math.max(1, h - PAD_TOP)
-      const plotW = Math.max(1, w - PAD_RIGHT)
+
+      // the gutter is only as wide as the widest value that has to live in it
+      const measured = shot?.measurements ?? []
+      const sample = baseSeries(measured.some((m) => (m.scale?.weight ?? 0) > 0))
+      ctx.font = "11px 'Jost', sans-serif"
+      let widest = 0
+      for (const s of sample) {
+        for (let i = measured.length - 1; i >= 0; i--) {
+          const raw = s.pick(measured[i])
+          if (raw === null || raw === undefined) continue
+          widest = Math.max(widest, ctx.measureText(`${raw.toFixed(s.digits)}${s.unit}`).width)
+          break
+        }
+      }
+      const padRight = Math.round(
+        Math.min(PAD_RIGHT_MAX, Math.max(PAD_RIGHT_MIN, widest + 15)),
+      )
+      const plotW = Math.max(1, w - padRight)
       const barY = (bar: number) => PAD_TOP + (1 - bar / 12) * plot
 
       ctx.strokeStyle = '#201e1a'
