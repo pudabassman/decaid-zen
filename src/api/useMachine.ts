@@ -67,6 +67,12 @@ export function useMachine() {
     }
   })
 
+  // the app exposes water levels on a socket only; there is no REST GET for them
+  useSocket<WaterLevels>('/machine/waterLevels', (frame) => {
+    if (MOCK) return
+    if (frame && typeof frame.currentLevel === 'number') setWater(frame)
+  })
+
   useSocket<ScaleFrame>('/scale/snapshot', (frame) => {
     if (MOCK) return
     if ('status' in frame) {
@@ -84,17 +90,6 @@ export function useMachine() {
   useEffect(() => {
     if (MOCK) return
     refreshWorkflow()
-    let id: number | undefined
-    client
-      .waterLevels()
-      .then((levels) => {
-        setWater(levels)
-        id = window.setInterval(() => {
-          client.waterLevels().then(setWater).catch(() => undefined)
-        }, 30_000)
-      })
-      .catch(() => setWater(null))
-    return () => window.clearInterval(id)
   }, [refreshWorkflow])
 
   const pouring = snapshot ? POURING.has(snapshot.state.state) : false
