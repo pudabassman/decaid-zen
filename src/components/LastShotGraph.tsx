@@ -14,6 +14,9 @@ const baseSeries = (yieldByWeight: boolean) => [
 ]
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
+/** how far a line's colour bleeds below it */
+const SHADOW = 34
+
 const PAD_TOP = 56
 /** floor and ceiling for the right-hand label gutter */
 const PAD_RIGHT_MIN = 40
@@ -111,15 +114,7 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       }
 
       for (const s of baseSeries(yieldByWeight)) {
-        ctx.save()
-        ctx.strokeStyle = s.color
-        ctx.lineWidth = s.width
-        ctx.lineJoin = 'round'
-        ctx.shadowColor = s.color
-        ctx.shadowBlur = 6
-        ctx.shadowOffsetY = 2
-        ctx.beginPath()
-        let started = false
+        const drawn: Array<[number, number]> = []
         for (const point of points) {
           const raw = s.pick(point)
           if (raw === null || raw === undefined) continue
@@ -130,13 +125,37 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
             s.band === 1
               ? PAD_TOP + (1 - frac) * plot
               : PAD_TOP + (1 - frac) * plot * s.band
-          const x = padLeft + (t / span) * plotSpan
-          if (started) ctx.lineTo(x, y)
-          else {
-            ctx.moveTo(x, y)
-            started = true
-          }
+          drawn.push([padLeft + (t / span) * plotSpan, y])
         }
+
+        if (drawn.length > 1) {
+          // a short wash under the line, in its own colour, gone within SHADOW px
+          const top = Math.min(...drawn.map(([, y]) => y))
+          const fade = ctx.createLinearGradient(0, top, 0, top + SHADOW)
+          fade.addColorStop(0, `${s.color}26`)
+          fade.addColorStop(1, `${s.color}00`)
+          ctx.save()
+          ctx.fillStyle = fade
+          ctx.beginPath()
+          ctx.moveTo(drawn[0][0], drawn[0][1])
+          for (const [x, y] of drawn.slice(1)) ctx.lineTo(x, y)
+          for (let i = drawn.length - 1; i >= 0; i--) {
+            ctx.lineTo(drawn[i][0], Math.min(h, drawn[i][1] + SHADOW))
+          }
+          ctx.closePath()
+          ctx.fill()
+          ctx.restore()
+        }
+
+        ctx.save()
+        ctx.strokeStyle = s.color
+        ctx.lineWidth = s.width
+        ctx.lineJoin = 'round'
+        ctx.shadowColor = s.color
+        ctx.shadowBlur = 6
+        ctx.shadowOffsetY = 2
+        ctx.beginPath()
+        drawn.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)))
         ctx.stroke()
         ctx.restore()
 
