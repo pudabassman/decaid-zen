@@ -227,14 +227,14 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
         </div>
       </div>
 
-      <div className="row between baseline" style={{ marginBottom: 12 }}>
+      <div className="row between" style={{ marginBottom: 12, alignItems: 'center' }}>
         <span className="cap strong lastshotlabel">
           Last shot
           {last ? ` · ${new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
           {stats ? ` · ${stats.seconds.toFixed(1)} s` : ''}
         </span>
         {stats && (
-          <div className="row baseline lastshotstats" style={{ gap: 30 }}>
+          <div className="row lastshotstats" style={{ gap: 30, alignItems: 'center' }}>
             <Swatch color="var(--temp)" value={`${stats.endBrewTemp.toFixed(1)}°`} label="brew" />
             <Swatch color="var(--bar)" value={stats.peakPressure.toFixed(1)} label="peak bar" />
             <Swatch color="var(--weight)" value={stats.yieldValue.toFixed(1)} label={stats.yieldUnit === 'g' ? 'grams' : 'ml volume'} />
@@ -297,10 +297,10 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
 
 function Swatch({ color, value, label }: { color: string; value: string; label: string }) {
   return (
-    <div className="row baseline" style={{ gap: 9, color }}>
-      <span style={{ width: 7, height: 7, borderRadius: '50%', background: color }} />
-      <span className="num" style={{ fontSize: 22 }}>{value}</span>
-      <span className="cap" style={{ color }}>{label}</span>
+    <div className="row" style={{ gap: 9, color, alignItems: 'center' }}>
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flex: '0 0 auto' }} />
+      <span className="num" style={{ fontSize: 22, lineHeight: 1 }}>{value}</span>
+      <span className="cap" style={{ color, lineHeight: 1 }}>{label}</span>
     </div>
   )
 }
