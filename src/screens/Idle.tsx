@@ -51,9 +51,14 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
       .catch(() => setLast(null))
   }, [])
 
-  const budget = useWaterBudget(water, snapshot?.state.state, !MOCK)
+  const budget = useWaterBudget(water, snapshot?.state.state, snapshot?.flow)
   const tankPercent = water ? Math.round((water.currentLevel / budget.maxLevel) * 100) : null
-  const tankLabel = tankPercent === null ? '' : ` · tank ${Math.min(100, Math.max(0, tankPercent))}%`
+  const tankLabel =
+    budget.mlLeft !== null
+      ? ` · tank ${budget.mlLeft} ml`
+      : water
+        ? ` · tank ${Math.round(water.currentLevel)} mm`
+        : ''
 
   const stats = shotStats(last)
   const asleep = snapshot?.state.state === 'sleeping' || snapshot?.state.state === 'booting'

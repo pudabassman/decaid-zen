@@ -25,7 +25,7 @@ const state = {
   workflow: mockWorkflow(),
   grinds: mockGrinds(),
   water: mockWater(),
-  waterUse: { shot: [2.1, 2.4, 2.2], steam: [1.3, 1.5, 1.4], maxLevel: 45 },
+  waterUse: { shot: [2.1, 2.4, 2.2], steam: [1.3, 1.5, 1.4], maxLevel: 45, mlPerMm: [33.4, 32.1, 34.0] },
   grinders: [
     { id: 'grinder:niche', model: 'Niche Zero' },
     { id: 'grinder:df64', model: 'DF64' },
