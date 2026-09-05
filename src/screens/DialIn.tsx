@@ -197,30 +197,43 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
         <div
           className="row"
           style={{
-            gap: 48,
+            gap: 40,
             padding: '26px 0',
             borderTop: '1px solid var(--rule-soft)',
             alignItems: 'flex-end',
           }}
         >
-          <Field
-            bare
-            label="Grind"
-            value={ctx.grinderSetting ?? ''}
-            placeholder="--"
-            numeric
-            onCommit={(next) => patch({ grinderSetting: next })}
-          />
-          <div style={{ flex: '1 1 0', minWidth: 0 }}>
-            <Field
-              bare
-              label="Grinder"
-              value={ctx.grinderModel ?? ''}
-              placeholder="No grinder"
-              valueIsText
-              options={grinders.map((g) => g.model)}
-              onCommit={(next) => void chooseGrinder(next)}
-            />
+          <div style={{ flex: '1 1 0', minWidth: 0, borderBottom: '1px dashed var(--rule)' }}>
+            <div className="row" style={{ gap: 40, marginBottom: 8 }}>
+              <span className="cap" style={{ width: 96 }}>Grind</span>
+              <span className="cap">Grinder</span>
+            </div>
+            <div className="row baseline" style={{ gap: 40 }}>
+              <span style={{ width: 96, flex: '0 0 auto' }}>
+                <EditableValue
+                  className="num bare"
+                  style={{ fontSize: 44 }}
+                  label="Grind"
+                  value={ctx.grinderSetting ?? ''}
+                  placeholder="--"
+                  numeric
+                  width={90}
+                  onCommit={(next) => patch({ grinderSetting: next })}
+                />
+              </span>
+              <span style={{ flex: '1 1 0', minWidth: 0 }}>
+                <EditableValue
+                  className="display bare"
+                  style={{ fontSize: 38 }}
+                  label="Grinder"
+                  value={ctx.grinderModel ?? ''}
+                  placeholder="No grinder"
+                  options={grinders.map((g) => g.model)}
+                  width={360}
+                  onCommit={(next) => void chooseGrinder(next)}
+                />
+              </span>
+            </div>
           </div>
           <Stepper
             onLess={() => patch({ grinderSetting: shift(ctx.grinderSetting, -0.1) })}
