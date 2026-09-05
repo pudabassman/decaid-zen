@@ -386,7 +386,7 @@ a { color: var(--flow); }
 
 .lastshotlabel,
 .lastshotstats {
-  transform: translateY(16px);
+  transform: translateY(26px);
   position: relative;
   z-index: 2;
   pointer-events: none;

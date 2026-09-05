@@ -245,7 +245,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
 
       <LastShotGraph shot={last} />
 
-      <div className="rule" style={{ margin: '12px 0' }} />
+      <div style={{ height: 18 }} />
 
       <div className="row between">
         <div className="row" style={{ gap: 14 }}>

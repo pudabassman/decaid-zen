@@ -11,7 +11,7 @@ const baseSeries = (yieldByWeight: boolean) => [
 ]
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
-const PAD_TOP = 46
+const PAD_TOP = 56
 /** the only y values worth naming: the pressure line's mid and high marks */
 const GRID_BARS = [4, 8]
 
@@ -52,19 +52,18 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
         ctx.lineTo(w, y)
         ctx.stroke()
       }
-      ctx.strokeStyle = '#35322b'
-      ctx.beginPath()
-      ctx.moveTo(0, h - 0.5)
-      ctx.lineTo(w, h - 0.5)
-      ctx.stroke()
-
-      ctx.font = "9px 'Jost', sans-serif"
-      ctx.fillStyle = '#5d574c'
+      ctx.font = "10px 'Jost', sans-serif"
       ctx.textAlign = 'start'
-      ctx.textBaseline = 'alphabetic'
+      ctx.textBaseline = 'middle'
       GRID_BARS.forEach((bar, i) => {
-        const top = i === GRID_BARS.length - 1
-        ctx.fillText(top ? `${bar} bar` : `${bar}`, 3, Math.round(barY(bar)) - 5)
+        const y = Math.round(barY(bar)) + 0.5
+        ctx.strokeStyle = '#45413a'
+        ctx.beginPath()
+        ctx.moveTo(0, y)
+        ctx.lineTo(8, y)
+        ctx.stroke()
+        ctx.fillStyle = '#7d7669'
+        ctx.fillText(i === GRID_BARS.length - 1 ? `${bar} bar` : `${bar}`, 13, y)
       })
 
       const points = shot?.measurements ?? []
@@ -105,22 +104,23 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
         ctx.restore()
       }
 
-      ctx.fillStyle = '#5d574c'
-      ctx.font = "9px 'Jost', sans-serif"
+      ctx.font = "10px 'Jost', sans-serif"
       ctx.textBaseline = 'alphabetic'
       const tickEvery = span > 45 ? 20 : 10
-      ctx.strokeStyle = '#35322b'
-      for (let t = tickEvery; t < span - 3; t += tickEvery) {
+      for (let t = tickEvery; t <= span - 4; t += tickEvery) {
         const x = Math.round((t / span) * w) + 0.5
+        ctx.strokeStyle = '#45413a'
         ctx.beginPath()
-        ctx.moveTo(x, h - 5)
-        ctx.lineTo(x, h - 1)
+        ctx.moveTo(x, h)
+        ctx.lineTo(x, h - 7)
         ctx.stroke()
+        ctx.fillStyle = '#7d7669'
         ctx.textAlign = 'center'
-        ctx.fillText(`${t}s`, x, h - 9)
+        ctx.fillText(`${t}s`, x, h - 12)
       }
+      ctx.fillStyle = '#7d7669'
       ctx.textAlign = 'end'
-      ctx.fillText(`${span.toFixed(0)}s`, w - 1, h - 9)
+      ctx.fillText(`${span.toFixed(0)}s`, w - 1, h - 12)
     }
 
     draw()
