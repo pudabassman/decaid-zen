@@ -25,3 +25,10 @@ export const Chevron = () => (
     <path d="M9 6l6 6-6 6" />
   </svg>
 )
+
+export const BeanIcon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" stroke="currentColor" {...stroke}>
+    <ellipse cx="12" cy="12" rx="6.2" ry="8.8" transform="rotate(-38 12 12)" />
+    <path d="M8.6 16.6c2.7-1.2 3.7-3.2 3.1-6 -.6-2.8.4-4.8 3.1-6" />
+  </svg>
+)

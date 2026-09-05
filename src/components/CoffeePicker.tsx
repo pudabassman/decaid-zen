@@ -53,7 +53,9 @@ export function CoffeePicker({ roaster, onPick, onClose }: Props) {
   const shown = (coffees ?? []).filter((coffee) => !needle || coffee.name.toLowerCase().includes(needle))
 
   return (
-    <aside className="drawer" style={{ width: 560 }}>
+    <>
+      <div className="drawerveil" onPointerDown={onClose} />
+      <aside className="drawer" style={{ width: 560 }}>
       <div className="row between" style={{ paddingBottom: 16 }}>
         <span className="cap strong">{roaster}</span>
         <div className="row" style={{ gap: 14 }}>
@@ -114,6 +116,7 @@ export function CoffeePicker({ roaster, onPick, onClose }: Props) {
           <span className="cap">Close</span>
         </Button>
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }

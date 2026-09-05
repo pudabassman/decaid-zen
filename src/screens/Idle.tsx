@@ -5,6 +5,7 @@ import { useRoasterCatalog } from '../lib/useRoasterCatalog'
 import { CoffeePicker } from '../components/CoffeePicker'
 import { RoasterSite } from '../components/RoasterSite'
 import { Dots } from '../components/Dots'
+import { BeanIcon } from '../components/icons'
 import { client } from '../api/client'
 import type { useMachine } from '../api/useMachine'
 import type { ShotRecord } from '../api/types'
@@ -135,15 +136,33 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <div className="cap" style={{ marginBottom: 18 }}>
-          <EditableValue
-            className="cap"
-            label="Roaster"
-            value={ctx?.coffeeRoaster ?? ''}
-            placeholder="No roaster"
-            width={260}
-            onCommit={(next) => patchWorkflow({ coffeeRoaster: next })}
-          />
+        <div className="row" style={{ gap: 14, marginBottom: 18 }}>
+          <span className="cap">
+            <EditableValue
+              className="cap"
+              label="Roaster"
+              value={ctx?.coffeeRoaster ?? ''}
+              placeholder="No roaster"
+              width={260}
+              onCommit={(next) => patchWorkflow({ coffeeRoaster: next })}
+            />
+          </span>
+          {listing.status === 'available' && (
+            <button
+              className="beanpill"
+              aria-label={`${listing.count} coffees from ${roaster}`}
+              onClick={() => setPicking(true)}
+            >
+              <BeanIcon size={13} />
+              <span className="num">{listing.count}</span>
+            </button>
+          )}
+          {listing.status === 'checking' && (
+            <span className="cap">
+              searching
+              <Dots />
+            </span>
+          )}
         </div>
 
         <div className="row between" style={{ alignItems: 'flex-start' }}>
@@ -202,20 +221,9 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
       <div className="row between" style={{ gap: 24, marginBottom: 6 }}>
         <ProfileDeck records={records} activeId={activeId} grinds={grinds} onPick={pickProfile} />
         <div style={{ height: 62, display: 'flex', alignItems: 'center', flex: '0 0 auto' }}>
-        {listing.status === 'available' && (
-          <Button width={230} quiet onClick={() => setPicking(true)}>
-            <span className="cap">{`Show ${listing.count} coffees`}</span>
-          </Button>
-        )}
-        {listing.status === 'checking' && (
-          <span className="cap">
-            searching {roaster}
-            <Dots />
-          </span>
-        )}
-        {listing.status === 'none' && roaster.length > 2 && (
-          <RoasterSite roaster={roaster} onResolved={listing.recheck} />
-        )}
+          {listing.status === 'none' && roaster.length > 2 && (
+            <RoasterSite roaster={roaster} onResolved={listing.recheck} />
+          )}
         </div>
       </div>
 

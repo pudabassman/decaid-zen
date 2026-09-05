@@ -104,6 +104,7 @@ a { color: var(--flow); }
 @keyframes traceFade { to { opacity: 0; } }
 
 .drawer {
+  z-index: 31;
   position: absolute;
   top: 0;
   right: 0;
@@ -358,3 +359,27 @@ a { color: var(--flow); }
   max-width: 100%;
 }
 .deckcard .cap { display: block; margin-top: 7px; }
+
+.beanpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px 0 7px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  transition: color 260ms ease, border-color 260ms ease;
+}
+.beanpill:hover, .beanpill:active { color: var(--ink); border-color: var(--ink); }
+.beanpill .num { font-size: 12px; letter-spacing: 0.02em; }
+
+.drawerveil {
+  position: fixed;
+  inset: 0;
+  background: rgba(19, 18, 16, 0.5);
+  z-index: 30;
+}

@@ -99,6 +99,8 @@ export function LiveShot({ machine }: { machine: Machine }) {
       </button>
 
       {drawer && (
+        <>
+        <div className="drawerveil" onPointerDown={() => setDrawer(false)} />
         <aside className="drawer">
           <button className="grip" style={{ left: -24 }} onClick={() => setDrawer(false)} aria-label="Close">
             <span />
@@ -140,6 +142,7 @@ export function LiveShot({ machine }: { machine: Machine }) {
             )
           })}
         </aside>
+        </>
       )}
     </div>
   )
