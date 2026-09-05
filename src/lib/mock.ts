@@ -60,6 +60,60 @@ export const mockWorkflow = (): Workflow => ({
   },
 })
 
+export const mockProfiles = () => [
+  {
+    id: 'profile:lrv2',
+    profile: {
+      title: "Damian's LRv2",
+      steps: [
+        { name: 'fill', pump: 'flow' as const, flow: 6, seconds: 4 },
+        { name: 'preinfuse', pump: 'pressure' as const, pressure: 3, seconds: 10 },
+        { name: 'ramp', pump: 'pressure' as const, pressure: 8.6, seconds: 6 },
+        { name: 'decline', pump: 'pressure' as const, pressure: 5.4, seconds: 18 },
+      ],
+    },
+  },
+  { id: 'profile:blooming', profile: mockWorkflow().profile! },
+  {
+    id: 'profile:dflow',
+    profile: {
+      title: 'D-Flow',
+      steps: [
+        { name: 'fill', pump: 'flow' as const, flow: 8, seconds: 3 },
+        { name: 'infuse', pump: 'flow' as const, flow: 2.2, seconds: 12 },
+        { name: 'hold', pump: 'flow' as const, flow: 1.8, seconds: 14 },
+      ],
+    },
+  },
+  {
+    id: 'profile:italian',
+    profile: {
+      title: 'Classic Italian',
+      steps: [
+        { name: 'ramp', pump: 'pressure' as const, pressure: 9, seconds: 4 },
+        { name: 'hold', pump: 'pressure' as const, pressure: 9, seconds: 24 },
+      ],
+    },
+  },
+  {
+    id: 'profile:aflow',
+    profile: {
+      title: 'A-Flow light',
+      steps: [
+        { name: 'fill', pump: 'flow' as const, flow: 5, seconds: 5 },
+        { name: 'bloom', pump: 'pressure' as const, pressure: 2, seconds: 14 },
+        { name: 'push', pump: 'pressure' as const, pressure: 7.4, seconds: 16 },
+      ],
+    },
+  },
+]
+
+export const mockGrinds = (): Record<string, string> => ({
+  'profile:lrv2': '16.5',
+  'profile:blooming': '17.5',
+  'profile:italian': '12.5',
+})
+
 export const mockShot = (): ShotRecord => ({
   id: 'mock-shot',
   timestamp: new Date(Date.now() - 26 * 60 * 1000).toISOString(),

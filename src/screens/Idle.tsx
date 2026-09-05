@@ -12,7 +12,9 @@ import { LastShotGraph } from '../components/LastShotGraph'
 import { shotStats } from '../lib/shotStats'
 import { useAction } from '../lib/useAction'
 import { useSwipe } from '../lib/useSwipe'
-import { MOCK, mockShot } from '../lib/mock'
+import { MOCK, mockGrinds, mockProfiles, mockShot } from '../lib/mock'
+import { profiles as profileApi, type ProfileRecord } from '../api/profiles'
+import { ProfileDeck } from '../components/ProfileDeck'
 
 type Machine = ReturnType<typeof useMachine>
 
@@ -22,6 +24,8 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
   const { snapshot, scale, workflow, water } = machine
   const [last, setLast] = useState<ShotRecord | null>(null)
   const [picking, setPicking] = useState(false)
+  const [records, setRecords] = useState<ProfileRecord[]>([])
+  const [grinds, setGrinds] = useState<Record<string, string>>({})
   const loaded = useRef(false)
   const screen = useRef<HTMLDivElement>(null)
   const { run, message, busy } = useAction()
@@ -30,6 +34,16 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
     onLeft: (fromRightEdge) => fromRightEdge && onJournal(),
     onRight: (fromLeftEdge) => fromLeftEdge && onDialIn(),
   })
+
+  useEffect(() => {
+    if (MOCK) {
+      setRecords(mockProfiles())
+      setGrinds(mockGrinds())
+      return
+    }
+    profileApi.list().then(setRecords).catch(() => setRecords([]))
+    profileApi.grindMemory().then((map) => setGrinds(map ?? {})).catch(() => undefined)
+  }, [])
 
   useEffect(() => {
     if (loaded.current) return
@@ -53,6 +67,8 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
 
   const ctx = workflow?.context
   const roaster = ctx?.coffeeRoaster ?? ''
+  const activeTitle = workflow?.profile?.title
+  const activeId = records.find((r) => r.profile?.title === activeTitle)?.id ?? null
   const beanLength = (ctx?.coffeeName ?? '').length
   const beanSize = beanLength > 46 ? 40 : beanLength > 28 ? 54 : 76
   const readingsTop = Math.round(beanSize * 0.76) - 63
@@ -66,6 +82,28 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
       await client.saveWorkflow({ ...workflow, context: { ...workflow.context, ...next } })
       machine.refreshWorkflow()
     })
+
+  const pickProfile = (record: ProfileRecord) =>
+    run('Switch profile', async () => {
+      if (!workflow) return
+      const remembered = grinds[record.id]
+      await client.saveWorkflow({
+        ...workflow,
+        profile: record.profile,
+        context: {
+          ...workflow.context,
+          ...(remembered ? { grinderSetting: remembered } : {}),
+        },
+      })
+      machine.refreshWorkflow()
+    })
+
+  const rememberGrind = (value: string) => {
+    if (!activeId) return
+    const next = { ...grinds, [activeId]: value }
+    setGrinds(next)
+    profileApi.saveGrindMemory(next).catch(() => undefined)
+  }
 
   const number = (raw: string, fallback: number) => {
     const parsed = Number.parseFloat(raw)
@@ -146,7 +184,10 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
             value={ctx?.grinderSetting ?? ''}
             placeholder="--"
             numeric
-              onCommit={(next) => patchWorkflow({ grinderSetting: next })}
+              onCommit={(next) => {
+                rememberGrind(next)
+                patchWorkflow({ grinderSetting: next })
+              }}
             />
           </div>
         </div>
@@ -154,7 +195,9 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
         <div className="rule" style={{ marginTop: 12 }} />
       </div>
 
-      <div style={{ height: 62, display: 'flex', alignItems: 'center', marginTop: 0, marginBottom: 6 }}>
+      <div className="row between" style={{ gap: 24, marginBottom: 6 }}>
+        <ProfileDeck records={records} activeId={activeId} grinds={grinds} onPick={pickProfile} />
+        <div style={{ height: 62, display: 'flex', alignItems: 'center', flex: '0 0 auto' }}>
         {listing.status === 'available' && (
           <Button width={230} quiet onClick={() => setPicking(true)}>
             <span className="cap">{`Show ${listing.count} coffees`}</span>
@@ -169,6 +212,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
         {listing.status === 'none' && roaster.length > 2 && (
           <RoasterSite roaster={roaster} onResolved={listing.recheck} />
         )}
+        </div>
       </div>
 
       <div className="row between baseline" style={{ marginBottom: 12 }}>

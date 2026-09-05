@@ -282,3 +282,68 @@ a { color: var(--flow); }
   border-radius: 0 2px 2px 0;
   transition: height 600ms ease;
 }
+
+
+.deckwrap { position: relative; }
+.deckbadge {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 52px;
+  padding: 0 20px 0 14px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  touch-action: none;
+}
+.deckname { font-size: 20px; color: var(--ink); }
+.deckdots { display: flex; gap: 5px; margin-left: 6px; }
+.deckdots span { width: 5px; height: 5px; border-radius: 50%; background: var(--grip); }
+.deckdots span.on { background: var(--ink); }
+
+.deckveil {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  background: rgba(19, 18, 16, 0.88);
+  z-index: 60;
+}
+.deckfan {
+  position: fixed;
+  left: var(--margin-x);
+  right: var(--margin-x);
+  z-index: 61;
+  touch-action: none;
+}
+.deckcard {
+  position: absolute;
+  bottom: 0;
+  width: 232px;
+  padding: 18px 16px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--rule-soft);
+  background: #12110f;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transform-origin: center bottom;
+  box-shadow: -26px 0 46px -24px rgba(0, 0, 0, 0.95);
+  transition: opacity 240ms ease, transform 240ms ease, border-color 240ms ease;
+}
+.deckcard.on { border-color: #3c3830; background: var(--panel); }
+.deckcard .deckname { color: var(--ink); }
+.deckcard:not(.on) .cap { color: #5d574c; }
+.deckcard .deckname {
+  display: block;
+  margin-top: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.deckcard .cap { display: block; margin-top: 7px; }
