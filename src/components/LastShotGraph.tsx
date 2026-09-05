@@ -12,6 +12,8 @@ const baseSeries = (yieldByWeight: boolean) => [
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
 const PAD_TOP = 46
+/** the only y values worth naming: the pressure line's mid and high marks */
+const GRID_BARS = [4, 8]
 
 export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -34,10 +36,17 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, h)
 
+      const plot = Math.max(1, h - PAD_TOP)
+      const barY = (bar: number) => PAD_TOP + (1 - bar / 12) * plot
+
       ctx.strokeStyle = '#201e1a'
       ctx.lineWidth = 1
-      for (const frac of [0, 1 / 3, 2 / 3]) {
-        const y = Math.round(h * frac) + 0.5
+      ctx.beginPath()
+      ctx.moveTo(0, PAD_TOP + 0.5)
+      ctx.lineTo(w, PAD_TOP + 0.5)
+      ctx.stroke()
+      for (const bar of GRID_BARS) {
+        const y = Math.round(barY(bar)) + 0.5
         ctx.beginPath()
         ctx.moveTo(0, y)
         ctx.lineTo(w, y)
@@ -48,6 +57,15 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       ctx.moveTo(0, h - 0.5)
       ctx.lineTo(w, h - 0.5)
       ctx.stroke()
+
+      ctx.font = "9px 'Jost', sans-serif"
+      ctx.fillStyle = '#5d574c'
+      ctx.textAlign = 'start'
+      ctx.textBaseline = 'alphabetic'
+      GRID_BARS.forEach((bar, i) => {
+        const top = i === GRID_BARS.length - 1
+        ctx.fillText(top ? `${bar} bar` : `${bar}`, 3, Math.round(barY(bar)) - 5)
+      })
 
       const points = shot?.measurements ?? []
       if (points.length < 2) return
@@ -72,7 +90,6 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
           const t = (Date.parse(point.machine.timestamp) - t0) / 1000
           const value = Math.max(s.min, Math.min(s.max, raw))
           const frac = (value - s.min) / (s.max - s.min)
-          const plot = Math.max(1, h - PAD_TOP)
           const y =
             s.band === 1
               ? PAD_TOP + (1 - frac) * plot
@@ -90,8 +107,20 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
 
       ctx.fillStyle = '#5d574c'
       ctx.font = "9px 'Jost', sans-serif"
+      ctx.textBaseline = 'alphabetic'
+      const tickEvery = span > 45 ? 20 : 10
+      ctx.strokeStyle = '#35322b'
+      for (let t = tickEvery; t < span - 3; t += tickEvery) {
+        const x = Math.round((t / span) * w) + 0.5
+        ctx.beginPath()
+        ctx.moveTo(x, h - 5)
+        ctx.lineTo(x, h - 1)
+        ctx.stroke()
+        ctx.textAlign = 'center'
+        ctx.fillText(`${t}s`, x, h - 9)
+      }
       ctx.textAlign = 'end'
-      ctx.fillText(`${span.toFixed(1)}s`, w, h + 14)
+      ctx.fillText(`${span.toFixed(0)}s`, w - 1, h - 9)
     }
 
     draw()

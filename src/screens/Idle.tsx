@@ -135,7 +135,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
         </div>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 6 }}>
         <div className="row" style={{ gap: 14, marginBottom: 18 }}>
           <span className="cap">
             <EditableValue
@@ -218,16 +218,16 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
         <div className="rule" style={{ marginTop: 12 }} />
       </div>
 
-      <div className="row between" style={{ gap: 24, marginBottom: 6 }}>
+      <div className="row between" style={{ gap: 24, marginBottom: 2 }}>
         <ProfileDeck records={records} activeId={activeId} grinds={grinds} onPick={pickProfile} />
-        <div style={{ height: 62, display: 'flex', alignItems: 'center', flex: '0 0 auto' }}>
+        <div style={{ height: 52, display: 'flex', alignItems: 'center', flex: '0 0 auto' }}>
           {listing.status === 'none' && roaster.length > 2 && (
             <RoasterSite roaster={roaster} onResolved={listing.recheck} />
           )}
         </div>
       </div>
 
-      <div className="row between" style={{ marginBottom: 12, alignItems: 'center' }}>
+      <div className="row between" style={{ height: 0, alignItems: 'center' }}>
         <span className="cap strong lastshotlabel">
           Last shot
           {last ? ` · ${new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
