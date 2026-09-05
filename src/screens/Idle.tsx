@@ -248,14 +248,14 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
 
       <div className="row between">
         <div className="row" style={{ gap: 14 }}>
-          <Button width={150} onClick={onJournal}>
+          <Button width={150} height={52} onClick={onJournal}>
             <span className="display" style={{ fontSize: 22 }}>Journal</span>
           </Button>
-          <Button width={150} onClick={onDialIn}>
+          <Button width={150} height={52} onClick={onDialIn}>
             <span className="display" style={{ fontSize: 22 }}>Dial in</span>
           </Button>
           {machine.scaleConnected && (
-            <Button width={130} quiet disabled={busy} onClick={() => run('Tare', client.tare)}>
+            <Button width={130} height={52} quiet disabled={busy} onClick={() => run('Tare', client.tare)}>
               <span className="cap">Tare</span>
             </Button>
           )}
@@ -267,6 +267,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
           </span>
           <Button
             width={196}
+            height={52}
             hot
             disabled={busy}
             onClick={() =>

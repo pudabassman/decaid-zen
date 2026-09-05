@@ -88,7 +88,7 @@ export function LiveShot({ machine }: { machine: Machine }) {
             {workflow?.profile?.title ? ` · ${workflow.profile.title}` : ''}
             {workflow?.context?.grinderModel ? ` · ${workflow.context.grinderModel} ${workflow.context.grinderSetting ?? ''}` : ''}
           </span>
-          <Button width={196} hot disabled={busy} onClick={() => run('Stop', () => client.requestState('idle'))}>
+          <Button width={196} height={52} hot disabled={busy} onClick={() => run('Stop', () => client.requestState('idle'))}>
             <span className="display" style={{ fontSize: 24, letterSpacing: '0.03em' }}>Stop</span>
           </Button>
         </div>
