@@ -258,7 +258,9 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
         )}
       </div>
 
+      <div className="rule" />
       <LastShotGraph shot={last} />
+      <div className="rule" />
       </div>
 
       <div style={{ height: 18 }} />
