@@ -3,19 +3,19 @@ import type { ShotMeasurement, ShotRecord } from '../api/types'
 
 const baseSeries = (yieldByWeight: boolean) => [
   { pick: (m: ShotMeasurement) => m.machine.mixTemperature,
-    target: (m: ShotMeasurement) => m.machine.targetMixTemperature, color: '#d9714f', min: 80, max: 100, band: 0.34, width: 1.6, unit: '°', digits: 1, step: 5, rightMarks: true, markAbove: false },
+    target: (m: ShotMeasurement) => m.machine.targetMixTemperature, color: '#d9714f', min: 80, max: 100, band: 0.34, width: 1.6, unit: '°', digits: 1 },
   { pick: (m: ShotMeasurement) => m.machine.pressure,
-    target: (m: ShotMeasurement) => m.machine.targetPressure, color: '#9fb055', min: 0, max: 12, band: 1, width: 2.2, unit: ' bar', digits: 1, step: 2, rightMarks: false, markAbove: true },
+    target: (m: ShotMeasurement) => m.machine.targetPressure, color: '#9fb055', min: 0, max: 12, band: 1, width: 2.2, unit: ' bar', digits: 1 },
   yieldByWeight
-    ? { pick: (m: ShotMeasurement) => m.scale?.weight ?? null, target: () => null, color: '#d3b06a', min: 0, max: 50, band: 1, width: 2.2, unit: ' g', digits: 1, step: 10, rightMarks: true, markAbove: true }
-    : { pick: (m: ShotMeasurement) => m.volume ?? null, target: () => null, color: '#d3b06a', min: 0, max: 80, band: 1, width: 2.2, unit: ' ml', digits: 0, step: 20, rightMarks: true, markAbove: true },
+    ? { pick: (m: ShotMeasurement) => m.scale?.weight ?? null, target: () => null, color: '#d3b06a', min: 0, max: 50, band: 1, width: 2.2, unit: ' g', digits: 1 }
+    : { pick: (m: ShotMeasurement) => m.volume ?? null, target: () => null, color: '#d3b06a', min: 0, max: 80, band: 1, width: 2.2, unit: ' ml', digits: 0 },
   { pick: (m: ShotMeasurement) => m.machine.flow,
-    target: (m: ShotMeasurement) => m.machine.targetFlow, color: '#4fbcc6', min: 0, max: 6, band: 1, width: 1.7, unit: ' ml/s', digits: 1, step: 1, rightMarks: true, markAbove: true },
+    target: (m: ShotMeasurement) => m.machine.targetFlow, color: '#4fbcc6', min: 0, max: 6, band: 1, width: 1.7, unit: ' ml/s', digits: 1 },
 ]
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
 const PAD_TOP = 56
-/** the only y values worth naming: the pressure line's mid and high marks */
+/** faint guides at 4 and 8 bar; the numbers live on the curves themselves */
 const GRID_BARS = [4, 8]
 /** floor and ceiling for the right-hand label gutter */
 const PAD_RIGHT_MIN = 40
@@ -72,19 +72,6 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
         ctx.lineTo(plotW, y)
         ctx.stroke()
       }
-      ctx.font = "10px 'Jost', sans-serif"
-      ctx.textAlign = 'start'
-      ctx.textBaseline = 'middle'
-      GRID_BARS.forEach((bar, i) => {
-        const y = Math.round(barY(bar)) + 0.5
-        ctx.strokeStyle = '#45413a'
-        ctx.beginPath()
-        ctx.moveTo(0, y)
-        ctx.lineTo(8, y)
-        ctx.stroke()
-        ctx.fillStyle = '#7d7669'
-        ctx.fillText(i === GRID_BARS.length - 1 ? `${bar} bar` : `${bar}`, 13, y)
-      })
 
 
       const points = shot?.measurements ?? []
@@ -171,20 +158,24 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
             tick: false,
           })
 
-          if (!s.rightMarks) break
-
-          const above = Math.min(s.max, (Math.floor(raw / s.step) + 1) * s.step)
-          const below = Math.max(s.min, (Math.ceil(raw / s.step) - 1) * s.step)
-          for (const mark of s.markAbove ? [above, below] : [below]) {
-            if (Math.abs(mark - raw) < s.step * 0.35) continue
+          const targets = points.map((point) => s.target(point)).filter((v) => v !== null && v !== undefined) as number[]
+          if (targets.length) {
+            const first = targets[0]
+            const last = targets[targets.length - 1]
+            ctx.font = "10px 'Jost', sans-serif"
+            ctx.textAlign = 'start'
+            ctx.textBaseline = 'middle'
+            ctx.fillStyle = `${s.color}7a`
+            ctx.fillText(`${first.toFixed(s.digits)}${s.unit}`, 3, yFor(first))
             column.push({
-              y: yFor(mark),
-              color: `${s.color}88`,
-              text: `${mark.toFixed(mark % 1 === 0 ? 0 : 1)}${s.unit}`,
+              y: yFor(last),
+              color: `${s.color}7a`,
+              text: `${last.toFixed(s.digits)}${s.unit}`,
               weight: 0,
-              tick: true,
+              tick: false,
             })
           }
+
           break
         }
       }
