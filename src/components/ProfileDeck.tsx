@@ -51,10 +51,12 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const [candidate, setCandidate] = useState<string | null>(null)
   const [anchor, setAnchor] = useState(0)
   const [pan, setPan] = useState(0)
+  const rotation = useRef(0)
   const dragging = useRef(false)
   const moved = useRef(false)
   const origin = useRef({ x: 0, y: 0 })
   const badge = useRef<HTMLButtonElement>(null)
+  const seats = useRef<Map<string, number>>(new Map())
 
   const activeIndex = Math.max(0, records.findIndex((r) => r.id === activeId))
   const active = records[activeIndex]
@@ -84,6 +86,8 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
       setOpen(false)
       setCandidate(null)
       setPan(0)
+      rotation.current = 0
+      seats.current.clear()
     }, 190)
   }
 
@@ -95,7 +99,9 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   }
 
   // a drag rotates which profile sits in the front seat; the seats never move
-  const slot = Math.max(0, Math.min(records.length - 1, activeIndex - Math.round(pan / STEP)))
+  const count = Math.max(1, records.length)
+  const wrap = (n: number) => ((n % count) + count) % count
+  const slot = wrap(activeIndex - Math.round(pan / STEP))
   const highlighted = candidate ?? records[slot]?.id ?? activeId
 
   return (
@@ -113,8 +119,11 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
           >
             <div className="decktrack">
               {records.map((record, i) => {
-                const seat = i - slot
+                const seat = wrap(i - slot)
                 const on = record.id === highlighted
+                // a card that wraps round the back must not slide across the frame
+                const jumped = Math.abs(seat - (seats.current.get(record.id) ?? seat)) > 1
+                seats.current.set(record.id, seat)
                 return (
                   <button
                     key={record.id}
@@ -122,7 +131,8 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
                     className={`deckcard${on ? ' on' : ''}`}
                     style={{
                       left: FRONT + seat * STEP,
-                      zIndex: 60 - Math.abs(seat),
+                      zIndex: 60 - seat,
+                      transition: jumped ? 'none' : undefined,
                       transform: `scale(${seat === 0 ? 1 : 0.95})`,
                       animationDelay: `${Math.min(i, 4) * 22}ms`,
                     }}
@@ -161,6 +171,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
           dragging.current = true
           moved.current = false
           origin.current = { x: e.clientX, y: e.clientY }
+          rotation.current = pan
           setOpen(true)
         }}
         onPointerMove={(e) => {
@@ -171,7 +182,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
           moved.current = true
           if (Math.abs(dx) > Math.abs(dy)) {
             // one seat per STEP dragged, with a little slack at either end
-            setPan(dx)
+            setPan(rotation.current + dx)
             setCandidate(null)
             return
           }
