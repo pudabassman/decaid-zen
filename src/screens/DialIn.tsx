@@ -7,6 +7,11 @@ import { RoasterSite } from '../components/RoasterSite'
 import { Dots } from '../components/Dots'
 import { client } from '../api/client'
 import type { Grinder, Workflow } from '../api/types'
+import {
+  MAX_PREFERRED,
+  profiles as profileApi,
+  type ProfileRecord,
+} from '../api/profiles'
 import { useSwipe } from '../lib/useSwipe'
 import { useAction } from '../lib/useAction'
 
@@ -26,6 +31,8 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
   const [dirty, setDirty] = useState(false)
   const [picking, setPicking] = useState(false)
   const [grinders, setGrinders] = useState<Grinder[]>([])
+  const [records, setRecords] = useState<ProfileRecord[]>([])
+  const [preferred, setPreferred] = useState<string[]>([])
   const { run, message, busy } = useAction()
   const screen = useRef<HTMLDivElement>(null)
   useSwipe(screen, { onLeft: (fromRightEdge) => fromRightEdge && onDone() })
@@ -34,7 +41,17 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
 
   useEffect(() => {
     client.grinders().then(setGrinders).catch(() => setGrinders([]))
+    profileApi.list().then(setRecords).catch(() => setRecords([]))
+    profileApi.preferred().then((ids) => setPreferred(ids ?? [])).catch(() => undefined)
   }, [])
+
+  const togglePreferred = (id: string) => {
+    const next = preferred.includes(id)
+      ? preferred.filter((other) => other !== id)
+      : [...preferred, id].slice(-MAX_PREFERRED)
+    setPreferred(next)
+    profileApi.savePreferred(next).catch(() => undefined)
+  }
 
   const chooseGrinder = async (model: string) => {
     const name = model.trim()
@@ -136,6 +153,30 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
           valueIsText
           onCommit={(next) => patch({ coffeeRoaster: next })}
         />
+        <div style={{ padding: '26px 0', borderTop: '1px solid var(--rule-soft)' }}>
+          <div className="cap" style={{ marginBottom: 14 }}>
+            Deck profiles · {preferred.length || 'first'} of {MAX_PREFERRED}
+          </div>
+          <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
+            {records.map((record) => {
+              const on = preferred.includes(record.id)
+              return (
+                <button
+                  key={record.id}
+                  className={`beanpill${on ? ' on' : ''}`}
+                  style={{ height: 34, padding: '0 14px' }}
+                  onClick={() => togglePreferred(record.id)}
+                >
+                  <span className="display" style={{ fontSize: 16 }}>
+                    {record.profile?.title ?? 'Untitled'}
+                  </span>
+                </button>
+              )
+            })}
+            {records.length === 0 && <span className="cap">No profiles found</span>}
+          </div>
+        </div>
+
         <Field
           label="Bean"
           value={ctx.coffeeName ?? ''}

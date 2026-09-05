@@ -45,8 +45,10 @@ const grindLabel = (value: string | undefined) => `grind ${value && value.trim()
 
 export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const [open, setOpen] = useState(MOCK && window.location.search.includes('fan'))
+  const [closing, setClosing] = useState(false)
   const [candidate, setCandidate] = useState<string | null>(null)
   const [anchor, setAnchor] = useState(0)
+  const [pan, setPan] = useState(0)
   const dragging = useRef(false)
   const moved = useRef(false)
   const origin = useRef({ x: 0, y: 0 })
@@ -72,10 +74,19 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
     return card?.dataset.profile ?? null
   }
 
-  const commit = (id: string | null) => {
+  const close = () => {
     dragging.current = false
-    setOpen(false)
-    setCandidate(null)
+    setClosing(true)
+    window.setTimeout(() => {
+      setClosing(false)
+      setOpen(false)
+      setCandidate(null)
+      setPan(0)
+    }, 190)
+  }
+
+  const commit = (id: string | null) => {
+    close()
     if (!id) return
     const record = records.find((r) => r.id === id)
     if (record && record.id !== activeId) onPick(record)
@@ -88,12 +99,22 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
       {open && (
         <>
           <div
-            className="deckveil"
+            className={`deckveil${closing ? ' closing' : ''}`}
             style={{ height: Math.max(0, anchor - 6) }}
             onPointerUp={() => commit(null)}
           />
-          <div className="deckfan" style={{ bottom: Math.max(0, window.innerHeight - anchor + 14) }}>
-            <div style={{ position: 'relative', height: 184 }}>
+          <div
+            className={`deckfan${closing ? ' closing' : ''}`}
+            style={{ bottom: Math.max(0, window.innerHeight - anchor + 14) }}
+          >
+            <div
+              style={{
+                position: 'relative',
+                height: 184,
+                transform: `translateX(${pan}px)`,
+                transition: dragging.current ? 'none' : 'transform 240ms ease',
+              }}
+            >
               {records.map((record, i) => {
                 const on = record.id === highlighted
                 const offset = i <= activeIndex ? i * STEP : activeIndex * STEP + CARD_W - 40 + (i - activeIndex - 1) * STEP
@@ -107,6 +128,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
                       left: offset,
                       zIndex: on ? 60 : 50 - depth,
                       transform: `scale(${on ? 1 : 0.95})`,
+                      animationDelay: `${Math.min(i, 4) * 22}ms`,
                     }}
                     onPointerUp={(e) => {
                       e.stopPropagation()
@@ -151,6 +173,12 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
           const dy = e.clientY - origin.current.y
           if (!moved.current && Math.hypot(dx, dy) < 8) return
           moved.current = true
+          if (Math.abs(dx) > Math.abs(dy)) {
+            const width = records.length * STEP + CARD_W
+            // always leave room to slide the deck under the thumb, even when it fits
+            const room = Math.max(180, width - (window.innerWidth - 120))
+            setPan(Math.max(-room, Math.min(room, dx)))
+          }
           setCandidate(cardAt(e.clientX, e.clientY))
         }}
         onPointerUp={(e) => {

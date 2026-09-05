@@ -15,7 +15,12 @@ import { useAction } from '../lib/useAction'
 import { useSwipe } from '../lib/useSwipe'
 import { MOCK } from '../lib/mock'
 import { useWaterBudget } from '../lib/waterBudget'
-import { matchRecord, profiles as profileApi, type ProfileRecord } from '../api/profiles'
+import {
+  matchRecord,
+  preferredRecords,
+  profiles as profileApi,
+  type ProfileRecord,
+} from '../api/profiles'
 import { ProfileDeck } from '../components/ProfileDeck'
 
 type Machine = ReturnType<typeof useMachine>
@@ -28,6 +33,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
   const [picking, setPicking] = useState(false)
   const [records, setRecords] = useState<ProfileRecord[]>([])
   const [grinds, setGrinds] = useState<Record<string, string>>({})
+  const [preferred, setPreferred] = useState<string[] | null>(null)
   const loaded = useRef(false)
   const screen = useRef<HTMLDivElement>(null)
   const { run, message, busy } = useAction()
@@ -40,6 +46,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
   useEffect(() => {
     profileApi.list().then(setRecords).catch(() => setRecords([]))
     profileApi.grindMemory().then((map) => setGrinds(map ?? {})).catch(() => undefined)
+    profileApi.preferred().then(setPreferred).catch(() => undefined)
   }, [])
 
   useEffect(() => {
@@ -218,7 +225,12 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
       </div>
 
       <div className="row between" style={{ gap: 24, marginBottom: 2 }}>
-        <ProfileDeck records={records} activeId={activeId} grinds={grinds} onPick={pickProfile} />
+        <ProfileDeck
+          records={preferredRecords(records, preferred)}
+          activeId={activeId}
+          grinds={grinds}
+          onPick={pickProfile}
+        />
         <div style={{ height: 52, display: 'flex', alignItems: 'center', flex: '0 0 auto' }}>
           {listing.status === 'none' && roaster.length > 2 && (
             <RoasterSite roaster={roaster} onResolved={listing.recheck} />

@@ -10,6 +10,8 @@ export interface ProfileRecord {
 
 const STORE = 'decaid-zen'
 const GRIND_KEY = 'grindByProfile'
+const PREFERRED_KEY = 'preferredProfiles'
+export const MAX_PREFERRED = 5
 
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = init?.body ? { 'content-type': 'application/json', ...init?.headers } : init?.headers
@@ -45,4 +47,17 @@ export const profiles = {
     json<Record<string, string> | null>(`/store/${STORE}/${GRIND_KEY}`).catch(() => null),
   saveGrindMemory: (map: Record<string, string>) =>
     json<void>(`/store/${STORE}/${GRIND_KEY}`, { method: 'POST', body: JSON.stringify(map) }),
+  preferred: () => json<string[] | null>(`/store/${STORE}/${PREFERRED_KEY}`).catch(() => null),
+  savePreferred: (ids: string[]) =>
+    json<void>(`/store/${STORE}/${PREFERRED_KEY}`, {
+      method: 'POST',
+      body: JSON.stringify(ids.slice(0, MAX_PREFERRED)),
+    }),
+}
+
+/** the deck shows the chosen few; with none chosen it falls back to the first five */
+export function preferredRecords(records: ProfileRecord[], ids: string[] | null) {
+  if (!ids?.length) return records.slice(0, MAX_PREFERRED)
+  const chosen = ids.map((id) => records.find((r) => r.id === id)).filter(Boolean) as ProfileRecord[]
+  return chosen.length ? chosen.slice(0, MAX_PREFERRED) : records.slice(0, MAX_PREFERRED)
 }
