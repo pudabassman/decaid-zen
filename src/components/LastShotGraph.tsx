@@ -41,10 +41,6 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
 
       ctx.strokeStyle = '#201e1a'
       ctx.lineWidth = 1
-      ctx.beginPath()
-      ctx.moveTo(0, PAD_TOP + 0.5)
-      ctx.lineTo(w, PAD_TOP + 0.5)
-      ctx.stroke()
       for (const bar of GRID_BARS) {
         const y = Math.round(barY(bar)) + 0.5
         ctx.beginPath()

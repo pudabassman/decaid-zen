@@ -215,7 +215,6 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
           </div>
         </div>
 
-        <div className="rule" style={{ marginTop: 12 }} />
       </div>
 
       <div className="row between" style={{ gap: 24, marginBottom: 2 }}>
