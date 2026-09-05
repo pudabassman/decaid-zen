@@ -13,7 +13,8 @@ import { shotStats } from '../lib/shotStats'
 import { useAction } from '../lib/useAction'
 import { useSwipe } from '../lib/useSwipe'
 import { MOCK, mockGrinds, mockProfiles, mockShot } from '../lib/mock'
-import { profiles as profileApi, type ProfileRecord } from '../api/profiles'
+import { useWaterBudget } from '../lib/waterBudget'
+import { matchRecord, profiles as profileApi, type ProfileRecord } from '../api/profiles'
 import { ProfileDeck } from '../components/ProfileDeck'
 
 type Machine = ReturnType<typeof useMachine>
@@ -59,16 +60,16 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
       .catch(() => setLast(null))
   }, [])
 
-  const tankLabel =
-    water?.currentPercentage !== undefined ? ` · tank ${Math.round(water.currentPercentage)}%` : ''
+  const budget = useWaterBudget(water, snapshot?.state.state, !MOCK)
+  const tankPercent = water ? Math.round((water.currentLevel / budget.maxLevel) * 100) : null
+  const tankLabel = tankPercent === null ? '' : ` · tank ${Math.min(100, Math.max(0, tankPercent))}%`
 
   const stats = shotStats(last)
   const asleep = snapshot?.state.state === 'sleeping' || snapshot?.state.state === 'booting'
 
   const ctx = workflow?.context
   const roaster = ctx?.coffeeRoaster ?? ''
-  const activeTitle = workflow?.profile?.title
-  const activeId = records.find((r) => r.profile?.title === activeTitle)?.id ?? null
+  const activeId = matchRecord(records, workflow?.profile)?.id ?? null
   const beanLength = (ctx?.coffeeName ?? '').length
   const beanSize = beanLength > 46 ? 40 : beanLength > 28 ? 54 : 76
   const readingsTop = Math.round(beanSize * 0.76) - 63
@@ -110,11 +111,18 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
     return Number.isFinite(parsed) ? parsed : fallback
   }
 
-  const waterFill = Math.max(0, Math.min(100, water?.currentPercentage ?? 0))
+  const waterFill = Math.max(0, Math.min(100, tankPercent ?? 0))
 
   return (
     <div className="screen" ref={screen}>
-      <div className="waterrail" aria-label={`Water ${Math.round(waterFill)}%`}>
+      <div
+        className={`waterrail${budget.lastDrink || (MOCK && window.location.search.includes('low')) ? ' low' : ''}`}
+        aria-label={
+          budget.lastDrink
+            ? 'Water low: one shot and steam left'
+            : `Water ${Math.round(waterFill)}%`
+        }
+      >
         <span style={{ height: `${waterFill}%` }} />
       </div>
 

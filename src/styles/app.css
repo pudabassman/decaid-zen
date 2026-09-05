@@ -273,6 +273,17 @@ a { color: var(--flow); }
   background: var(--water-track);
   pointer-events: none;
 }
+.waterrail.low span {
+  background: var(--water-low);
+  animation: waterPulse 1.8s ease-in-out infinite;
+}
+@keyframes waterPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.34; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .waterrail.low span { animation: none; opacity: 0.8; }
+}
 .waterrail span {
   position: absolute;
   left: 0;

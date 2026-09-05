@@ -126,7 +126,6 @@ export interface Grinder {
 }
 
 export interface WaterLevels {
-  currentPercentage?: number
-  currentLevel?: number
-  warningThresholdPercentage?: number
+  currentLevel: number
+  refillLevel: number
 }

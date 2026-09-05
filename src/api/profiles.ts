@@ -19,6 +19,26 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
   return (text ? JSON.parse(text) : undefined) as T
 }
 
+export function profileKey(profile: Profile | undefined) {
+  const steps = profile?.steps ?? []
+  if (!steps.length) return profile?.title ?? ''
+  const shape = steps
+    .map((step) => `${step.pump ?? '?'}:${step.pressure ?? 0}:${step.flow ?? 0}:${step.seconds ?? 0}`)
+    .join('|')
+  return `${profile?.title ?? ''}::${shape}`
+}
+
+export function matchRecord(records: ProfileRecord[], profile: Profile | undefined) {
+  if (!profile) return null
+  const key = profileKey(profile)
+  const exact = records.find((r) => profileKey(r.profile) === key)
+  if (exact) return exact
+  const shape = key.split('::')[1]
+  const sameShape = records.find((r) => profileKey(r.profile).split('::')[1] === shape)
+  if (sameShape) return sameShape
+  return records.find((r) => r.profile?.title === profile.title) ?? null
+}
+
 export const profiles = {
   list: () => json<ProfileRecord[]>('/profiles?visibility=visible'),
   grindMemory: () =>

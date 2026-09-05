@@ -9,9 +9,10 @@ Working notes for the skin + `coffee-catalog` plugin. Single tester right now
       real profiles: badge above the last-shot band, drag/tap fans the deck over
       the dimmed top block, release picks. Curves are drawn from each profile's
       own steps, so check they read sensibly for the real profile set.
-- [ ] Profile identity is matched by **title** (the workflow carries no profile
-      id). Two profiles sharing a title would collide, and renaming one loses its
-      remembered grind. Switch to a stabler key if it bites.
+- [ ] Water budget needs real samples: usage per shot and per steam is learned
+      from tank-level drops as you use the machine, so the pulse stays off until
+      at least one of each has been seen. Check the learned numbers look sane
+      after a few drinks (`GET /api/v1/store/decaid-zen/waterUse`).
 
 - [ ] Live shot screen: not exercised since the graph rewrite — needs a real pour
       (or a mock path) to confirm frame markers, stop button and the drawer.
