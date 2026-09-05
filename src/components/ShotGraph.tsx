@@ -6,10 +6,10 @@ const MIN_WINDOW = 15
 const AXIS_TICKS = [10, 20, 30, 40, 50, 60]
 
 const SERIES = [
-  { key: 'mix', color: '#d9714f', min: 80, max: 100, band: 0.34, width: 2 },
-  { key: 'pressure', color: '#9fb055', min: 0, max: 12, band: 1, width: 2.4 },
-  { key: 'weight', color: '#d3b06a', min: 0, max: 40, band: 1, width: 2.4 },
-  { key: 'flow', color: '#4fbcc6', min: 0, max: 6, band: 1, width: 2 },
+  { key: 'mix', target: 'targetMix', color: '#d9714f', min: 80, max: 100, band: 0.34, width: 2 },
+  { key: 'pressure', target: 'targetPressure', color: '#9fb055', min: 0, max: 12, band: 1, width: 2.4 },
+  { key: 'weight', target: null, color: '#d3b06a', min: 0, max: 40, band: 1, width: 2.4 },
+  { key: 'flow', target: 'targetFlow', color: '#4fbcc6', min: 0, max: 6, band: 1, width: 2 },
 ] as const
 
 type SeriesKey = (typeof SERIES)[number]['key']
@@ -94,6 +94,32 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
       const positions: Record<string, number> = {}
 
       const visible = new Set(labels.map((l) => l.key))
+
+      // the profile's targets, quiet and dashed behind the live lines
+      for (const s of SERIES) {
+        if (data.length < 2 || !s.target || !visible.has(s.key)) continue
+        ctx.save()
+        ctx.strokeStyle = `${s.color}3d`
+        ctx.lineWidth = 1.3
+        ctx.setLineDash([5, 5])
+        ctx.beginPath()
+        let open = false
+        for (const point of data) {
+          if (point.t > span) break
+          const value = point[s.target]
+          if (value === undefined) continue
+          const x = xFor(point.t)
+          const y = yFor(s, value, h)
+          if (open) ctx.lineTo(x, y)
+          else {
+            ctx.moveTo(x, y)
+            open = true
+          }
+        }
+        ctx.stroke()
+        ctx.restore()
+      }
+
       for (const s of SERIES) {
         if (data.length < 2 || !visible.has(s.key)) continue
         ctx.save()

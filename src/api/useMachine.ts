@@ -10,6 +10,9 @@ export interface Sample {
   flow: number
   weight: number
   mix: number
+  targetPressure: number
+  targetFlow: number
+  targetMix: number
 }
 
 const POURING = new Set(['espresso', 'hotWater', 'steam', 'flush'])
@@ -55,6 +58,9 @@ export function useMachine() {
         flow: frame.flow,
         weight: weight.current,
         mix: frame.mixTemperature,
+        targetPressure: frame.targetPressure,
+        targetFlow: frame.targetFlow,
+        targetMix: frame.targetMixTemperature,
       })
       if (samples.current.length > 3000) samples.current.splice(0, samples.current.length - 3000)
       setElapsed(t)

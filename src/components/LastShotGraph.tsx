@@ -2,12 +2,15 @@ import { useEffect, useRef } from 'react'
 import type { ShotMeasurement, ShotRecord } from '../api/types'
 
 const baseSeries = (yieldByWeight: boolean) => [
-  { pick: (m: ShotMeasurement) => m.machine.mixTemperature, color: '#d9714f', min: 80, max: 100, band: 0.34, width: 1.6, unit: '°', digits: 1, step: 5, rightMarks: true, markAbove: false },
-  { pick: (m: ShotMeasurement) => m.machine.pressure, color: '#9fb055', min: 0, max: 12, band: 1, width: 2.2, unit: ' bar', digits: 1, step: 2, rightMarks: false, markAbove: true },
+  { pick: (m: ShotMeasurement) => m.machine.mixTemperature,
+    target: (m: ShotMeasurement) => m.machine.targetMixTemperature, color: '#d9714f', min: 80, max: 100, band: 0.34, width: 1.6, unit: '°', digits: 1, step: 5, rightMarks: true, markAbove: false },
+  { pick: (m: ShotMeasurement) => m.machine.pressure,
+    target: (m: ShotMeasurement) => m.machine.targetPressure, color: '#9fb055', min: 0, max: 12, band: 1, width: 2.2, unit: ' bar', digits: 1, step: 2, rightMarks: false, markAbove: true },
   yieldByWeight
-    ? { pick: (m: ShotMeasurement) => m.scale?.weight ?? null, color: '#d3b06a', min: 0, max: 50, band: 1, width: 2.2, unit: ' g', digits: 1, step: 10, rightMarks: true, markAbove: true }
-    : { pick: (m: ShotMeasurement) => m.volume ?? null, color: '#d3b06a', min: 0, max: 80, band: 1, width: 2.2, unit: ' ml', digits: 0, step: 20, rightMarks: true, markAbove: true },
-  { pick: (m: ShotMeasurement) => m.machine.flow, color: '#4fbcc6', min: 0, max: 6, band: 1, width: 1.7, unit: ' ml/s', digits: 1, step: 1, rightMarks: true, markAbove: true },
+    ? { pick: (m: ShotMeasurement) => m.scale?.weight ?? null, target: () => null, color: '#d3b06a', min: 0, max: 50, band: 1, width: 2.2, unit: ' g', digits: 1, step: 10, rightMarks: true, markAbove: true }
+    : { pick: (m: ShotMeasurement) => m.volume ?? null, target: () => null, color: '#d3b06a', min: 0, max: 80, band: 1, width: 2.2, unit: ' ml', digits: 0, step: 20, rightMarks: true, markAbove: true },
+  { pick: (m: ShotMeasurement) => m.machine.flow,
+    target: (m: ShotMeasurement) => m.machine.targetFlow, color: '#4fbcc6', min: 0, max: 6, band: 1, width: 1.7, unit: ' ml/s', digits: 1, step: 1, rightMarks: true, markAbove: true },
 ]
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
@@ -92,6 +95,34 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
 
       const yieldByWeight = points.some((m) => (m.scale?.weight ?? 0) > 0)
       const column: Array<{ y: number; color: string; text: string; weight: number; tick: boolean }> = []
+
+      // what the profile asked for, drawn quietly behind what happened
+      for (const s of baseSeries(yieldByWeight)) {
+        ctx.save()
+        ctx.strokeStyle = `${s.color}3d`
+        ctx.lineWidth = 1.2
+        ctx.setLineDash([5, 5])
+        ctx.beginPath()
+        let open = false
+        for (const point of points) {
+          const raw = s.target(point)
+          if (raw === null || raw === undefined) continue
+          const t = (Date.parse(point.machine.timestamp) - t0) / 1000
+          const value = Math.max(s.min, Math.min(s.max, raw))
+          const frac = (value - s.min) / (s.max - s.min)
+          const y =
+            s.band === 1 ? PAD_TOP + (1 - frac) * plot : PAD_TOP + (1 - frac) * plot * s.band
+          const x = (t / span) * plotW
+          if (open) ctx.lineTo(x, y)
+          else {
+            ctx.moveTo(x, y)
+            open = true
+          }
+        }
+        ctx.stroke()
+        ctx.restore()
+      }
+
       for (const s of baseSeries(yieldByWeight)) {
         ctx.save()
         ctx.strokeStyle = s.color
