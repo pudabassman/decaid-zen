@@ -1,0 +1,41 @@
+name: Release skin
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check manifest version matches the tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest=$(node -p "require('./public/manifest.json').version")
+          pkg=$(node -p "require('./package.json').version")
+          if [ "$tag" != "$manifest" ] || [ "$tag" != "$pkg" ]; then
+            echo "tag $tag, manifest.json $manifest, package.json $pkg — bump them to match" >&2
+            exit 1
+          fi
+
+      - run: npm run build
+
+      - name: Package skin
+        run: cd dist && zip -qr "../decaid-zen-${GITHUB_REF_NAME}.zip" .
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: decaid-zen-${{ github.ref_name }}.zip
+          generate_release_notes: true
