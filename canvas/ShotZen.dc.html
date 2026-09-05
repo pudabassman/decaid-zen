@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200;0,6..72,300;0,6..72,400;1,6..72,300&family=Jost:wght@200;300;400;500&family=Spectral:wght@200;300&display=swap">
+  <style>
+    body { margin: 0; background: #131210; font-family: "Jost", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #4fbcc6; } a:hover { color: #7fd6de; }
+    .display { font-family: "Newsreader", Georgia, serif; font-weight: 300; font-variant-numeric: lining-nums proportional-nums; }
+    .n { font-family: "Spectral", Georgia, serif; font-weight: 200; letter-spacing: -0.005em; font-variant-numeric: lining-nums proportional-nums; }
+    .cap { font-size: 10px; letter-spacing: 0.34em; text-transform: uppercase; color: #7d7669; }
+    .pulse { transform-box: fill-box; transform-origin: center; animation: dotPulse 2.4s cubic-bezier(0.22,0.61,0.36,1) infinite; }
+    @keyframes dotPulse { 0% { transform: scale(1); opacity: 0.5; } 70% { transform: scale(3.6); opacity: 0; } 100% { transform: scale(3.6); opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .pulse { animation: none; opacity: 0; } }
+    .act { position: relative; }
+    .trace { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+    .trace rect, .trace circle { stroke-dasharray: 100; stroke-dashoffset: 100; }
+    .act:focus .trace rect, .act:focus .trace circle { animation: traceRun 700ms cubic-bezier(0.4,0,0.2,1) forwards, traceFade 400ms 720ms ease-out forwards; }
+    @keyframes traceRun { to { stroke-dashoffset: 0; } }
+    @keyframes traceFade { to { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .act:focus .trace rect, .act:focus .trace circle { animation: none; } }
+    .btn { background: rgba(236,231,219,0.05); border: 1px solid rgba(236,231,219,0.26); color: rgba(236,231,219,0.62);
+           transition: background-color 320ms ease, border-color 320ms ease, color 320ms ease; }
+    .btn:focus { background: rgba(236,231,219,0.13); border-color: #ece7db; color: #ece7db; outline: none; }
+    .btn .trace rect { stroke: #ece7db; }
+    .content { animation: contentIn 460ms cubic-bezier(0.22,0.61,0.36,1) both; }
+    @keyframes contentIn { from { transform: translateX(180px); } to { transform: translateX(0); } }
+    @media (prefers-reduced-motion: reduce) { .content { animation: none; } }
+    .drawer { animation: drawerIn 460ms cubic-bezier(0.22,0.61,0.36,1) both; }
+    @keyframes drawerIn { from { transform: translateX(100%); opacity: 0.35; } to { transform: translateX(0); opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .drawer { animation: none; } }
+    .statusdot { position: relative; width: 6px; height: 6px; border-radius: 50%; background: #4fbcc6; flex-shrink: 0; }
+    .statusdot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #4fbcc6;
+      animation: dotPulse 2.4s cubic-bezier(0.22,0.61,0.36,1) infinite; }
+    @media (prefers-reduced-motion: reduce) { .statusdot::after { animation: none; opacity: 0; } }
+    .handle { position: absolute; width: 48px; height: 96px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .grip { width: 4px; height: 64px; border-radius: 999px; background: #45413a; }
+    .row { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #26241f; }
+  </style>
+</helmet>
+<div style="width: 1280px; height: 800px; overflow: hidden; background: #131210; color: #ece7db; position: relative;">
+
+  <div style="position: absolute; left: 60px; top: 16px; display: flex; align-items: center; gap: 16px;">
+    <span class="statusdot"></span>
+    <span class="cap" style="color: #ece7db;">Pouring</span>
+    <span class="cap">Frame 3 of 4 &nbsp;&middot;&nbsp; Ramp</span>
+  </div>
+
+  <div style="position: absolute; right: 60px; top: 12px; display: flex; align-items: baseline; gap: 10px;">
+    <span class="n" style="font-size: 34px;">28.6</span>
+    <span class="cap">seconds</span>
+  </div>
+
+  <svg viewBox="0 0 1160 566" width="1160" height="566" style="position: absolute; left: 60px; top: 68px; display: block; overflow: visible;">
+    <defs>
+      <filter id="glowTemp" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#d9714f" flood-opacity="0.45"/></filter>
+      <filter id="glowBar" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#9fb055" flood-opacity="0.45"/></filter>
+      <filter id="glowWeight" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#d3b06a" flood-opacity="0.45"/></filter>
+      <filter id="glowFlow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#4fbcc6" flood-opacity="0.45"/></filter>
+    </defs>
+    <g stroke="#201e1a" stroke-width="1">
+      <line x1="0" y1="0" x2="1000" y2="0"/>
+      <line x1="0" y1="142" x2="1000" y2="142"/>
+      <line x1="0" y1="283" x2="1000" y2="283"/>
+      <line x1="0" y1="424" x2="1000" y2="424"/>
+    </g>
+    <line x1="0" y1="566" x2="1000" y2="566" stroke="#35322b" stroke-width="1"/>
+    <line x1="209.8" y1="0" x2="209.8" y2="566" stroke="#302d27" stroke-width="1" stroke-dasharray="1 5"/>
+    <text x="215.8" y="560" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" letter-spacing="2.4">BLOOM</text>
+    <line x1="909.1" y1="0" x2="909.1" y2="566" stroke="#302d27" stroke-width="1" stroke-dasharray="1 5"/>
+    <text x="915.1" y="560" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" letter-spacing="2.4">RAMP</text>
+    <path d="M0.0,67.7 L10.4,68.0 L20.8,68.4 L31.2,68.7 L41.7,69.1 L52.1,69.6 L62.5,70.0 L72.9,70.5 L83.3,71.0 L93.8,71.6 L104.2,72.1 L114.6,72.7 L125.0,73.2 L135.4,73.8 L145.8,74.4 L156.2,75.0 L166.7,75.5 L177.1,76.0 L187.5,76.5 L197.9,77.0 L208.3,77.4 L218.8,77.8 L229.2,78.1 L239.6,78.4 L250.0,78.6 L260.4,78.8 L270.8,78.9 L281.2,78.9 L291.7,78.9 L302.1,78.7 L312.5,78.6 L322.9,78.3 L333.3,78.0 L343.8,77.7 L354.2,77.3 L364.6,76.9 L375.0,76.4 L385.4,75.9 L395.8,75.3 L406.2,74.8 L416.7,74.2 L427.1,73.7 L437.5,73.1 L447.9,72.5 L458.3,72.0 L468.8,71.4 L479.2,70.9 L489.6,70.4 L500.0,69.9 L510.4,69.4 L520.8,69.0 L531.2,68.6 L541.7,68.3 L552.1,67.9 L562.5,67.6 L572.9,67.3 L583.3,67.1 L593.8,66.9 L604.2,66.7 L614.6,66.5 L625.0,66.3 L635.4,66.2 L645.8,66.1 L656.2,66.0 L666.7,65.9 L677.1,65.8 L687.5,65.7 L697.9,65.7 L708.3,65.6 L718.8,65.6 L729.2,65.6 L739.6,65.5 L750.0,65.5 L760.4,65.5 L770.8,65.5 L781.2,65.5 L791.7,65.5 L802.1,65.5 L812.5,65.5 L822.9,65.4 L833.3,65.4 L843.8,65.4 L854.2,65.4 L864.6,65.4 L875.0,65.4 L885.4,65.4 L895.8,65.4 L906.2,65.4 L916.7,65.4 L927.1,65.4 L937.5,65.4 L947.9,65.4 L958.3,65.4 L968.8,65.4 L979.2,65.4 L989.6,65.4 L1000.0,65.4" fill="none" stroke="#d9714f" stroke-width="2.0" stroke-linecap="round" filter="url(#glowTemp)"/>
+    <path d="M0.0,566.0 L10.4,556.6 L20.8,547.3 L31.2,537.9 L41.7,528.5 L52.1,519.2 L62.5,509.8 L72.9,500.4 L83.3,491.1 L93.8,481.7 L104.2,472.3 L114.6,463.0 L125.0,453.6 L135.4,444.2 L145.8,434.9 L156.2,425.5 L166.7,416.1 L177.1,406.7 L187.5,397.4 L197.9,388.0 L208.3,378.6 L218.8,424.5 L229.2,424.5 L239.6,424.5 L250.0,424.5 L260.4,424.5 L270.8,424.5 L281.2,424.5 L291.7,424.5 L302.1,424.5 L312.5,424.5 L322.9,424.5 L333.3,424.5 L343.8,424.5 L354.2,424.5 L364.6,424.5 L375.0,424.5 L385.4,424.5 L395.8,424.5 L406.2,424.5 L416.7,424.5 L427.1,424.5 L437.5,424.5 L447.9,424.5 L458.3,424.5 L468.8,424.5 L479.2,424.5 L489.6,424.5 L500.0,424.5 L510.4,424.5 L520.8,424.5 L531.2,424.5 L541.7,424.5 L552.1,424.5 L562.5,424.5 L572.9,424.5 L583.3,424.5 L593.8,424.5 L604.2,424.5 L614.6,424.5 L625.0,424.5 L635.4,424.5 L645.8,424.5 L656.2,424.5 L666.7,424.5 L677.1,424.5 L687.5,424.5 L697.9,424.5 L708.3,424.5 L718.8,424.5 L729.2,424.5 L739.6,424.5 L750.0,424.5 L760.4,424.5 L770.8,424.5 L781.2,424.5 L791.7,424.5 L802.1,424.5 L812.5,424.5 L822.9,424.5 L833.3,424.5 L843.8,424.5 L854.2,424.5 L864.6,424.5 L875.0,424.5 L885.4,424.5 L895.8,424.5 L906.2,424.5 L916.7,393.3 L927.1,350.5 L937.5,307.6 L947.9,264.8 L958.3,221.9 L968.8,179.0 L979.2,136.8 L989.6,136.8 L1000.0,136.8" fill="none" stroke="#9fb055" stroke-width="2.4" stroke-linecap="round" filter="url(#glowBar)"/>
+    <path d="M0.0,566.0 L10.4,566.0 L20.8,566.0 L31.2,566.0 L41.7,566.0 L52.1,566.0 L62.5,566.0 L72.9,566.0 L83.3,566.0 L93.8,566.0 L104.2,566.0 L114.6,566.0 L125.0,566.0 L135.4,566.0 L145.8,566.0 L156.2,566.0 L166.7,566.0 L177.1,566.0 L187.5,566.0 L197.9,566.0 L208.3,566.0 L218.8,566.0 L229.2,566.0 L239.6,566.0 L250.0,566.0 L260.4,566.0 L270.8,566.0 L281.2,566.0 L291.7,566.0 L302.1,566.0 L312.5,566.0 L322.9,566.0 L333.3,566.0 L343.8,566.0 L354.2,563.6 L364.6,557.9 L375.0,552.3 L385.4,546.7 L395.8,541.0 L406.2,535.4 L416.7,529.8 L427.1,524.2 L437.5,518.5 L447.9,512.9 L458.3,507.3 L468.8,501.7 L479.2,496.0 L489.6,490.4 L500.0,484.8 L510.4,479.1 L520.8,473.5 L531.2,467.9 L541.7,462.3 L552.1,456.6 L562.5,451.0 L572.9,445.4 L583.3,439.8 L593.8,434.1 L604.2,428.5 L614.6,422.9 L625.0,417.2 L635.4,411.6 L645.8,406.0 L656.2,400.4 L666.7,394.7 L677.1,389.1 L687.5,383.5 L697.9,377.8 L708.3,372.2 L718.8,366.6 L729.2,361.0 L739.6,355.3 L750.0,349.7 L760.4,344.1 L770.8,338.5 L781.2,332.8 L791.7,327.2 L802.1,321.6 L812.5,315.9 L822.9,310.3 L833.3,304.7 L843.8,299.1 L854.2,293.4 L864.6,287.8 L875.0,282.2 L885.4,276.5 L895.8,270.9 L906.2,265.3 L916.7,259.7 L927.1,254.0 L937.5,248.4 L947.9,242.8 L958.3,237.2 L968.8,231.5 L979.2,225.9 L989.6,220.3 L1000.0,214.6" fill="none" stroke="#d3b06a" stroke-width="2.4" stroke-linecap="round" filter="url(#glowWeight)"/>
+    <path d="M0.0,566.0 L10.4,495.7 L20.8,425.5 L31.2,355.2 L41.7,285.0 L52.1,214.7 L62.5,144.4 L72.9,99.2 L83.3,116.0 L93.8,132.9 L104.2,149.8 L114.6,166.6 L125.0,183.5 L135.4,200.3 L145.8,217.2 L156.2,234.1 L166.7,250.9 L177.1,267.8 L187.5,284.7 L197.9,301.5 L208.3,318.4 L218.8,367.4 L229.2,366.9 L239.6,366.3 L250.0,365.7 L260.4,365.2 L270.8,364.6 L281.2,364.0 L291.7,363.5 L302.1,362.9 L312.5,362.4 L322.9,361.8 L333.3,361.2 L343.8,360.7 L354.2,360.1 L364.6,359.5 L375.0,359.0 L385.4,358.4 L395.8,357.9 L406.2,357.3 L416.7,356.7 L427.1,356.2 L437.5,355.6 L447.9,355.1 L458.3,354.5 L468.8,353.9 L479.2,353.4 L489.6,352.8 L500.0,352.2 L510.4,351.7 L520.8,351.1 L531.2,350.6 L541.7,350.0 L552.1,349.4 L562.5,348.9 L572.9,348.3 L583.3,347.7 L593.8,347.2 L604.2,346.6 L614.6,346.1 L625.0,345.5 L635.4,344.9 L645.8,344.4 L656.2,343.8 L666.7,343.2 L677.1,342.7 L687.5,342.1 L697.9,341.6 L708.3,341.0 L718.8,340.4 L729.2,339.9 L739.6,339.3 L750.0,338.8 L760.4,338.2 L770.8,337.6 L781.2,337.1 L791.7,336.5 L802.1,335.9 L812.5,335.4 L822.9,334.8 L833.3,334.3 L843.8,333.7 L854.2,333.1 L864.6,332.6 L875.0,332.0 L885.4,331.4 L895.8,330.9 L906.2,330.3 L916.7,330.2 L927.1,330.2 L937.5,330.2 L947.9,330.2 L958.3,330.2 L968.8,330.2 L979.2,330.2 L989.6,330.2 L1000.0,330.2" fill="none" stroke="#4fbcc6" stroke-width="2.0" stroke-linecap="round" filter="url(#glowFlow)"/>
+    <line x1="1000" y1="-10" x2="1000" y2="566" stroke="#ece7db" stroke-width="1" opacity="0.22"/>
+    <circle class="pulse" cx="1000" cy="65.4" r="4.5" fill="#d9714f" style="animation-delay: 0.0s;"/>
+    <circle class="pulse" cx="1000" cy="136.8" r="4.5" fill="#9fb055" style="animation-delay: 0.3s;"/>
+    <circle class="pulse" cx="1000" cy="214.6" r="4.5" fill="#d3b06a" style="animation-delay: 0.6s;"/>
+    <circle class="pulse" cx="1000" cy="330.2" r="4.5" fill="#4fbcc6" style="animation-delay: 0.9s;"/>
+    <circle cx="1000" cy="65.4" r="4.5" fill="#d9714f"/>
+    <circle cx="1000" cy="136.8" r="4.5" fill="#9fb055"/>
+    <circle cx="1000" cy="214.6" r="4.5" fill="#d3b06a"/>
+    <circle cx="1000" cy="330.2" r="4.5" fill="#4fbcc6"/>
+    <text x="1060" y="59.4" fill="#d9714f" font-family="Spectral, serif" font-weight="200" font-size="32">93.2°</text>
+    <text x="1060" y="74.4" fill="#d9714f" font-family="Jost, sans-serif" font-size="9" letter-spacing="2.2">BREW · OF 93.0</text>
+    <text x="1060" y="130.8" fill="#9fb055" font-family="Spectral, serif" font-weight="200" font-size="32">9.1</text>
+    <text x="1060" y="145.8" fill="#9fb055" font-family="Jost, sans-serif" font-size="9" letter-spacing="2.2">BAR · OF 9.0</text>
+    <text x="1060" y="208.6" fill="#d3b06a" font-family="Spectral, serif" font-weight="200" font-size="32">24.8</text>
+    <text x="1060" y="223.6" fill="#d3b06a" font-family="Jost, sans-serif" font-size="9" letter-spacing="2.2">GRAMS · OF 36.0</text>
+    <text x="1060" y="324.2" fill="#4fbcc6" font-family="Spectral, serif" font-weight="200" font-size="32">2.5</text>
+    <text x="1060" y="339.2" fill="#4fbcc6" font-family="Jost, sans-serif" font-size="9" letter-spacing="2.2">ML/S · OF 2.5</text>
+    <text x="-14" y="4" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" text-anchor="end">12</text>
+    <text x="-14" y="287" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" text-anchor="end">6</text>
+    <text x="-14" y="568" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" text-anchor="end">0</text>
+    <text x="349.7" y="586" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" text-anchor="middle">10s</text>
+    <text x="699.3" y="586" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" text-anchor="middle">20s</text>
+    <text x="1000" y="586" fill="#b8b1a2" font-family="Jost, sans-serif" font-size="9" text-anchor="middle">28.6s</text>
+  </svg>
+
+  <div style="position: absolute; left: 60px; bottom: 92px; display: flex; align-items: baseline; gap: 46px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;"><span class="cap">Ratio</span><span class="n" style="font-size: 42px; color: #d3b06a;">1:1.38</span></div>
+    <div style="display: flex; align-items: baseline; gap: 12px;"><span class="cap">Weight</span><span class="n" style="font-size: 42px;">24.8 g</span></div>
+    <div style="display: flex; align-items: baseline; gap: 12px;"><span class="cap">Dose</span><span class="n" style="font-size: 42px;">18.0 g</span></div>
+  </div>
+
+  <div style="position: absolute; left: 60px; right: 60px; top: 720px; height: 1px; background: #302d27;"></div>
+
+  <div style="position: absolute; right: 60px; bottom: 12px;">
+    <button class="act btn" style="width: 196px; height: 56px; border-radius: 999px; cursor: pointer; font-family: inherit;">
+      <svg class="trace" viewBox="0 0 196 56" width="196" height="56"><rect x="0.75" y="0.75" width="194.5" height="54.5" rx="27.25" pathLength="100" fill="none" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="display" style="font-size: 24px; letter-spacing: 0.03em;">Stop</span>
+    </button>
+  </div>
+
+  <div style="position: absolute; left: 60px; bottom: 34px;">
+    <span class="cap">Ethiopia Yirgacheffe &nbsp;&middot;&nbsp; Blooming Espresso &nbsp;&middot;&nbsp; Niche Zero 2.5</span>
+  </div>
+
+  <button class="handle" style="left: 0; top: 352px;" title="Swipe right: profile frames"><span class="grip"></span></button>
+  <button class="handle" style="right: 0; top: 352px;" title="Swipe left: temperatures and targets"><span class="grip"></span></button>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&family=Instrument+Serif&family=Spectral:wght@200;300;400&family=Sora:wght@200;300;400&family=Newsreader:opsz,wght@6..72,200;6..72,300&family=Fira+Code:wght@300;400&display=swap">
+  <style>
+    body { margin: 0; background: #131210; font-family: "Jost", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #4fbcc6; } a:hover { color: #7fd6de; }
+    .cap { font-size: 10px; letter-spacing: 0.34em; text-transform: uppercase; color: #7d7669; }
+    .row { display: grid; grid-template-columns: 210px 1fr; align-items: center; gap: 32px; padding: 30px 0; border-bottom: 1px solid #26241f; }
+    .vals { display: flex; align-items: baseline; gap: 42px; font-variant-numeric: lining-nums proportional-nums; }
+    .big { font-size: 54px; line-height: 1; }
+    .mid { font-size: 34px; line-height: 1; }
+  </style>
+</helmet>
+<div style="width: 1280px; height: 800px; overflow: hidden; background: #131210; color: #ece7db; padding: 0 72px;">
+
+  <div style="padding: 58px 0 10px; display: flex; align-items: baseline; justify-content: space-between;">
+    <span style="font-family: 'Newsreader', Georgia, serif; font-weight: 300; font-size: 40px;">Which numerals</span>
+    <span class="cap">Same values, five faces &nbsp;&middot;&nbsp; pick one</span>
+  </div>
+
+  <div class="row" style="border-top: 1px solid #302d27;">
+    <div>
+      <div style="font-size: 17px; color: #7d7669;">Jost 300</div>
+      <div class="cap" style="margin-top: 6px;">Tried</div>
+    </div>
+    <div class="vals" style="font-family: 'Jost', sans-serif; font-weight: 300;">
+      <span class="big">28.6</span><span class="big" style="color: #4fbcc6;">1:1.38</span><span class="big">24.8</span>
+      <span class="mid" style="color: #9fb055;">9.1</span><span class="mid" style="color: #d9714f;">93.2&deg;</span><span class="mid">18.0</span>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <div style="font-size: 17px; color: #ece7db;">Sora 200</div>
+      <div class="cap" style="margin-top: 6px;">Wider, more technical</div>
+    </div>
+    <div class="vals" style="font-family: 'Sora', sans-serif; font-weight: 200;">
+      <span class="big">28.6</span><span class="big" style="color: #4fbcc6;">1:1.38</span><span class="big">24.8</span>
+      <span class="mid" style="color: #9fb055;">9.1</span><span class="mid" style="color: #d9714f;">93.2&deg;</span><span class="mid">18.0</span>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <div style="font-size: 17px; color: #ece7db;">Instrument Serif</div>
+      <div class="cap" style="margin-top: 6px;">High contrast, editorial</div>
+    </div>
+    <div class="vals" style="font-family: 'Instrument Serif', Georgia, serif;">
+      <span class="big">28.6</span><span class="big" style="color: #4fbcc6;">1:1.38</span><span class="big">24.8</span>
+      <span class="mid" style="color: #9fb055;">9.1</span><span class="mid" style="color: #d9714f;">93.2&deg;</span><span class="mid">18.0</span>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <div style="font-size: 17px; color: #ece7db;">Spectral 200</div>
+      <div class="cap" style="margin-top: 6px; color: #4fbcc6;">Chosen &middot; in place now</div>
+    </div>
+    <div class="vals" style="font-family: 'Spectral', Georgia, serif; font-weight: 200;">
+      <span class="big">28.6</span><span class="big" style="color: #4fbcc6;">1:1.38</span><span class="big">24.8</span>
+      <span class="mid" style="color: #9fb055;">9.1</span><span class="mid" style="color: #d9714f;">93.2&deg;</span><span class="mid">18.0</span>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <div style="font-size: 17px; color: #ece7db;">Fira Code 300</div>
+      <div class="cap" style="margin-top: 6px;">Monospaced, instrument-like</div>
+    </div>
+    <div class="vals" style="font-family: 'Fira Code', monospace; font-weight: 300;">
+      <span class="big">28.6</span><span class="big" style="color: #4fbcc6;">1:1.38</span><span class="big">24.8</span>
+      <span class="mid" style="color: #9fb055;">9.1</span><span class="mid" style="color: #d9714f;">93.2&deg;</span><span class="mid">18.0</span>
+    </div>
+  </div>
+
+  <div style="padding-top: 30px; display: flex; align-items: baseline; gap: 40px;">
+    <span class="cap">Words stay Newsreader in every case</span>
+    <span class="cap" style="color: #b8b1a2;">Say a name and it goes across all five screens</span>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

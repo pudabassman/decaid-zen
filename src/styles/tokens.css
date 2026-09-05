@@ -1,0 +1,26 @@
+:root {
+  --ground: #131210;
+  --panel: #1a1916;
+  --ink: #ece7db;
+  --ink-soft: #b8b1a2;
+  --muted: #7d7669;
+  --rule: #302d27;
+  --rule-soft: #26241f;
+  --grid: #201e1a;
+  --axis: #35322b;
+  --axis-label: #5d574c;
+  --grip: #45413a;
+  --target: #4a463d;
+
+  --temp: #d9714f;
+  --bar: #9fb055;
+  --weight: #d3b06a;
+  --flow: #4fbcc6;
+
+  --unit: 12px;
+  --margin-x: 60px;
+
+  --serif: 'Newsreader', Georgia, serif;
+  --sans: 'Jost', system-ui, sans-serif;
+  --num: 'Spectral', Georgia, serif;
+}

@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200;0,6..72,300;0,6..72,400;1,6..72,300&family=Jost:wght@300;400;500&family=Spectral:wght@200;300&display=swap">
+  <style>
+    body { margin: 0; background: #131210; font-family: "Jost", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #4fbcc6; } a:hover { color: #7fd6de; }
+    .display { font-family: "Newsreader", Georgia, serif; font-weight: 300; font-variant-numeric: lining-nums proportional-nums; }
+    .n { font-family: "Spectral", Georgia, serif; font-weight: 200; letter-spacing: -0.005em; font-variant-numeric: lining-nums proportional-nums; }
+    .cap { font-size: 10px; letter-spacing: 0.34em; text-transform: uppercase; color: #7d7669; }
+    .entry { display: grid; grid-template-columns: 68px 1fr 96px 96px; align-items: center; gap: 22px; height: 84px; border-bottom: 1px solid #26241f; cursor: pointer; }
+  </style>
+</helmet>
+<div style="width: 1280px; height: 800px; overflow: hidden; background: #131210; color: #ece7db; position: relative;">
+
+  <div style="position: absolute; left: 88px; top: 20px; right: 520px;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between;">
+      <span class="display" style="font-size: 42px; letter-spacing: -0.01em;">Journal</span>
+      <span class="cap">142 shots &nbsp;&middot;&nbsp; Square Mile</span>
+    </div>
+
+    <div style="margin-top: 34px;">
+      <div class="entry" style="border-top: 1px solid #ece7db;">
+        <span class="n cap" style="color: #ece7db;">10:30</span>
+        <div>
+          <div class="display" style="font-size: 26px;">Ethiopia Yirgacheffe</div>
+          <div class="cap" style="margin-top: 4px;">Blooming Espresso</div>
+        </div>
+        <span class="n display" style="font-size: 26px; color: #d3b06a; text-align: right;">1:2.01</span>
+        <span class="n cap" style="text-align: right;">28.4 s</span>
+      </div>
+      <div class="entry">
+        <span class="n cap">08:12</span>
+        <div><div class="display" style="font-size: 26px;">Ethiopia Yirgacheffe</div><div class="cap" style="margin-top: 4px;">Blooming Espresso</div></div>
+        <span class="n display" style="font-size: 26px; text-align: right;">1:1.93</span>
+        <span class="n cap" style="text-align: right;">26.1 s</span>
+      </div>
+      <div class="entry">
+        <span class="n cap">17:44</span>
+        <div><div class="display" style="font-size: 26px;">Red Brick</div><div class="cap" style="margin-top: 4px;">Classic Espresso</div></div>
+        <span class="n display" style="font-size: 26px; text-align: right;">1:2.00</span>
+        <span class="n cap" style="text-align: right;">31.7 s</span>
+      </div>
+      <div class="entry">
+        <span class="n cap">09:03</span>
+        <div><div class="display" style="font-size: 26px;">Red Brick</div><div class="cap" style="margin-top: 4px;">Stopped by hand</div></div>
+        <span class="n display" style="font-size: 26px; color: #d9714f; text-align: right;">1:1.63</span>
+        <span class="n cap" style="text-align: right;">19.8 s</span>
+      </div>
+      <div class="entry">
+        <span class="n cap">07:51</span>
+        <div><div class="display" style="font-size: 26px;">Kenya Kirinyaga</div><div class="cap" style="margin-top: 4px;">Blooming Espresso</div></div>
+        <span class="n display" style="font-size: 26px; text-align: right;">1:2.01</span>
+        <span class="n cap" style="text-align: right;">29.6 s</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; right: 0; top: 0; bottom: 0; width: 460px; background: #1a1916; border-left: 1px solid #302d27; box-shadow: -40px 0 80px -50px rgba(0,0,0,0.65); padding: 0 48px;">
+    <button style="position: absolute; left: -24px; top: 352px; width: 48px; height: 96px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+      <span style="width: 4px; height: 64px; border-radius: 999px; background: #45413a;"></span>
+    </button>
+    <div style="padding-top: 20px;">
+      <div class="cap">06 February &nbsp;&middot;&nbsp; 10:30</div>
+      <div class="display" style="font-size: 40px; line-height: 1.06; margin-top: 12px; letter-spacing: -0.015em;">Ethiopia<br>Yirgacheffe</div>
+      <div class="cap" style="margin-top: 12px;">Niche Zero 2.5 &nbsp;&middot;&nbsp; 18.0 &rarr; 36.2 g</div>
+    </div>
+
+    <svg viewBox="0 0 364 250" width="364" height="190" preserveAspectRatio="none" style="display: block; margin: 24px 0 0; overflow: visible;">
+      <g stroke="#201e1a" stroke-width="1"><line x1="0" y1="0" x2="364" y2="0"/><line x1="0" y1="83" x2="364" y2="83"/><line x1="0" y1="166" x2="364" y2="166"/></g>
+      <line x1="0" y1="250" x2="364" y2="250" stroke="#35322b" stroke-width="1"/>
+      <defs>
+        <filter id="glowTemp" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#d9714f" flood-opacity="0.45"/></filter>
+        <filter id="glowBar" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#9fb055" flood-opacity="0.45"/></filter>
+        <filter id="glowWeight" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#d3b06a" flood-opacity="0.45"/></filter>
+        <filter id="glowFlow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#4fbcc6" flood-opacity="0.45"/></filter>
+      </defs>
+      <path d="M0,248 C10,248 19,205 37,178 C47,169 55,166 64,166 C104,172 176,182 236,185 C258,186 272,186 276,186 C286,136 296,78 304,56 C324,60 344,66 364,74" fill="none" stroke="#9fb055" stroke-width="2.2" filter="url(#glowBar)"/>
+      <path d="M0,248 C6,205 12,60 21,44 C31,27 45,101 58,135 C84,166 159,168 214,165 C245,163 300,156 364,150" fill="none" stroke="#4fbcc6" stroke-width="1.8" filter="url(#glowFlow)"/>
+      <path d="M0,249 L106,248 C127,244 155,225 183,199 C218,167 264,127 306,96 C330,79 350,68 364,62" fill="none" stroke="#d3b06a" stroke-width="2.2" filter="url(#glowWeight)"/>
+      <circle cx="364" cy="74" r="4" fill="#9fb055"/><circle cx="364" cy="150" r="3.6" fill="#4fbcc6"/><circle cx="364" cy="62" r="4" fill="#d3b06a"/>
+    </svg>
+
+    <div style="display: flex; gap: 26px; margin-top: 18px;">
+      <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 16px; height: 2px; background: #9fb055;"></span><span class="cap">Bar</span></div>
+      <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 16px; height: 2px; background: #4fbcc6;"></span><span class="cap">Flow</span></div>
+      <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 16px; height: 2px; background: #d3b06a;"></span><span class="cap">Weight</span></div>
+    </div>
+
+    <div style="display: flex; align-items: baseline; gap: 40px; margin-top: 26px; padding-top: 22px; border-top: 1px solid #26241f;">
+      <div><div class="cap" style="margin-bottom: 6px;">Ratio</div><span class="n display" style="font-size: 34px; color: #d3b06a;">1:2.01</span></div>
+      <div><div class="cap" style="margin-bottom: 6px;">Time</div><span class="n display" style="font-size: 34px;">28.4 s</span></div>
+      <div><div class="cap" style="margin-bottom: 6px;">Peak</div><span class="n display" style="font-size: 34px;">9.1 bar</span></div>
+    </div>
+
+    <div style="position: absolute; left: 48px; right: 48px; bottom: 60px;">
+      <div class="cap" style="margin-bottom: 12px;">Notes</div>
+      <div style="border: 1px solid #302d27; border-radius: 14px; background: rgba(236,231,219,0.04); padding: 14px 16px; min-height: 84px;">
+        <span class="display" style="font-size: 20px; line-height: 1.45; color: #b8b1a2; text-wrap: pretty;">Balanced, slight florality on the finish. One notch finer tomorrow.</span><span style="display: inline-block; width: 1px; height: 20px; background: #ece7db; vertical-align: -4px; margin-left: 2px;"></span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px;">
+        <span class="cap">Unsaved</span>
+        <button class="act btn quiet" style="width: 150px; height: 44px; border-radius: 999px; cursor: pointer; font-family: inherit;">
+          <svg class="trace" viewBox="0 0 150 44" width="150" height="44"><rect x="0.75" y="0.75" width="148.5" height="42.5" rx="21.25" pathLength="100" fill="none" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span class="cap">Save note</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 60px; right: 460px; top: 720px; height: 1px; background: #302d27;"></div>
+  <div style="position: absolute; left: 60px; bottom: 34px;"><span class="cap">Square Mile &nbsp;&middot;&nbsp; this week &nbsp;&middot;&nbsp; tap a shot to compare</span></div>
+  <button style="position: absolute; left: 0; top: 352px; width: 48px; height: 96px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+    <span style="width: 4px; height: 64px; border-radius: 999px; background: #45413a;"></span>
+  </button>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

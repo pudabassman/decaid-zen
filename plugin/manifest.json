@@ -1,0 +1,73 @@
+{
+  "id": "coffee-catalog.reaplugin",
+  "author": "Decaid Zen",
+  "name": "Coffee catalog",
+  "description": "Finds a roaster's shop from the name the user typed, reads its coffee list (Shopify or WooCommerce), and remembers what it learned.",
+  "version": "1.3.0",
+  "apiVersion": 1,
+  "permissions": [
+    "log",
+    "api",
+    "pluginStorage"
+  ],
+  "settings": {
+    "CacheHours": {
+      "type": "number",
+      "description": "How long a roaster's catalog is cached before it is fetched again",
+      "default": 24
+    },
+    "SearchApiKey": {
+      "type": "string",
+      "secure": true,
+      "description": "Optional Brave Search API key, used only if the keyless engines fail"
+    }
+  },
+  "api": [
+    {
+      "id": "roasters",
+      "type": "http",
+      "data": {
+        "q": {
+          "type": "string",
+          "description": "Optional filter; GET returns the known roasters with a catalog"
+        }
+      }
+    },
+    {
+      "id": "coffees",
+      "type": "http",
+      "data": {
+        "roaster": {
+          "type": "string",
+          "description": "Roaster name in English or Hebrew, or its domain"
+        },
+        "probe": {
+          "type": "string",
+          "description": "1 returns only availability and a count, without the list"
+        },
+        "refresh": {
+          "type": "string",
+          "description": "1 bypasses the cache"
+        },
+        "discover": {
+          "type": "string",
+          "description": "1 lets a probe fall through to live discovery"
+        }
+      }
+    },
+    {
+      "id": "resolve",
+      "type": "http",
+      "data": {
+        "roaster": {
+          "type": "string",
+          "description": "Roaster name to remember"
+        },
+        "site": {
+          "type": "string",
+          "description": "Roaster website or domain to read the catalog from"
+        }
+      }
+    }
+  ]
+}

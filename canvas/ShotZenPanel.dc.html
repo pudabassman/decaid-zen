@@ -1,0 +1,187 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200;0,6..72,300;0,6..72,400;1,6..72,300&family=Jost:wght@200;300;400;500&family=Spectral:wght@200;300&display=swap">
+  <style>
+    body { margin: 0; background: #131210; font-family: "Jost", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #4fbcc6; } a:hover { color: #7fd6de; }
+    .display { font-family: "Newsreader", Georgia, serif; font-weight: 300; font-variant-numeric: lining-nums proportional-nums; }
+    .n { font-family: "Spectral", Georgia, serif; font-weight: 200; letter-spacing: -0.005em; font-variant-numeric: lining-nums proportional-nums; }
+    .cap { font-size: 10px; letter-spacing: 0.34em; text-transform: uppercase; color: #7d7669; }
+    .pulse { transform-box: fill-box; transform-origin: center; animation: dotPulse 2.4s cubic-bezier(0.22,0.61,0.36,1) infinite; }
+    @keyframes dotPulse { 0% { transform: scale(1); opacity: 0.5; } 70% { transform: scale(3.6); opacity: 0; } 100% { transform: scale(3.6); opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .pulse { animation: none; opacity: 0; } }
+    .act { position: relative; }
+    .trace { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+    .trace rect, .trace circle { stroke-dasharray: 100; stroke-dashoffset: 100; }
+    .act:focus .trace rect, .act:focus .trace circle { animation: traceRun 700ms cubic-bezier(0.4,0,0.2,1) forwards, traceFade 400ms 720ms ease-out forwards; }
+    @keyframes traceRun { to { stroke-dashoffset: 0; } }
+    @keyframes traceFade { to { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .act:focus .trace rect, .act:focus .trace circle { animation: none; } }
+    .btn { background: rgba(236,231,219,0.05); border: 1px solid rgba(236,231,219,0.26); color: rgba(236,231,219,0.62);
+           transition: background-color 320ms ease, border-color 320ms ease, color 320ms ease; }
+    .btn:focus { background: rgba(236,231,219,0.13); border-color: #ece7db; color: #ece7db; outline: none; }
+    .btn .trace rect { stroke: #ece7db; }
+    .content { animation: contentIn 460ms cubic-bezier(0.22,0.61,0.36,1) both; }
+    @keyframes contentIn { from { transform: translateX(180px); } to { transform: translateX(0); } }
+    @media (prefers-reduced-motion: reduce) { .content { animation: none; } }
+    .drawer { animation: drawerIn 460ms cubic-bezier(0.22,0.61,0.36,1) both; }
+    @keyframes drawerIn { from { transform: translateX(100%); opacity: 0.35; } to { transform: translateX(0); opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .drawer { animation: none; } }
+    .statusdot { position: relative; width: 6px; height: 6px; border-radius: 50%; background: #4fbcc6; flex-shrink: 0; }
+    .statusdot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #4fbcc6;
+      animation: dotPulse 2.4s cubic-bezier(0.22,0.61,0.36,1) infinite; }
+    @media (prefers-reduced-motion: reduce) { .statusdot::after { animation: none; opacity: 0; } }
+    .handle { position: absolute; width: 48px; height: 96px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .grip { width: 4px; height: 64px; border-radius: 999px; background: #45413a; }
+    .row { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #26241f; }
+  </style>
+</helmet>
+<div style="width: 1280px; height: 800px; overflow: hidden; background: #131210; color: #ece7db; position: relative;">
+
+  <div class="content" style="position: absolute; inset: 0;">
+
+  <div style="position: absolute; left: 60px; top: 16px; display: flex; align-items: center; gap: 16px;">
+    <span class="statusdot"></span>
+    <span class="cap" style="color: #ece7db;">Pouring</span>
+    <span class="cap">Frame 3 of 4 &nbsp;&middot;&nbsp; Ramp</span>
+  </div>
+
+  <div style="position: absolute; left: 60px; top: 48px; display: flex; align-items: baseline; gap: 10px;">
+    <span class="n" style="font-size: 30px;">28.6</span>
+    <span class="cap">seconds</span>
+  </div>
+
+  <svg viewBox="0 0 780 598" width="700" height="536" style="position: absolute; left: 60px; top: 100px; display: block; overflow: visible;">
+    <defs>
+      <filter id="glowTemp" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#d9714f" flood-opacity="0.45"/></filter>
+      <filter id="glowBar" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#9fb055" flood-opacity="0.45"/></filter>
+      <filter id="glowWeight" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#d3b06a" flood-opacity="0.45"/></filter>
+      <filter id="glowFlow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#4fbcc6" flood-opacity="0.45"/></filter>
+    </defs>
+    <g stroke="#201e1a" stroke-width="1">
+      <line x1="0" y1="0" x2="620" y2="0"/>
+      <line x1="0" y1="150" x2="620" y2="150"/>
+      <line x1="0" y1="299" x2="620" y2="299"/>
+      <line x1="0" y1="448" x2="620" y2="448"/>
+    </g>
+    <line x1="0" y1="598" x2="620" y2="598" stroke="#35322b" stroke-width="1"/>
+    <line x1="130.1" y1="0" x2="130.1" y2="598" stroke="#302d27" stroke-width="1" stroke-dasharray="1 5"/>
+    <text x="136.1" y="592" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" letter-spacing="2.4">BLOOM</text>
+    <line x1="563.6" y1="0" x2="563.6" y2="598" stroke="#302d27" stroke-width="1" stroke-dasharray="1 5"/>
+    <text x="569.6" y="592" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" letter-spacing="2.4">RAMP</text>
+    <path d="M0.0,71.5 L6.5,71.9 L12.9,72.2 L19.4,72.6 L25.8,73.1 L32.3,73.5 L38.8,74.0 L45.2,74.5 L51.7,75.1 L58.1,75.6 L64.6,76.2 L71.0,76.8 L77.5,77.4 L84.0,78.0 L90.4,78.6 L96.9,79.2 L103.3,79.8 L109.8,80.3 L116.2,80.9 L122.7,81.4 L129.2,81.8 L135.6,82.2 L142.1,82.6 L148.5,82.8 L155.0,83.1 L161.5,83.2 L167.9,83.3 L174.4,83.4 L180.8,83.3 L187.3,83.2 L193.8,83.0 L200.2,82.8 L206.7,82.5 L213.1,82.1 L219.6,81.7 L226.0,81.2 L232.5,80.7 L239.0,80.2 L245.4,79.6 L251.9,79.0 L258.3,78.4 L264.8,77.8 L271.2,77.2 L277.7,76.6 L284.2,76.0 L290.6,75.4 L297.1,74.9 L303.5,74.4 L310.0,73.9 L316.5,73.4 L322.9,72.9 L329.4,72.5 L335.8,72.1 L342.3,71.8 L348.8,71.4 L355.2,71.1 L361.7,70.9 L368.1,70.6 L374.6,70.4 L381.0,70.2 L387.5,70.1 L394.0,69.9 L400.4,69.8 L406.9,69.7 L413.3,69.6 L419.8,69.5 L426.2,69.5 L432.7,69.4 L439.2,69.3 L445.6,69.3 L452.1,69.3 L458.5,69.2 L465.0,69.2 L471.5,69.2 L477.9,69.2 L484.4,69.2 L490.8,69.2 L497.3,69.2 L503.8,69.2 L510.2,69.1 L516.7,69.1 L523.1,69.1 L529.6,69.1 L536.0,69.1 L542.5,69.1 L549.0,69.1 L555.4,69.1 L561.9,69.1 L568.3,69.1 L574.8,69.1 L581.2,69.1 L587.7,69.1 L594.2,69.1 L600.6,69.1 L607.1,69.1 L613.5,69.1 L620.0,69.1" fill="none" stroke="#d9714f" stroke-width="2.0" stroke-linecap="round" filter="url(#glowTemp)"/>
+    <path d="M0.0,598.0 L6.5,588.1 L12.9,578.2 L19.4,568.3 L25.8,558.4 L32.3,548.5 L38.8,538.6 L45.2,528.7 L51.7,518.8 L58.1,508.9 L64.6,499.0 L71.0,489.1 L77.5,479.2 L84.0,469.3 L90.4,459.4 L96.9,449.5 L103.3,439.6 L109.8,429.7 L116.2,419.8 L122.7,409.9 L129.2,400.1 L135.6,448.5 L142.1,448.5 L148.5,448.5 L155.0,448.5 L161.5,448.5 L167.9,448.5 L174.4,448.5 L180.8,448.5 L187.3,448.5 L193.8,448.5 L200.2,448.5 L206.7,448.5 L213.1,448.5 L219.6,448.5 L226.0,448.5 L232.5,448.5 L239.0,448.5 L245.4,448.5 L251.9,448.5 L258.3,448.5 L264.8,448.5 L271.2,448.5 L277.7,448.5 L284.2,448.5 L290.6,448.5 L297.1,448.5 L303.5,448.5 L310.0,448.5 L316.5,448.5 L322.9,448.5 L329.4,448.5 L335.8,448.5 L342.3,448.5 L348.8,448.5 L355.2,448.5 L361.7,448.5 L368.1,448.5 L374.6,448.5 L381.0,448.5 L387.5,448.5 L394.0,448.5 L400.4,448.5 L406.9,448.5 L413.3,448.5 L419.8,448.5 L426.2,448.5 L432.7,448.5 L439.2,448.5 L445.6,448.5 L452.1,448.5 L458.5,448.5 L465.0,448.5 L471.5,448.5 L477.9,448.5 L484.4,448.5 L490.8,448.5 L497.3,448.5 L503.8,448.5 L510.2,448.5 L516.7,448.5 L523.1,448.5 L529.6,448.5 L536.0,448.5 L542.5,448.5 L549.0,448.5 L555.4,448.5 L561.9,448.5 L568.3,415.6 L574.8,370.3 L581.2,325.0 L587.7,279.7 L594.2,234.4 L600.6,189.2 L607.1,144.5 L613.5,144.5 L620.0,144.5" fill="none" stroke="#9fb055" stroke-width="2.4" stroke-linecap="round" filter="url(#glowBar)"/>
+    <path d="M0.0,598.0 L6.5,598.0 L12.9,598.0 L19.4,598.0 L25.8,598.0 L32.3,598.0 L38.8,598.0 L45.2,598.0 L51.7,598.0 L58.1,598.0 L64.6,598.0 L71.0,598.0 L77.5,598.0 L84.0,598.0 L90.4,598.0 L96.9,598.0 L103.3,598.0 L109.8,598.0 L116.2,598.0 L122.7,598.0 L129.2,598.0 L135.6,598.0 L142.1,598.0 L148.5,598.0 L155.0,598.0 L161.5,598.0 L167.9,598.0 L174.4,598.0 L180.8,598.0 L187.3,598.0 L193.8,598.0 L200.2,598.0 L206.7,598.0 L213.1,598.0 L219.6,595.4 L226.0,589.5 L232.5,583.5 L239.0,577.6 L245.4,571.6 L251.9,565.7 L258.3,559.7 L264.8,553.8 L271.2,547.9 L277.7,541.9 L284.2,536.0 L290.6,530.0 L297.1,524.1 L303.5,518.1 L310.0,512.2 L316.5,506.2 L322.9,500.3 L329.4,494.3 L335.8,488.4 L342.3,482.5 L348.8,476.5 L355.2,470.6 L361.7,464.6 L368.1,458.7 L374.6,452.7 L381.0,446.8 L387.5,440.8 L394.0,434.9 L400.4,428.9 L406.9,423.0 L413.3,417.0 L419.8,411.1 L426.2,405.2 L432.7,399.2 L439.2,393.3 L445.6,387.3 L452.1,381.4 L458.5,375.4 L465.0,369.5 L471.5,363.5 L477.9,357.6 L484.4,351.6 L490.8,345.7 L497.3,339.7 L503.8,333.8 L510.2,327.9 L516.7,321.9 L523.1,316.0 L529.6,310.0 L536.0,304.1 L542.5,298.1 L549.0,292.2 L555.4,286.2 L561.9,280.3 L568.3,274.3 L574.8,268.4 L581.2,262.5 L587.7,256.5 L594.2,250.6 L600.6,244.6 L607.1,238.7 L613.5,232.7 L620.0,226.8" fill="none" stroke="#d3b06a" stroke-width="2.4" stroke-linecap="round" filter="url(#glowWeight)"/>
+    <path d="M0.0,598.0 L6.5,523.8 L12.9,449.5 L19.4,375.3 L25.8,301.1 L32.3,226.8 L38.8,152.6 L45.2,104.8 L51.7,122.6 L58.1,140.4 L64.6,158.2 L71.0,176.0 L77.5,193.9 L84.0,211.7 L90.4,229.5 L96.9,247.3 L103.3,265.1 L109.8,282.9 L116.2,300.7 L122.7,318.6 L129.2,336.4 L135.6,388.2 L142.1,387.6 L148.5,387.0 L155.0,386.4 L161.5,385.8 L167.9,385.2 L174.4,384.6 L180.8,384.0 L187.3,383.4 L193.8,382.8 L200.2,382.3 L206.7,381.7 L213.1,381.1 L219.6,380.5 L226.0,379.9 L232.5,379.3 L239.0,378.7 L245.4,378.1 L251.9,377.5 L258.3,376.9 L264.8,376.3 L271.2,375.7 L277.7,375.1 L284.2,374.5 L290.6,373.9 L297.1,373.3 L303.5,372.7 L310.0,372.2 L316.5,371.6 L322.9,371.0 L329.4,370.4 L335.8,369.8 L342.3,369.2 L348.8,368.6 L355.2,368.0 L361.7,367.4 L368.1,366.8 L374.6,366.2 L381.0,365.6 L387.5,365.0 L394.0,364.4 L400.4,363.8 L406.9,363.2 L413.3,362.7 L419.8,362.1 L426.2,361.5 L432.7,360.9 L439.2,360.3 L445.6,359.7 L452.1,359.1 L458.5,358.5 L465.0,357.9 L471.5,357.3 L477.9,356.7 L484.4,356.1 L490.8,355.5 L497.3,354.9 L503.8,354.3 L510.2,353.7 L516.7,353.2 L523.1,352.6 L529.6,352.0 L536.0,351.4 L542.5,350.8 L549.0,350.2 L555.4,349.6 L561.9,349.0 L568.3,348.8 L574.8,348.8 L581.2,348.8 L587.7,348.8 L594.2,348.8 L600.6,348.8 L607.1,348.8 L613.5,348.8 L620.0,348.8" fill="none" stroke="#4fbcc6" stroke-width="2.0" stroke-linecap="round" filter="url(#glowFlow)"/>
+    <line x1="620" y1="-10" x2="620" y2="598" stroke="#ece7db" stroke-width="1" opacity="0.22"/>
+    <circle class="pulse" cx="620" cy="69.1" r="4.5" fill="#d9714f" style="animation-delay: 0.0s;"/>
+    <circle class="pulse" cx="620" cy="144.5" r="4.5" fill="#9fb055" style="animation-delay: 0.3s;"/>
+    <circle class="pulse" cx="620" cy="226.8" r="4.5" fill="#d3b06a" style="animation-delay: 0.6s;"/>
+    <circle class="pulse" cx="620" cy="348.8" r="4.5" fill="#4fbcc6" style="animation-delay: 0.9s;"/>
+    <circle cx="620" cy="69.1" r="4.5" fill="#d9714f"/>
+    <circle cx="620" cy="144.5" r="4.5" fill="#9fb055"/>
+    <circle cx="620" cy="226.8" r="4.5" fill="#d3b06a"/>
+    <circle cx="620" cy="348.8" r="4.5" fill="#4fbcc6"/>
+    <text x="687" y="63.1" fill="#d9714f" font-family="Spectral, serif" font-weight="200" font-size="26">93.2°</text>
+    <text x="687" y="78.1" fill="#d9714f" font-family="Jost, sans-serif" font-size="8" letter-spacing="2.2">BREW · OF 93.0</text>
+    <text x="687" y="138.5" fill="#9fb055" font-family="Spectral, serif" font-weight="200" font-size="26">9.1</text>
+    <text x="687" y="153.5" fill="#9fb055" font-family="Jost, sans-serif" font-size="8" letter-spacing="2.2">BAR · OF 9.0</text>
+    <text x="687" y="220.8" fill="#d3b06a" font-family="Spectral, serif" font-weight="200" font-size="26">24.8</text>
+    <text x="687" y="235.8" fill="#d3b06a" font-family="Jost, sans-serif" font-size="8" letter-spacing="2.2">GRAMS · OF 36.0</text>
+    <text x="687" y="342.8" fill="#4fbcc6" font-family="Spectral, serif" font-weight="200" font-size="26">2.5</text>
+    <text x="687" y="357.8" fill="#4fbcc6" font-family="Jost, sans-serif" font-size="8" letter-spacing="2.2">ML/S · OF 2.5</text>
+    <text x="-14" y="4" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" text-anchor="end">12</text>
+    <text x="-14" y="303" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" text-anchor="end">6</text>
+    <text x="-14" y="600" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" text-anchor="end">0</text>
+    <text x="216.8" y="618" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" text-anchor="middle">10s</text>
+    <text x="433.6" y="618" fill="#5d574c" font-family="Jost, sans-serif" font-size="9" text-anchor="middle">20s</text>
+    <text x="620" y="618" fill="#b8b1a2" font-family="Jost, sans-serif" font-size="9" text-anchor="middle">28.6s</text>
+  </svg>
+
+  <div style="position: absolute; left: 60px; bottom: 92px; display: flex; align-items: baseline; gap: 40px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;"><span class="cap">Ratio</span><span class="n" style="font-size: 38px; color: #d3b06a;">1:1.38</span></div>
+    <div style="display: flex; align-items: baseline; gap: 12px;"><span class="cap">Weight</span><span class="n" style="font-size: 38px;">24.8 g</span></div>
+  </div>
+
+  <div style="position: absolute; left: 60px; right: 500px; top: 720px; height: 1px; background: #302d27;"></div>
+
+  <div style="position: absolute; right: 500px; bottom: 12px;">
+    <button class="act btn" style="width: 196px; height: 56px; border-radius: 999px; cursor: pointer; font-family: inherit;">
+      <svg class="trace" viewBox="0 0 196 56" width="196" height="56"><rect x="0.75" y="0.75" width="194.5" height="54.5" rx="27.25" pathLength="100" fill="none" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="display" style="font-size: 24px; letter-spacing: 0.03em;">Stop</span>
+    </button>
+  </div>
+
+  <div style="position: absolute; left: 60px; bottom: 34px;">
+    <span class="cap">Ethiopia Yirgacheffe &nbsp;&middot;&nbsp; 18.0 g</span>
+  </div>
+
+  </div>
+
+  <div class="drawer" style="position: absolute; right: 0; top: 0; bottom: 0; width: 440px; background: #1a1916; border-left: 1px solid #302d27; box-shadow: -40px 0 80px -50px rgba(0,0,0,0.65); padding: 0 40px;">
+    <button style="position: absolute; left: -24px; top: 352px; width: 48px; height: 96px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+      <span style="width: 4px; height: 64px; border-radius: 999px; background: #45413a;"></span>
+    </button>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px;">
+      <span class="cap" style="color: #ece7db;">Machine detail</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7d7669" stroke-width="1.4"><path d="M9 6l6 6-6 6"/></svg>
+    </div>
+
+    <div class="row" style="border-top: 1px solid #26241f;">
+      <span class="cap" style="color: #d9714f;">Brew temp</span>
+      <div style="display: flex; align-items: baseline; gap: 8px;"><span class="n" style="font-size: 30px;">93.2</span><span class="cap">of 93.0 &deg;C</span></div>
+    </div>
+    <div class="row">
+      <span class="cap" style="color: #9fb055;">Pressure</span>
+      <div style="display: flex; align-items: baseline; gap: 8px;"><span class="n" style="font-size: 30px;">9.1</span><span class="cap">of 9.0 bar</span></div>
+    </div>
+    <div class="row">
+      <span class="cap" style="color: #d3b06a;">Weight</span>
+      <div style="display: flex; align-items: baseline; gap: 8px;"><span class="n" style="font-size: 30px;">24.8</span><span class="cap">of 36.0 g</span></div>
+    </div>
+    <div class="row">
+      <span class="cap" style="color: #4fbcc6;">Flow</span>
+      <div style="display: flex; align-items: baseline; gap: 8px;"><span class="n" style="font-size: 30px;">2.5</span><span class="cap">of 2.5 ml/s</span></div>
+    </div>
+    <div class="row">
+      <span class="cap">Group</span>
+      <div style="display: flex; align-items: baseline; gap: 8px;"><span class="n" style="font-size: 30px;">93.0</span><span class="cap">of 93.0 &deg;C</span></div>
+    </div>
+    <div class="row">
+      <span class="cap">Steam</span>
+      <div style="display: flex; align-items: baseline; gap: 8px;"><span class="n" style="font-size: 30px;">135.5</span><span class="cap">of 135.0 &deg;C</span></div>
+    </div>
+
+    <div class="cap" style="margin: 30px 0 14px;">Profile &middot; Blooming Espresso</div>
+    <div style="display: flex; flex-direction: column;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 13px 0; border-top: 1px solid #26241f;">
+        <span class="display" style="font-size: 22px; color: #7d7669;">1 &nbsp; Fill</span><span class="cap">4.0 bar &middot; 6 s</span>
+      </div>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 13px 0; border-top: 1px solid #26241f;">
+        <span class="display" style="font-size: 22px; color: #7d7669;">2 &nbsp; Bloom</span><span class="cap">3.0 bar &middot; 20 s</span>
+      </div>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 13px 0; border-top: 1px solid #ece7db; border-bottom: 1px solid #26241f;">
+        <span class="display" style="font-size: 22px;">3 &nbsp; Ramp</span><span class="cap" style="color: #ece7db;">9.0 bar &middot; 4 s</span>
+      </div>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 13px 0; border-top: 1px solid #26241f;">
+        <span class="display" style="font-size: 22px; color: #7d7669;">4 &nbsp; Decline</span><span class="cap">6.0 bar &middot; 30 s</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
