@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { client } from './client'
 import { MOCK, mockScale, mockSnapshot, mockWater, mockWorkflow } from '../lib/mock'
+import { MOCK_SHOT, pourAt } from '../lib/mockPour'
 import { useSocket } from './useSocket'
 import type { MachineSnapshot, ScaleFrame, ScaleSnapshot, WaterLevels, Workflow } from './types'
 
@@ -36,6 +37,39 @@ export function useMachine() {
     setScaleConnected(true)
     client.workflow().then(setWorkflow).catch(() => setWorkflow(mockWorkflow()))
     client.waterLevels().then(setWater).catch(() => setWater(mockWater()))
+
+    if (!MOCK_SHOT) return
+    const startedAt = Date.now()
+    samples.current = []
+    const id = window.setInterval(() => {
+      const t = (Date.now() - startedAt) / 1000
+      const pour = pourAt(t)
+      setSnapshot({
+        ...mockSnapshot(),
+        timestamp: new Date().toISOString(),
+        state: { state: 'espresso', substate: 'pouring' },
+        pressure: pour.pressure,
+        flow: pour.flow,
+        mixTemperature: pour.mix,
+        targetPressure: pour.targetPressure,
+        targetFlow: pour.targetFlow,
+        targetMixTemperature: pour.targetMix,
+        profileFrame: t < 6 ? 1 : t < 20 ? 2 : 3,
+      })
+      setScale({ timestamp: new Date().toISOString(), weight: pour.weight })
+      samples.current.push({
+        t,
+        pressure: pour.pressure,
+        flow: pour.flow,
+        weight: pour.weight,
+        mix: pour.mix,
+        targetPressure: pour.targetPressure,
+        targetFlow: pour.targetFlow,
+        targetMix: pour.targetMix,
+      })
+      setElapsed(t)
+    }, 100)
+    return () => window.clearInterval(id)
   }, [])
 
   const machineStatus = useSocket<MachineSnapshot>('/machine/snapshot', (frame) => {

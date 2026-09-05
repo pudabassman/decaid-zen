@@ -160,13 +160,15 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
         ctx.lineTo(edge + 0.5, h)
         ctx.stroke()
 
-        SERIES.forEach((s, i) => {
+        // every end point breathes on the same beat, so none looks stalled
+        const shown = SERIES.filter((s) => positions[s.key] !== undefined && visible.has(s.key))
+        shown.forEach((s) => {
           const y = positions[s.key]
-          if (y === undefined || !visible.has(s.key)) return
+          if (y === undefined) return
           if (live) {
-            const local = (phase + i * 0.25) % 1
-            const eased = 1 - Math.pow(1 - Math.min(local / 0.7, 1), 3)
-            ctx.globalAlpha = Math.max(0, 0.5 * (1 - local / 0.7))
+            const local = phase
+            const eased = 1 - Math.pow(1 - local, 3)
+            ctx.globalAlpha = 0.45 * (1 - local)
             ctx.fillStyle = s.color
             ctx.beginPath()
             ctx.arc(edge, y, 4.5 * (1 + eased * 2.6), 0, Math.PI * 2)
