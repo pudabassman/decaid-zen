@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../components/Button'
 import { EditableValue } from '../components/EditableValue'
+import { BeanIcon } from '../components/icons'
 import { useRoasterCatalog } from '../lib/useRoasterCatalog'
 import { CoffeePicker } from '../components/CoffeePicker'
 import { RoasterSite } from '../components/RoasterSite'
@@ -116,9 +117,55 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
 
   return (
     <div className="screen" ref={screen}>
-      <div className="row between" style={{ marginBottom: 12 }}>
-        <span className="display" style={{ fontSize: 42, letterSpacing: '-0.01em' }}>Dial in</span>
-        <span className="cap">{draft?.name ?? 'workflow'}{dirty ? ' · unsaved' : ''}</span>
+      <div style={{ marginBottom: 16 }}>
+        <div className="row between" style={{ marginBottom: 10 }}>
+          <div className="row" style={{ gap: 14 }}>
+            <span className="cap">
+              <EditableValue
+                className="cap"
+                label="Roaster"
+                value={ctx.coffeeRoaster ?? ''}
+                placeholder="No roaster"
+                width={260}
+                onCommit={(next) => patch({ coffeeRoaster: next })}
+              />
+            </span>
+            {listing.status === 'available' && (
+              <button
+                className="beanpill"
+                aria-label={`${listing.count} coffees from ${ctx.coffeeRoaster}`}
+                onClick={() => setPicking(true)}
+              >
+                <BeanIcon size={13} />
+                <span className="num">{listing.count}</span>
+              </button>
+            )}
+            {listing.status === 'checking' && (
+              <span className="cap">
+                searching
+                <Dots />
+              </span>
+            )}
+          </div>
+          <span className="cap">{draft?.name ?? 'workflow'}{dirty ? ' · unsaved' : ''}</span>
+        </div>
+
+        <div className="display" style={{ fontSize: 44, lineHeight: 1.04, letterSpacing: '-0.02em' }}>
+          <EditableValue
+            className="clamp2 bare"
+            label="Bean"
+            value={ctx.coffeeName ?? ''}
+            placeholder="No bean loaded"
+            width={620}
+            onCommit={(next) => patch({ coffeeName: next })}
+          />
+        </div>
+
+        {listing.status === 'none' && (ctx.coffeeRoaster ?? '').length > 2 && (
+          <div style={{ marginTop: 12 }}>
+            <RoasterSite roaster={ctx.coffeeRoaster ?? ''} onResolved={listing.recheck} />
+          </div>
+        )}
       </div>
 
       <div className="grow" style={{ overflowY: 'auto' }}>
@@ -180,13 +227,6 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
             onMore={() => patch({ grinderSetting: shift(ctx.grinderSetting, 0.1) })}
           />
         </div>
-        <Field
-          label="Roaster"
-          value={ctx.coffeeRoaster ?? ''}
-          placeholder="No roaster"
-          valueIsText
-          onCommit={(next) => patch({ coffeeRoaster: next })}
-        />
         <div style={{ padding: '26px 0', borderTop: '1px solid var(--rule-soft)' }}>
           <div className="row between" style={{ marginBottom: 16 }}>
             <ProfileDeck
@@ -217,28 +257,6 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
           </div>
         </div>
 
-        <Field
-          label="Bean"
-          value={ctx.coffeeName ?? ''}
-          placeholder="No bean loaded"
-          valueIsText
-          onCommit={(next) => patch({ coffeeName: next })}
-        >
-          {listing.status === 'available' && (
-            <Button width={230} quiet onClick={() => setPicking(true)}>
-              <span className="cap">{`Show ${listing.count} coffees`}</span>
-            </Button>
-          )}
-          {listing.status === 'checking' && (
-            <span className="cap">
-              searching
-              <Dots />
-            </span>
-          )}
-          {listing.status === 'none' && (ctx.coffeeRoaster ?? '').length > 2 && (
-            <RoasterSite roaster={ctx.coffeeRoaster ?? ''} onResolved={listing.recheck} />
-          )}
-        </Field>
       </div>
 
       <div className="rule" style={{ margin: '12px 0' }} />
