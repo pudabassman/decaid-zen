@@ -68,7 +68,7 @@ export function Journal({ onBack }: { onBack: () => void }) {
       </div>
 
       <div className="grow" style={{ display: 'flex', gap: 40, minHeight: 0 }}>
-        <div style={{ flex: '1 1 auto', overflowY: 'auto' }}>
+        <div style={{ flex: '1 1 auto', minWidth: 0, overflowY: 'auto' }}>
           {items.map((shot) => {
             const live = selected?.id === shot.id
             return (
@@ -112,7 +112,15 @@ export function Journal({ onBack }: { onBack: () => void }) {
           {items.length === 0 && <div className="cap">No shots recorded yet</div>}
         </div>
 
-        <aside style={{ flex: '0 0 440px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <aside
+          style={{
+            flex: '0 0 calc(50% - 20px)',
+            minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+          }}
+        >
           <div className="cap">
             {selected ? new Date(selected.timestamp).toLocaleString() : 'select a shot'}
           </div>
