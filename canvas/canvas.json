@@ -6,7 +6,8 @@
       "x": 0,
       "y": 0,
       "w": 1280,
-      "h": 800
+      "h": 800,
+      "page": "page-1"
     },
     {
       "file": "ShotZenEarly.dc.html",
@@ -14,7 +15,8 @@
       "x": 1400,
       "y": 0,
       "w": 1280,
-      "h": 800
+      "h": 800,
+      "page": "page-1"
     },
     {
       "file": "ShotZenPanel.dc.html",
@@ -22,7 +24,8 @@
       "x": 2800,
       "y": 0,
       "w": 1280,
-      "h": 800
+      "h": 800,
+      "page": "page-1"
     },
     {
       "file": "Main.dc.html",
@@ -30,7 +33,8 @@
       "x": 0,
       "y": 960,
       "w": 1280,
-      "h": 800
+      "h": 800,
+      "page": "page-1"
     },
     {
       "file": "HistoryZen.dc.html",
@@ -38,7 +42,8 @@
       "x": 1400,
       "y": 960,
       "w": 1280,
-      "h": 800
+      "h": 800,
+      "page": "page-1"
     },
     {
       "file": "DialInZen.dc.html",
@@ -46,7 +51,8 @@
       "x": 2800,
       "y": 960,
       "w": 1280,
-      "h": 800
+      "h": 800,
+      "page": "page-1"
     },
     {
       "file": "Numerals.dc.html",
@@ -54,7 +60,53 @@
       "x": 4200,
       "y": 960,
       "w": 1280,
-      "h": 800
+      "h": 800,
+      "page": "page-1"
+    },
+    {
+      "file": "ProfileChips.dc.html",
+      "title": "Option A — chip rail",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 470,
+      "page": "page-2"
+    },
+    {
+      "file": "ProfileTabs.dc.html",
+      "title": "Option B — left tabs",
+      "x": 1400,
+      "y": 0,
+      "w": 1280,
+      "h": 470,
+      "page": "page-2"
+    },
+    {
+      "file": "ProfileDots.dc.html",
+      "title": "Option C — dot ladder",
+      "x": 2800,
+      "y": 0,
+      "w": 1280,
+      "h": 470,
+      "page": "page-2"
+    },
+    {
+      "file": "ProfileCurves.dc.html",
+      "title": "Option D — curve strip",
+      "x": 0,
+      "y": 640,
+      "w": 1280,
+      "h": 470,
+      "page": "page-2"
+    },
+    {
+      "file": "ProfileFooter.dc.html",
+      "title": "Option E — footer slots",
+      "x": 1400,
+      "y": 640,
+      "w": 1280,
+      "h": 470,
+      "page": "page-2"
     }
   ],
   "annotations": [
@@ -63,38 +115,102 @@
       "x": -440,
       "y": 0,
       "w": 360,
-      "text": "THE GRAPH GROWS\nThe x-axis is no longer a fixed 40s window. It spans 0 to now, so the curve always fills the full plot and the live edge is pinned at the right. As the shot runs the axis stretches, the frame markers and second ticks slide left, and the dots stay put.\n\nThe two artboards here are the same shot at 11.4s and 28.6s -- note the bloom marker moving left and the ramp appearing.\n\nValues live in a fixed gutter just right of the pinned edge, so they never move horizontally either. When two lines converge the labels push apart to a minimum gap rather than overlapping."
+      "text": "THE GRAPH GROWS\nThe x-axis is no longer a fixed 40s window. It spans 0 to now, so the curve always fills the full plot and the live edge is pinned at the right. As the shot runs the axis stretches, the frame markers and second ticks slide left, and the dots stay put.\n\nThe two artboards here are the same shot at 11.4s and 28.6s -- note the bloom marker moving left and the ramp appearing.\n\nValues live in a fixed gutter just right of the pinned edge, so they never move horizontally either. When two lines converge the labels push apart to a minimum gap rather than overlapping.",
+      "page": "page-1"
     },
     {
       "id": "live",
       "x": -440,
       "y": 420,
       "w": 360,
-      "text": "Every number on these boards is real text, not a template hole -- the geometry and the values were computed from one shot model at generation time, so what you read here is what the screen would read at 11.4s and at 28.6s.\n\nEach curve casts a soft shadow in its own colour, and the four endpoint dots pulse a halo on a 2.4s cadence, staggered a third of a second apart. Idle's last-shot graph is still -- nothing is pouring.\n\nButtons sit at a pale white at rest -- a faint fill, a 26% border, text at 62%. On tap a stroke traces once all the way round the border in 700ms and fades, while the button itself deepens to full white over 320ms. Click one in an artboard to see it. Discard stays a step quieter than the primary action either side of the press."
+      "text": "Every number on these boards is real text, not a template hole -- the geometry and the values were computed from one shot model at generation time, so what you read here is what the screen would read at 11.4s and at 28.6s.\n\nEach curve casts a soft shadow in its own colour, and the four endpoint dots pulse a halo on a 2.4s cadence, staggered a third of a second apart. Idle's last-shot graph is still -- nothing is pouring.\n\nButtons sit at a pale white at rest -- a faint fill, a 26% border, text at 62%. On tap a stroke traces once all the way round the border in 700ms and fades, while the button itself deepens to full white over 320ms. Click one in an artboard to see it. Discard stays a step quieter than the primary action either side of the press.",
+      "page": "page-1"
     },
     {
       "id": "type",
       "x": 4200,
       "y": 620,
       "w": 360,
-      "text": "Numerals are Spectral 200 across every screen now. Words stay Newsreader; the small caps labels stay Jost.\n\nThe specimen board keeps the alternatives for reference."
+      "text": "Numerals are Spectral 200 across every screen now. Words stay Newsreader; the small caps labels stay Jost.\n\nThe specimen board keeps the alternatives for reference.",
+      "page": "page-1"
     },
     {
       "id": "gestures",
       "x": 2800,
       "y": -300,
       "w": 620,
-      "text": "Edge grips are the only chrome for detail: a 4px line inside a 48x96px hit area, tap or swipe. Left = profile and beans, right = machine detail, shown open here with every value the main screen omits.\n\nContent shifts left rather than being covered, and its graph rescales into the narrower plot on the same rules -- live edge pinned, values in the gutter."
+      "text": "Edge grips are the only chrome for detail: a 4px line inside a 48x96px hit area, tap or swipe. Left = profile and beans, right = machine detail, shown open here with every value the main screen omits.\n\nContent shifts left rather than being covered, and its graph rescales into the narrower plot on the same rules -- live edge pinned, values in the gutter.",
+      "page": "page-1"
     },
     {
       "id": "rest",
       "x": -440,
       "y": 960,
       "w": 360,
-      "text": "IDLE carries the last shot's finished curve across the bottom with its four final values above it.\n\nJournal and Dial-in share the vocabulary: hairline rules, no cards, same curve colours, one edge grip.\n\nStill static mockups -- values are placeholders in the real API field shapes."
+      "text": "IDLE carries the last shot's finished curve across the bottom with its four final values above it.\n\nJournal and Dial-in share the vocabulary: hairline rules, no cards, same curve colours, one edge grip.\n\nStill static mockups -- values are placeholders in the real API field shapes.",
+      "page": "page-1"
+    },
+    {
+      "id": "opt-a",
+      "x": -460,
+      "y": 0,
+      "w": 380,
+      "page": "page-2",
+      "text": "A — CHIP RAIL\nFive pills under the divider, each carrying its own grind. Selected one is filled.\n\nWhy: reads left to right like the rest of the screen, and the grind sits with the profile that owns it.\nTradeoff: eats a band of vertical space that the last-shot graph currently uses."
+    },
+    {
+      "id": "opt-b",
+      "x": -460,
+      "y": 300,
+      "w": 380,
+      "page": "page-2",
+      "text": "B — LEFT TABS\nA column at the left margin, selected marked by a hairline bar, with the chosen profile expanded beside it.\n\nWhy: switching never moves the numbers, and there is room for detail about the selection.\nTradeoff: turns the calm left margin into chrome, and collides with the water rail."
+    },
+    {
+      "id": "opt-c",
+      "x": 4300,
+      "y": 0,
+      "w": 380,
+      "page": "page-2",
+      "text": "C — DOT LADDER\nOne profile named large, five dots to jump between them.\n\nWhy: quietest of the five; costs one line of height.\nTradeoff: you cannot see the other four without tapping, so it only works if you know your rotation by heart."
+    },
+    {
+      "id": "opt-d",
+      "x": -460,
+      "y": 640,
+      "w": 380,
+      "page": "page-2",
+      "text": "D — CURVE STRIP\nFive miniature pressure curves; you pick by shape, not by name.\n\nWhy: recognising a bloom vs a straight 9-bar is faster than reading five similar titles.\nTradeoff: the widest option, and the curves need real profile data to be honest."
+    },
+    {
+      "id": "opt-e",
+      "x": 2860,
+      "y": 640,
+      "w": 380,
+      "page": "page-2",
+      "text": "E — FOOTER SLOTS\nThe footer's profile caption becomes five compact slots next to Sleep.\n\nWhy: costs no vertical space at all — the graph keeps its full height.\nTradeoff: smallest targets of the five, and the footer starts to feel busy."
+    },
+    {
+      "id": "grind-note",
+      "x": 1400,
+      "y": 1200,
+      "w": 620,
+      "page": "page-2",
+      "text": "GRIND IS PER PROFILE\nEvery option shows the grind attached to its profile, because the same bean wants a different setting per profile. Switching profile should switch the grind reading with it, and editing grind should write back against the profile in view."
     }
   ],
   "launch": {
-    "view": "canvas"
-  }
+    "view": "canvas",
+    "page": "page-2"
+  },
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Screens"
+    },
+    {
+      "id": "page-2",
+      "name": "Profile options"
+    }
+  ]
 }

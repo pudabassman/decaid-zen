@@ -1,6 +1,6 @@
 import { api } from '../lib/gateway'
 import type {
-  MachineSnapshot, MachineStateName, ShotAnnotations, ShotRecord, ShotsPage, WaterLevels, Workflow,
+  Grinder, MachineSnapshot, MachineStateName, ShotAnnotations, ShotRecord, ShotsPage, WaterLevels, Workflow,
 } from './types'
 
 export class ApiError extends Error {
@@ -24,6 +24,9 @@ export const client = {
   workflow: () => request<Workflow>('/workflow'),
   saveWorkflow: (body: Workflow) => request<Workflow>('/workflow', { method: 'PUT', body: JSON.stringify(body) }),
   tare: () => request<void>('/scale/tare', { method: 'PUT' }),
+  grinders: () => request<Grinder[]>('/grinders'),
+  createGrinder: (model: string) =>
+    request<Grinder>('/grinders', { method: 'POST', body: JSON.stringify({ model }) }),
   shots: (limit = 20, offset = 0) => request<ShotsPage>(`/shots?limit=${limit}&offset=${offset}`),
   latestShot: () => request<ShotRecord>('/shots/latest'),
   shot: (id: string) => request<ShotRecord>(`/shots/${encodeURIComponent(id)}`),

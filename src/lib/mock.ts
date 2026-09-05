@@ -36,7 +36,7 @@ export const mockScale = (): ScaleSnapshot => ({
   batteryLevel: 82,
 })
 
-export const mockWater = (): WaterLevels => ({ currentPercentage: 68, currentLevel: 1400 })
+export const mockWater = (): WaterLevels => ({ currentPercentage: 62, currentLevel: 1240 })
 
 export const mockWorkflow = (): Workflow => ({
   name: 'Morning',

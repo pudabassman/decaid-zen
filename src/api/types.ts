@@ -118,6 +118,13 @@ export interface ShotsPage {
   offset: number
 }
 
+export interface Grinder {
+  id: string
+  model: string
+  burrs?: string
+  archived?: boolean
+}
+
 export interface WaterLevels {
   currentPercentage?: number
   currentLevel?: number

@@ -6,7 +6,7 @@ import { CoffeePicker } from '../components/CoffeePicker'
 import { RoasterSite } from '../components/RoasterSite'
 import { Dots } from '../components/Dots'
 import { client } from '../api/client'
-import type { Workflow } from '../api/types'
+import type { Grinder, Workflow } from '../api/types'
 import { useSwipe } from '../lib/useSwipe'
 import { useAction } from '../lib/useAction'
 
@@ -25,11 +25,33 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
   const [draft, setDraft] = useState<Workflow | null>(initial)
   const [dirty, setDirty] = useState(false)
   const [picking, setPicking] = useState(false)
+  const [grinders, setGrinders] = useState<Grinder[]>([])
   const { run, message, busy } = useAction()
   const screen = useRef<HTMLDivElement>(null)
   useSwipe(screen, { onLeft: (fromRightEdge) => fromRightEdge && onDone() })
 
   useEffect(() => setDraft(initial), [initial])
+
+  useEffect(() => {
+    client.grinders().then(setGrinders).catch(() => setGrinders([]))
+  }, [])
+
+  const chooseGrinder = async (model: string) => {
+    const name = model.trim()
+    if (!name) return
+    const known = grinders.find((g) => g.model.toLowerCase() === name.toLowerCase())
+    if (known) {
+      patch({ grinderId: known.id, grinderModel: known.model })
+      return
+    }
+    try {
+      const created = await client.createGrinder(name)
+      setGrinders((prev) => [...prev, created])
+      patch({ grinderId: created.id, grinderModel: created.model })
+    } catch {
+      patch({ grinderModel: name })
+    }
+  }
 
   const ctx = draft?.context ?? {}
   const listing = useRoasterCatalog(ctx.coffeeRoaster)
@@ -88,7 +110,15 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
           />
         </Field>
         <Field
-          label={`Grind · ${ctx.grinderModel ?? 'grinder'}`}
+          label="Grinder"
+          value={ctx.grinderModel ?? ''}
+          placeholder="No grinder"
+          valueIsText
+          options={grinders.map((g) => g.model)}
+          onCommit={(next) => void chooseGrinder(next)}
+        />
+        <Field
+          label="Grind"
           value={ctx.grinderSetting ?? ''}
           placeholder="--"
           numeric

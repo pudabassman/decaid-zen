@@ -72,8 +72,14 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
     return Number.isFinite(parsed) ? parsed : fallback
   }
 
+  const waterFill = Math.max(0, Math.min(100, water?.currentPercentage ?? 0))
+
   return (
     <div className="screen" ref={screen}>
+      <div className="waterrail" aria-label={`Water ${Math.round(waterFill)}%`}>
+        <span style={{ height: `${waterFill}%` }} />
+      </div>
+
       <div className="row between" style={{ marginBottom: 24 }}>
         <div className="row" style={{ gap: 14 }}>
           <span className="statusdot" />

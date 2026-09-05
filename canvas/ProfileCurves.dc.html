@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200;0,6..72,300;0,6..72,400;1,6..72,300&family=Jost:wght@300;400;500&family=Spectral:wght@200;300&display=swap">
+  <style>
+    body { margin: 0; background: #131210; font-family: "Jost", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #4fbcc6; } a:hover { color: #7fd6de; }
+    .display { font-family: "Newsreader", Georgia, serif; font-weight: 300; font-variant-numeric: lining-nums proportional-nums; }
+    .n { font-family: "Spectral", Georgia, serif; font-weight: 200; letter-spacing: -0.005em; font-variant-numeric: lining-nums proportional-nums; }
+    .cap { font-size: 10px; letter-spacing: 0.34em; text-transform: uppercase; color: #7d7669; }
+    .rule { height: 1px; background: #302d27; }
+    .slot { background: transparent; border: 0; color: inherit; font: inherit; cursor: pointer; text-align: start; padding: 0; }
+    .pill { border-radius: 999px; border: 1px solid rgba(236,231,219,0.16); color: rgba(236,231,219,0.5); background: transparent; }
+    .pill.on { border-color: #ece7db; color: #ece7db; background: rgba(236,231,219,0.08); }
+  </style>
+</helmet>
+<div style="width: 1280px; height: 470px; overflow: hidden; background: #131210; color: #ece7db; position: relative;">
+
+  <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: rgba(79,188,198,0.12);"></div>
+  <div style="position: absolute; left: 0; bottom: 0; width: 3px; height: 62%; background: #4fbcc6;"></div>
+
+  <div style="position: absolute; left: 60px; top: 16px; display: flex; align-items: center; gap: 16px;">
+    <span style="width: 6px; height: 6px; border-radius: 50%; background: #4fbcc6;"></span>
+    <span class="cap" style="color: #ece7db;">Ready</span>
+  </div>
+
+  <div style="position: absolute; right: 60px; top: 12px; display: flex; align-items: baseline; gap: 34px;">
+    <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Group</div><span class="n display" style="font-size: 26px;">93.0&deg;</span></div>
+    <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Steam</div><span class="n display" style="font-size: 26px;">135.5&deg;</span></div>
+    <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Scale</div><span class="n display" style="font-size: 26px;">0.4 g</span></div>
+  </div>
+
+  <div style="position: absolute; left: 60px; right: 60px; top: 78px;">
+    <div class="cap" style="margin-bottom: 16px;">Peony</div>
+    <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+      <div class="display" style="font-size: 54px; line-height: 1.02; letter-spacing: -0.02em; max-width: 720px;">Kenya Kirinyaga Kabingara Washed</div>
+      <div style="display: flex; align-items: baseline; gap: 40px; margin-top: -22px;">
+        <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Dose</div><span class="n display" style="font-size: 38px;">18.0 g</span></div>
+        <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Yield</div><span class="n display" style="font-size: 38px;">38.0 g</span></div>
+        <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Ratio</div><span class="n display" style="font-size: 38px; color: #d3b06a;">1:2.1</span></div>
+        <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Grind</div><span class="n display" style="font-size: 38px;">17.5</span></div>
+      </div>
+    </div>
+    <div class="rule" style="margin-top: 14px;"></div>
+  </div>
+
+  <div style="position: absolute; left: 60px; right: 60px; top: 288px;">
+    <div class="cap" style="margin-bottom: 14px;">Profile</div>
+    <div style="display: flex; gap: 24px;">
+      <button class="slot" style="width: 200px; opacity: 1;">
+        <svg viewBox="0 0 110 50" width="180" height="60" style="display: block; overflow: visible;">
+          <path d="M0,44 C10,44 16,10 26,8 C40,8 54,14 64,20 C80,30 92,38 110,40" fill="none" stroke="#9fb055" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="display" style="font-size: 20px; margin-top: 10px;">Blooming Espresso</div>
+        <div class="cap" style="margin-top: 6px;">grind 17.5</div>
+      </button>
+      <button class="slot" style="width: 200px; opacity: 0.42;">
+        <svg viewBox="0 0 110 50" width="180" height="60" style="display: block; overflow: visible;">
+          <path d="M0,44 C8,20 18,12 30,12 C48,12 64,16 80,22 C94,28 102,34 110,36" fill="none" stroke="#5d574c" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="display" style="font-size: 20px; margin-top: 10px;">D-Flow</div>
+        <div class="cap" style="margin-top: 6px;">grind 15.0</div>
+      </button>
+      <button class="slot" style="width: 200px; opacity: 0.42;">
+        <svg viewBox="0 0 110 50" width="180" height="60" style="display: block; overflow: visible;">
+          <path d="M0,44 C6,12 14,6 24,6 C46,6 70,8 90,10 C98,11 104,12 110,14" fill="none" stroke="#5d574c" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="display" style="font-size: 20px; margin-top: 10px;">Classic Italian</div>
+        <div class="cap" style="margin-top: 6px;">grind 12.5</div>
+      </button>
+      <button class="slot" style="width: 200px; opacity: 0.42;">
+        <svg viewBox="0 0 110 50" width="180" height="60" style="display: block; overflow: visible;">
+          <path d="M0,44 C12,40 20,20 32,16 C50,12 70,18 86,26 C96,31 104,35 110,38" fill="none" stroke="#5d574c" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="display" style="font-size: 20px; margin-top: 10px;">A-Flow light</div>
+        <div class="cap" style="margin-top: 6px;">grind 18.0</div>
+      </button>
+      <button class="slot" style="width: 200px; opacity: 0.42;">
+        <svg viewBox="0 0 110 50" width="180" height="60" style="display: block; overflow: visible;">
+          <path d="M0,44 C10,30 16,14 28,10 C44,6 62,12 78,20 C92,27 102,33 110,37" fill="none" stroke="#5d574c" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="display" style="font-size: 20px; margin-top: 10px;">Damian's LRv2</div>
+        <div class="cap" style="margin-top: 6px;">grind 16.5</div>
+      </button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

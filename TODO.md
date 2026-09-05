@@ -5,6 +5,16 @@ Working notes for the skin + `coffee-catalog` plugin. Single tester right now
 
 ## Now
 
+- [ ] **Pick a profile-selector option** from the canvas (page "Profile options"):
+      A chip rail, B left tabs, C dot ladder, D curve strip, E footer slots.
+      Once chosen, build it into Idle and wire profile switching
+      (`GET /api/v1/profiles`, then `PUT /api/v1/workflow` with the chosen
+      profile) — nothing is wired yet.
+- [ ] **Grind per profile.** Store `profileId -> grinderSetting` in the app KV
+      store (`GET/POST /api/v1/store/<namespace>/<key>`), apply it when the
+      profile changes, write it back when grind is edited. Not started; depends
+      on the selector above.
+
 - [ ] Live shot screen: not exercised since the graph rewrite — needs a real pour
       (or a mock path) to confirm frame markers, stop button and the drawer.
 - [ ] Journal: notes field only verified against one shot. Check long notes,

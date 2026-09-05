@@ -263,3 +263,22 @@ a { color: var(--flow); }
 
 .editable.bare { border-bottom: 0; padding-bottom: 0; }
 .editable.bare:hover, .editable.bare:focus { border-bottom: 0; }
+
+.waterrail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--water-track);
+  pointer-events: none;
+}
+.waterrail span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--water);
+  border-radius: 0 2px 2px 0;
+  transition: height 600ms ease;
+}

@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200;0,6..72,300;0,6..72,400;1,6..72,300&family=Jost:wght@300;400;500&family=Spectral:wght@200;300&display=swap">
+  <style>
+    body { margin: 0; background: #131210; font-family: "Jost", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #4fbcc6; } a:hover { color: #7fd6de; }
+    .display { font-family: "Newsreader", Georgia, serif; font-weight: 300; font-variant-numeric: lining-nums proportional-nums; }
+    .n { font-family: "Spectral", Georgia, serif; font-weight: 200; letter-spacing: -0.005em; font-variant-numeric: lining-nums proportional-nums; }
+    .cap { font-size: 10px; letter-spacing: 0.34em; text-transform: uppercase; color: #7d7669; }
+    .rule { height: 1px; background: #302d27; }
+    .slot { background: transparent; border: 0; color: inherit; font: inherit; cursor: pointer; text-align: start; padding: 0; }
+    .pill { border-radius: 999px; border: 1px solid rgba(236,231,219,0.16); color: rgba(236,231,219,0.5); background: transparent; }
+    .pill.on { border-color: #ece7db; color: #ece7db; background: rgba(236,231,219,0.08); }
+  </style>
+</helmet>
+<div style="width: 1280px; height: 470px; overflow: hidden; background: #131210; color: #ece7db; position: relative;">
+
+  <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: rgba(79,188,198,0.12);"></div>
+  <div style="position: absolute; left: 0; bottom: 0; width: 3px; height: 62%; background: #4fbcc6;"></div>
+
+  <div style="position: absolute; left: 60px; top: 16px; display: flex; align-items: center; gap: 16px;">
+    <span style="width: 6px; height: 6px; border-radius: 50%; background: #4fbcc6;"></span>
+    <span class="cap" style="color: #ece7db;">Ready</span>
+  </div>
+
+  <div style="position: absolute; right: 60px; top: 12px; display: flex; align-items: baseline; gap: 34px;">
+    <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Group</div><span class="n display" style="font-size: 26px;">93.0&deg;</span></div>
+    <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Steam</div><span class="n display" style="font-size: 26px;">135.5&deg;</span></div>
+    <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Scale</div><span class="n display" style="font-size: 26px;">0.4 g</span></div>
+  </div>
+
+  <div style="position: absolute; left: 60px; right: 60px; top: 78px;">
+    <div class="cap" style="margin-bottom: 16px;">Peony</div>
+    <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+      <div class="display" style="font-size: 54px; line-height: 1.02; letter-spacing: -0.02em; max-width: 720px;">Kenya Kirinyaga Kabingara Washed</div>
+      <div style="display: flex; align-items: baseline; gap: 40px; margin-top: -22px;">
+        <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Dose</div><span class="n display" style="font-size: 38px;">18.0 g</span></div>
+        <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Yield</div><span class="n display" style="font-size: 38px;">38.0 g</span></div>
+        <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Ratio</div><span class="n display" style="font-size: 38px; color: #d3b06a;">1:2.1</span></div>
+        <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Grind</div><span class="n display" style="font-size: 38px;">17.5</span></div>
+      </div>
+    </div>
+    <div class="rule" style="margin-top: 14px;"></div>
+  </div>
+
+  <div style="position: absolute; left: 60px; right: 60px; top: 300px; display: flex; align-items: center; justify-content: space-between;">
+    <div>
+      <div class="cap" style="margin-bottom: 12px;">Profile 1 of 5</div>
+      <div style="display: flex; align-items: baseline; gap: 20px;">
+        <span class="display" style="font-size: 40px;">Blooming Espresso</span>
+        <span class="cap">grind 17.5</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="slot" style="width: 44px; height: 44px; display: grid; place-items: center;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #ece7db;"></span>
+        </button>
+        <button class="slot" style="width: 44px; height: 44px; display: grid; place-items: center;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #45413a;"></span>
+        </button>
+        <button class="slot" style="width: 44px; height: 44px; display: grid; place-items: center;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #45413a;"></span>
+        </button>
+        <button class="slot" style="width: 44px; height: 44px; display: grid; place-items: center;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #45413a;"></span>
+        </button>
+        <button class="slot" style="width: 44px; height: 44px; display: grid; place-items: center;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #45413a;"></span>
+        </button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
