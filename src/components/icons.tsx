@@ -32,3 +32,10 @@ export const BeanIcon = ({ size = 18 }: { size?: number }) => (
     <path d="M8.6 16.6c2.7-1.2 3.7-3.2 3.1-6 -.6-2.8.4-4.8 3.1-6" />
   </svg>
 )
+
+export const GearIcon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" stroke="currentColor" {...stroke}>
+    <circle cx="12" cy="12" r="3.1" />
+    <path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2 5.5 5.5" />
+  </svg>
+)

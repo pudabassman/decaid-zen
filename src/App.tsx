@@ -4,8 +4,9 @@ import { Idle } from './screens/Idle'
 import { LiveShot } from './screens/LiveShot'
 import { Journal } from './screens/Journal'
 import { DialIn } from './screens/DialIn'
+import { Settings } from './screens/Settings'
 
-type View = 'home' | 'journal' | 'dialin'
+type View = 'home' | 'journal' | 'dialin' | 'settings'
 
 export function App() {
   const machine = useMachine()
@@ -19,6 +20,8 @@ export function App() {
 
   if (view === 'journal') return <Journal onBack={() => setView('home')} />
 
+  if (view === 'settings') return <Settings onDone={() => setView('home')} />
+
   if (view === 'dialin') {
     return (
       <DialIn
@@ -31,5 +34,12 @@ export function App() {
     )
   }
 
-  return <Idle machine={machine} onJournal={() => setView('journal')} onDialIn={() => setView('dialin')} />
+  return (
+    <Idle
+      machine={machine}
+      onJournal={() => setView('journal')}
+      onDialIn={() => setView('dialin')}
+      onSettings={() => setView('settings')}
+    />
+  )
 }

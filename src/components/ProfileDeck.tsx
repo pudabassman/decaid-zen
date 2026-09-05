@@ -51,6 +51,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const [closing, setClosing] = useState(false)
   const [candidate, setCandidate] = useState<string | null>(null)
   const [anchor, setAnchor] = useState(0)
+  const [anchorBottom, setAnchorBottom] = useState(0)
   const [pan, setPan] = useState(0)
   const rotation = useRef(0)
   const dragging = useRef(false)
@@ -68,6 +69,8 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const slot = wrap(activeIndex - Math.round(pan / STEP))
   const cameFrom = previousSlot.current
   const highlighted = candidate ?? records[slot]?.id ?? activeId
+  /** not enough room above the badge: drop the deck below it instead */
+  const below = anchor > 0 && anchor < 210
 
   useEffect(() => {
     if (!open) {
@@ -75,7 +78,10 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
       return
     }
     const rect = badge.current?.getBoundingClientRect()
-    if (rect) setAnchor(rect.top)
+    if (rect) {
+      setAnchor(rect.top)
+      setAnchorBottom(rect.bottom)
+    }
   }, [open, records.length])
 
   useEffect(() => {
@@ -105,7 +111,10 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
 
   const startDrag = (e: ReactPointerEvent, el: HTMLElement | null) => {
     const rect = badge.current?.getBoundingClientRect()
-    if (rect) setAnchor(rect.top)
+    if (rect) {
+      setAnchor(rect.top)
+      setAnchorBottom(rect.bottom)
+    }
     el?.setPointerCapture?.(e.pointerId)
     dragging.current = true
     moved.current = false
@@ -141,12 +150,20 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
         <>
           <div
             className={`deckveil${closing ? ' closing' : ''}`}
-            style={{ height: Math.max(0, anchor - 6) }}
+            style={
+              below
+                ? { top: anchorBottom + 6, height: Math.max(0, window.innerHeight - anchorBottom - 6) }
+                : { height: Math.max(0, anchor - 6) }
+            }
             onPointerUp={() => commit(null)}
           />
           <div
             className={`deckfan${closing ? ' closing' : ''}`}
-            style={{ bottom: Math.max(0, window.innerHeight - anchor + 14) }}
+            style={
+              below
+                ? { top: anchorBottom + 14 }
+                : { bottom: Math.max(0, window.innerHeight - anchor + 14) }
+            }
             onPointerDown={(e) => startDrag(e, e.currentTarget)}
             onPointerMove={moveDrag}
             onPointerUp={(e) => {

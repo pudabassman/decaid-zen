@@ -14,9 +14,6 @@ const baseSeries = (yieldByWeight: boolean) => [
 ]
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
-/** how far a line's colour bleeds below it */
-const SHADOW = 34
-
 const PAD_TOP = 56
 /** floor and ceiling for the right-hand label gutter */
 const PAD_RIGHT_MIN = 40
@@ -58,9 +55,8 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
           break
         }
       }
-      const padRight = Math.round(
-        Math.min(PAD_RIGHT_MAX, Math.max(PAD_RIGHT_MIN, widest + 15)),
-      )
+      const gutterFor = (width: number) =>
+        Math.round(Math.min(PAD_RIGHT_MAX, Math.max(PAD_RIGHT_MIN, width + 15)))
       // and a left gutter for the target start values
       let widestStart = 0
       for (const s of sample) {
@@ -71,7 +67,10 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
           break
         }
       }
-      const padLeft = widestStart ? Math.round(widestStart + 12) : 0
+      // both gutters take the wider of the two, so the plot sits centred
+      const gutter = Math.max(gutterFor(widest), widestStart ? gutterFor(widestStart) : 0)
+      const padRight = gutter
+      const padLeft = widestStart ? gutter : 0
       const plotW = Math.max(1, w - padRight)
       const plotSpan = Math.max(1, plotW - padLeft)
 
@@ -128,24 +127,6 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
           drawn.push([padLeft + (t / span) * plotSpan, y])
         }
 
-        if (drawn.length > 1) {
-          // a short wash under the line, in its own colour, gone within SHADOW px
-          const top = Math.min(...drawn.map(([, y]) => y))
-          const fade = ctx.createLinearGradient(0, top, 0, top + SHADOW)
-          fade.addColorStop(0, `${s.color}26`)
-          fade.addColorStop(1, `${s.color}00`)
-          ctx.save()
-          ctx.fillStyle = fade
-          ctx.beginPath()
-          ctx.moveTo(drawn[0][0], drawn[0][1])
-          for (const [x, y] of drawn.slice(1)) ctx.lineTo(x, y)
-          for (let i = drawn.length - 1; i >= 0; i--) {
-            ctx.lineTo(drawn[i][0], Math.min(h, drawn[i][1] + SHADOW))
-          }
-          ctx.closePath()
-          ctx.fill()
-          ctx.restore()
-        }
 
         ctx.save()
         ctx.strokeStyle = s.color

@@ -11,7 +11,8 @@ export interface ProfileRecord {
 const STORE = 'decaid-zen'
 const GRIND_KEY = 'grindByProfile'
 const PREFERRED_KEY = 'preferredProfiles'
-export const MAX_PREFERRED = 5
+/** the deck holds at most this many profiles */
+export const MAX_DECK = 5
 
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = init?.body ? { 'content-type': 'application/json', ...init?.headers } : init?.headers
@@ -51,13 +52,13 @@ export const profiles = {
   savePreferred: (ids: string[]) =>
     json<void>(`/store/${STORE}/${PREFERRED_KEY}`, {
       method: 'POST',
-      body: JSON.stringify(ids.slice(0, MAX_PREFERRED)),
+      body: JSON.stringify(ids.slice(0, MAX_DECK)),
     }),
 }
 
-/** the deck shows the chosen few; with none chosen it falls back to the first five */
+/** the deck shows whatever was chosen; with nothing chosen it falls back to the first few */
 export function preferredRecords(records: ProfileRecord[], ids: string[] | null) {
-  if (!ids?.length) return records.slice(0, MAX_PREFERRED)
+  if (!ids?.length) return records.slice(0, MAX_DECK)
   const chosen = ids.map((id) => records.find((r) => r.id === id)).filter(Boolean) as ProfileRecord[]
-  return chosen.length ? chosen.slice(0, MAX_PREFERRED) : records.slice(0, MAX_PREFERRED)
+  return chosen.length ? chosen.slice(0, MAX_DECK) : records.slice(0, MAX_DECK)
 }

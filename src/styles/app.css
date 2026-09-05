@@ -19,7 +19,7 @@ a { color: var(--flow); }
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: var(--unit) var(--margin-x);
+  padding: 26px var(--margin-x) var(--unit);
 }
 
 .cap {
@@ -428,3 +428,163 @@ a { color: var(--flow); }
 @media (prefers-reduced-motion: reduce) {
   .deckcard.warp { animation: none; }
 }
+
+.gear {
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: color 260ms ease, border-color 260ms ease;
+}
+.gear:hover, .gear:active { color: var(--ink); border-color: var(--ink); }
+
+.settingsbody {
+  display: flex;
+  gap: 60px;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 18px;
+}
+.settingscol { flex: 1 1 0; min-width: 0; }
+
+.toggle {
+  width: 52px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  cursor: pointer;
+  padding: 0 3px;
+  display: flex;
+  align-items: center;
+  transition: border-color 240ms ease, background-color 240ms ease;
+}
+.toggle span {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--grip);
+  transition: transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1), background-color 240ms ease;
+}
+.toggle.on { border-color: var(--ink); background: rgba(236, 231, 219, 0.08); }
+.toggle.on span { transform: translateX(22px); background: var(--ink); }
+
+.choice {
+  display: flex;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.choice button {
+  min-height: 30px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 240ms ease, background-color 240ms ease;
+}
+.choice button.on { color: var(--ink); background: rgba(236, 231, 219, 0.08); }
+
+.nudge {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+.nudge:hover, .nudge:active { color: var(--ink); border-color: var(--ink); }
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--grip) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--grip);
+  border-radius: 999px;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+*::-webkit-scrollbar-corner { background: transparent; }
+
+.multiwrap { position: relative; }
+.multibutton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 240ms ease, border-color 240ms ease;
+}
+.multibutton:hover, .multibutton:active { color: var(--ink); border-color: var(--ink); }
+.multicaret { display: grid; place-items: center; transition: transform 240ms ease; }
+.multicaret.open { transform: rotate(180deg); }
+
+.multiveil { position: fixed; inset: 0; z-index: 40; }
+.multipanel {
+  position: absolute;
+  z-index: 41;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 260px;
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.85);
+}
+.multirow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-top: 1px solid var(--rule-soft);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: color 220ms ease, background-color 220ms ease;
+}
+.multirow:first-child { border-top: 0; }
+.multirow.on { color: var(--ink); background: rgba(236, 231, 219, 0.06); }
+.multirow:disabled { opacity: 0.35; cursor: default; }
+.multitick {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  font-size: 0;
+}
+.multirow.on .multitick { opacity: 1; }
+
+.multisearch {
+  position: sticky;
+  top: 0;
+  padding: 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--rule-soft);
+}
+.multisearch .search { font-size: 16px; padding: 8px 14px; }

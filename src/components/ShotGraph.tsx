@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState, type MutableRefObject } from 'react'
 import type { Sample } from '../api/useMachine'
 
-/** how far a line's colour bleeds below it */
-const SHADOW = 34
-
 const GUTTER = 200
 const MIN_WINDOW = 15
 const AXIS_TICKS = [10, 20, 30, 40, 50, 60]
@@ -131,24 +128,6 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
           drawn.push([xFor(point.t), yFor(s, point[s.key], h)])
         }
 
-        if (drawn.length > 1) {
-          // a short wash under the line, in its own colour, gone within SHADOW px
-          const top = Math.min(...drawn.map(([, y]) => y))
-          const fade = ctx.createLinearGradient(0, top, 0, top + SHADOW)
-          fade.addColorStop(0, `${s.color}26`)
-          fade.addColorStop(1, `${s.color}00`)
-          ctx.save()
-          ctx.fillStyle = fade
-          ctx.beginPath()
-          ctx.moveTo(drawn[0][0], drawn[0][1])
-          for (const [x, y] of drawn.slice(1)) ctx.lineTo(x, y)
-          for (let i = drawn.length - 1; i >= 0; i--) {
-            ctx.lineTo(drawn[i][0], Math.min(h, drawn[i][1] + SHADOW))
-          }
-          ctx.closePath()
-          ctx.fill()
-          ctx.restore()
-        }
 
         ctx.save()
         ctx.strokeStyle = s.color

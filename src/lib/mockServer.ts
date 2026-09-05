@@ -32,6 +32,38 @@ const state = {
     { id: 'grinder:ek43', model: 'Mahlkönig EK43' },
   ],
   notes: {} as Record<string, string>,
+  app: {
+    gatewayMode: 'tracking',
+    themeMode: 'dark',
+    logLevel: 'INFO',
+    weightFlowMultiplier: 1,
+    volumeFlowMultiplier: 0.3,
+    hotWaterFlowMultiplier: 0.3,
+    scalePowerMode: 'disconnect',
+    blockOnNoScale: false,
+    blockTareDuringShot: false,
+    stopHotWaterAtWeight: true,
+    preferredMachineId: 'FA:78:82:BA:6B:06',
+    preferredScaleId: 'EC:8B:BE:C7:55:6C',
+    defaultSkinId: 'decaid-zen',
+    automaticUpdateCheck: true,
+    chargingMode: 'longevity',
+    nightModeEnabled: true,
+    nightModeSleepTime: 1320,
+    nightModeMorningTime: 360,
+    lowBatteryBrightnessLimit: true,
+    keepAwake: true,
+  } as Record<string, unknown>,
+  machineSettings: {
+    fan: 50, usb: false, flushTemp: 90, flushTimeout: 10, flushFlow: 6,
+    hotWaterFlow: 8, steamFlow: 0.8, tankTemp: 0, steamPurgeMode: 1,
+  } as Record<string, unknown>,
+  advanced: {
+    heaterPh1Flow: 2, heaterPh2Flow: 0.5, heaterIdleTemp: 85,
+    heaterPh2Timeout: 2, heaterVoltage: 230, refillKitSetting: 2,
+  } as Record<string, unknown>,
+  display: { brightness: 100, wakeLockEnabled: true, lowBatteryBrightnessActive: false } as Record<string, unknown>,
+  presence: { userPresenceEnabled: true, sleepTimeoutMinutes: 15 } as Record<string, unknown>,
 }
 
 const shots = (): ShotRecord[] =>
@@ -71,6 +103,28 @@ function route(path: string, method: string, body: unknown): Response | null {
   }
 
   if (pathname.endsWith('/machine/waterLevels')) return ok(state.water)
+
+  const merge = (into: Record<string, unknown>) => {
+    Object.assign(into, body as Record<string, unknown>)
+    return ok(into)
+  }
+  if (pathname.endsWith('/machine/settings/advanced')) {
+    return method === 'POST' ? merge(state.advanced) : ok(state.advanced)
+  }
+  if (pathname.endsWith('/machine/settings')) {
+    return method === 'POST' ? merge(state.machineSettings) : ok(state.machineSettings)
+  }
+  if (pathname.endsWith('/presence/settings')) {
+    return method === 'POST' ? merge(state.presence) : ok(state.presence)
+  }
+  if (pathname.endsWith('/settings')) {
+    return method === 'POST' ? merge(state.app) : ok(state.app)
+  }
+  if (pathname.endsWith('/display/brightness')) {
+    state.display.brightness = (body as { brightness: number }).brightness
+    return ok({})
+  }
+  if (pathname.endsWith('/display')) return ok(state.display)
   if (pathname.endsWith('/grinders') && method === 'GET') return ok(state.grinders)
   if (pathname.endsWith('/grinders') && method === 'POST') {
     const model = (body as { model: string }).model

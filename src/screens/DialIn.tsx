@@ -67,13 +67,6 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
     )
   }
 
-  const togglePreferred = (id: string) => {
-    const next = preferred.includes(id)
-      ? preferred.filter((other) => other !== id)
-      : [...preferred, id].slice(-5)
-    setPreferred(next)
-    profileApi.savePreferred(next).catch(() => undefined)
-  }
 
   const chooseGrinder = async (model: string) => {
     const name = model.trim()
@@ -258,24 +251,6 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
             />
           </div>
 
-          <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
-            {records.map((record) => {
-              const on = preferred.includes(record.id)
-              return (
-                <button
-                  key={record.id}
-                  className={`beanpill${on ? ' on' : ''}`}
-                  style={{ height: 34, padding: '0 14px' }}
-                  onClick={() => togglePreferred(record.id)}
-                >
-                  <span className="display" style={{ fontSize: 16 }}>
-                    {record.profile?.title ?? 'Untitled'}
-                  </span>
-                </button>
-              )
-            })}
-            {records.length === 0 && <span className="cap">No profiles found</span>}
-          </div>
         </div>
 
       </div>

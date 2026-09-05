@@ -5,7 +5,7 @@ import { useRoasterCatalog } from '../lib/useRoasterCatalog'
 import { CoffeePicker } from '../components/CoffeePicker'
 import { RoasterSite } from '../components/RoasterSite'
 import { Dots } from '../components/Dots'
-import { BeanIcon } from '../components/icons'
+import { BeanIcon, GearIcon } from '../components/icons'
 import { client } from '../api/client'
 import type { useMachine } from '../api/useMachine'
 import type { ShotRecord } from '../api/types'
@@ -27,7 +27,17 @@ type Machine = ReturnType<typeof useMachine>
 
 const fmt = (n: number | undefined, digits = 1) => (n === undefined ? '--' : n.toFixed(digits))
 
-export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJournal: () => void; onDialIn: () => void }) {
+export function Idle({
+  machine,
+  onJournal,
+  onDialIn,
+  onSettings,
+}: {
+  machine: Machine
+  onJournal: () => void
+  onDialIn: () => void
+  onSettings: () => void
+}) {
   const { snapshot, scale, workflow, water } = machine
   const [last, setLast] = useState<ShotRecord | null>(null)
   const [picking, setPicking] = useState(false)
@@ -70,8 +80,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
   const roaster = ctx?.coffeeRoaster ?? ''
   const activeId = matchRecord(records, workflow?.profile)?.id ?? null
   const beanLength = (ctx?.coffeeName ?? '').length
-  const beanSize = beanLength > 46 ? 40 : beanLength > 28 ? 54 : 76
-  const readingsTop = Math.round(beanSize * 0.76) - 63
+  const beanSize = beanLength > 46 ? 44 : beanLength > 28 ? 56 : 76
   const listing = useRoasterCatalog(roaster)
   const dose = ctx?.targetDoseWeight ?? 18
   const target = ctx?.targetYield ?? workflow?.profile?.target_weight ?? 36
@@ -116,10 +125,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
     <div className="screen" ref={screen}>
 
       <div style={{ marginBottom: 6 }}>
-        <div
-          className="row between"
-          style={{ gap: 14, marginBottom: 30, alignItems: 'flex-end' }}
-        >
+        <div className="row between" style={{ marginBottom: 22, alignItems: 'baseline' }}>
           <div className="row" style={{ gap: 14 }}>
           <span className="cap">
             <EditableValue
@@ -147,6 +153,9 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
                 <Dots />
               </span>
             )}
+            {listing.status === 'none' && roaster.length > 2 && (
+              <RoasterSite roaster={roaster} onResolved={listing.recheck} />
+            )}
           </div>
 
           <div className="row baseline" style={{ gap: 34, opacity: asleep ? 0.45 : 1 }}>
@@ -156,16 +165,14 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
           </div>
         </div>
 
-        <div className="row between" style={{ alignItems: 'flex-start' }}>
+        <div className="row between" style={{ alignItems: 'flex-end' }}>
+          <div style={{ minWidth: 0, maxWidth: 720 }}>
           <div
             className="display"
             style={{
-              flex: '1 1 auto',
-              minWidth: 0,
               fontSize: beanSize,
-              lineHeight: 1.02,
+              lineHeight: 0.98,
               letterSpacing: '-0.02em',
-              maxWidth: 720,
             }}
           >
             <EditableValue
@@ -177,7 +184,8 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
               onCommit={(next) => patchWorkflow({ coffeeName: next })}
             />
           </div>
-          <div className="row baseline" style={{ gap: 40, flex: '0 0 auto', marginTop: readingsTop }}>
+          </div>
+          <div className="row baseline" style={{ gap: 40, flex: '0 0 auto' }}>
           <EditableReading
             label="Dose"
             value={fmt(dose)}
@@ -228,18 +236,14 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
         <span style={{ height: `${waterFill}%` }} />
       </div>
 
-      <div className="row between" style={{ gap: 24, marginBottom: 2 }}>
+
+      <div className="row" style={{ marginTop: 18, marginBottom: 12 }}>
         <ProfileDeck
-          records={preferredRecords(records, preferred)}
-          activeId={activeId}
-          grinds={grinds}
-          onPick={pickProfile}
+              records={preferredRecords(records, preferred)}
+              activeId={activeId}
+              grinds={grinds}
+              onPick={pickProfile}
         />
-        <div style={{ height: 52, display: 'flex', alignItems: 'center', flex: '0 0 auto' }}>
-          {listing.status === 'none' && roaster.length > 2 && (
-            <RoasterSite roaster={roaster} onResolved={listing.recheck} />
-          )}
-        </div>
       </div>
 
       <div className="row between" style={{ height: 0, alignItems: 'center' }}>
@@ -258,9 +262,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
         )}
       </div>
 
-      <div className="rule" />
       <LastShotGraph shot={last} />
-      <div className="rule" />
       </div>
 
       <div style={{ height: 18 }} />
@@ -278,6 +280,9 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
               <span className="cap">Tare</span>
             </Button>
           )}
+          <button className="gear" aria-label="Settings" onClick={onSettings}>
+            <GearIcon size={17} />
+          </button>
         </div>
         <div className="row" style={{ gap: 16 }}>
           <span className="cap" style={{ color: message ? 'var(--temp)' : undefined, marginRight: 6 }}>
@@ -335,10 +340,10 @@ function EditableReading({
 }) {
   return (
     <div style={{ textAlign: 'right' }}>
-      <div className="cap" style={{ marginBottom: 6 }}>{label}</div>
+      <div className="cap" style={{ marginBottom: 8, lineHeight: 1 }}>{label}</div>
       <EditableValue
         className="num bare"
-        style={{ fontSize: 38 }}
+        style={{ fontSize: 38, lineHeight: 1, display: 'inline-block' }}
         label={label}
         value={value}
         placeholder={placeholder}
@@ -354,8 +359,10 @@ function EditableReading({
 function Reading({ label, value, size = 26, color }: { label: string; value: string; size?: number; color?: string }) {
   return (
     <div style={{ textAlign: 'right' }}>
-      <div className="cap" style={{ marginBottom: 6 }}>{label}</div>
-      <span className="num" style={{ fontSize: size, color }}>{value}</span>
+      <div className="cap" style={{ marginBottom: 6, lineHeight: 1 }}>{label}</div>
+      <span className="num" style={{ fontSize: size, color, lineHeight: 1, display: 'inline-block' }}>
+        {value}
+      </span>
     </div>
   )
 }
