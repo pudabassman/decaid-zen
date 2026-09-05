@@ -267,7 +267,7 @@ a { color: var(--flow); }
 
 .waterrail {
   position: absolute;
-  left: 0;
+  left: calc(var(--margin-x) * -1);
   top: 0;
   bottom: 0;
   width: 6px;

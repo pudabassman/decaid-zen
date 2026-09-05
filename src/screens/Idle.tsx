@@ -114,16 +114,6 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
 
   return (
     <div className="screen" ref={screen}>
-      <div
-        className={`waterrail${budget.lastDrink || (MOCK && window.location.search.includes('low')) ? ' low' : ''}`}
-        aria-label={
-          budget.lastDrink
-            ? 'Water low: one shot and steam left'
-            : `Water ${Math.round(waterFill)}%`
-        }
-      >
-        <span style={{ height: `${waterFill}%` }} />
-      </div>
 
       <div style={{ marginBottom: 6 }}>
         <div
@@ -218,6 +208,26 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
 
       </div>
 
+      <div
+        style={{
+          position: 'relative',
+          flex: '1 1 auto',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+        }}
+      >
+      <div
+        className={`waterrail${budget.lastDrink || (MOCK && window.location.search.includes('low')) ? ' low' : ''}`}
+        aria-label={
+          budget.lastDrink
+            ? 'Water low: one shot and steam left'
+            : `Water ${Math.round(waterFill)}%`
+        }
+      >
+        <span style={{ height: `${waterFill}%` }} />
+      </div>
+
       <div className="row between" style={{ gap: 24, marginBottom: 2 }}>
         <ProfileDeck
           records={preferredRecords(records, preferred)}
@@ -249,6 +259,7 @@ export function Idle({ machine, onJournal, onDialIn }: { machine: Machine; onJou
       </div>
 
       <LastShotGraph shot={last} />
+      </div>
 
       <div style={{ height: 18 }} />
 
