@@ -117,7 +117,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
 
   return (
     <div className="screen" ref={screen}>
-      <div className="row between" style={{ marginBottom: 14 }}>
+      <div className="row between" style={{ marginBottom: 34 }}>
         <span className="display" style={{ fontSize: 42, letterSpacing: '-0.01em' }}>Dial in</span>
         <span className="cap">{draft?.name ?? 'workflow'}{dirty ? ' · unsaved' : ''}</span>
       </div>
