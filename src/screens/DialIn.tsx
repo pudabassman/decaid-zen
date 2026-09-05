@@ -8,7 +8,6 @@ import { Dots } from '../components/Dots'
 import { client } from '../api/client'
 import type { Grinder, Workflow } from '../api/types'
 import {
-  MAX_PREFERRED,
   matchRecord,
   preferredRecords,
   profiles as profileApi,
@@ -70,7 +69,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
   const togglePreferred = (id: string) => {
     const next = preferred.includes(id)
       ? preferred.filter((other) => other !== id)
-      : [...preferred, id].slice(-MAX_PREFERRED)
+      : [...preferred, id].slice(-5)
     setPreferred(next)
     profileApi.savePreferred(next).catch(() => undefined)
   }
@@ -150,23 +149,21 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
         </Field>
         <div
           className="row"
-          style={{ gap: 48, padding: '26px 0', borderTop: '1px solid var(--rule-soft)' }}
+          style={{
+            gap: 48,
+            padding: '26px 0',
+            borderTop: '1px solid var(--rule-soft)',
+            alignItems: 'flex-end',
+          }}
         >
-          <div style={{ flex: '1 1 0', minWidth: 0 }}>
-            <Field
-              bare
-              label="Grind"
-              value={ctx.grinderSetting ?? ''}
-              placeholder="--"
-              numeric
-              onCommit={(next) => patch({ grinderSetting: next })}
-            >
-              <Stepper
-                onLess={() => patch({ grinderSetting: shift(ctx.grinderSetting, -0.1) })}
-                onMore={() => patch({ grinderSetting: shift(ctx.grinderSetting, 0.1) })}
-              />
-            </Field>
-          </div>
+          <Field
+            bare
+            label="Grind"
+            value={ctx.grinderSetting ?? ''}
+            placeholder="--"
+            numeric
+            onCommit={(next) => patch({ grinderSetting: next })}
+          />
           <div style={{ flex: '1 1 0', minWidth: 0 }}>
             <Field
               bare
@@ -178,6 +175,10 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
               onCommit={(next) => void chooseGrinder(next)}
             />
           </div>
+          <Stepper
+            onLess={() => patch({ grinderSetting: shift(ctx.grinderSetting, -0.1) })}
+            onMore={() => patch({ grinderSetting: shift(ctx.grinderSetting, 0.1) })}
+          />
         </div>
         <Field
           label="Roaster"
@@ -196,9 +197,6 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
             />
           </div>
 
-          <div className="cap" style={{ marginBottom: 14 }}>
-            On the deck · {preferred.length || 'first'} of {MAX_PREFERRED}
-          </div>
           <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
             {records.map((record) => {
               const on = preferred.includes(record.id)
