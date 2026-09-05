@@ -6,6 +6,8 @@ const STORE = 'decaid-zen'
 const KEY = 'waterUse'
 const KEEP = 5
 const DEFAULT_MAX_MM = 45
+/** the DE1 tank holds roughly this much between empty and the top of the sensor */
+const TANK_ML = 1500
 
 interface WaterUse {
   shot: number[]
@@ -127,11 +129,15 @@ export function useWaterBudget(
   const perDrink = perShot !== null && perSteam !== null ? perShot + perSteam : null
   const usable = water ? Math.max(0, (water.currentLevel ?? 0) - (water.refillLevel ?? 0)) : 0
   const drinksLeft = perDrink && perDrink > 0 ? usable / perDrink : null
-  const mlPerMm = mean(use.mlPerMm)
-  const mlLeft = mlPerMm !== null && water ? Math.round(usable * mlPerMm) : null
+  const learned = mean(use.mlPerMm)
+  const maxLevel = Math.max(use.maxLevel, DEFAULT_MAX_MM)
+  // until a shot calibrates it, estimate from tank capacity over the tallest level seen
+  const mlPerMm = learned ?? TANK_ML / maxLevel
+  const mlLeft = water ? Math.round(usable * mlPerMm) : null
 
   return {
-    maxLevel: Math.max(use.maxLevel, DEFAULT_MAX_MM),
+    maxLevel,
+    calibrated: learned !== null,
     perShot,
     perSteam,
     drinksLeft,
