@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
-import type { ProfileRecord } from '../api/profiles'
+import { DECK_WINDOW, type ProfileRecord } from '../api/profiles'
 import type { Profile } from '../api/types'
 import { MOCK } from '../lib/mock'
 
@@ -65,7 +65,14 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
 
   const count = Math.max(1, records.length)
   const wrap = (n: number) => ((n % count) + count) % count
-  const middle = Math.floor(count / 2)
+  const visible = Math.min(DECK_WINDOW, count)
+  const middle = Math.floor((visible - 1) / 2)
+  /** where a record sits relative to the one in play, negative to the left */
+  const offset = (i: number, from: number) => {
+    const raw = wrap(i - from)
+    return raw > count / 2 ? raw - count : raw
+  }
+  const seated = (signed: number) => signed >= -middle && signed <= visible - 1 - middle
   const slot = wrap(activeIndex - Math.round(pan / STEP))
   const cameFrom = previousSlot.current
   const highlighted = candidate ?? records[slot]?.id ?? activeId
@@ -174,11 +181,14 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
           >
             <div className="decktrack">
               {records.map((record, i) => {
-                // the profile in play holds the middle seat; the rest ring around it
-                const seat = wrap(i - slot + middle)
+                // the profile in play holds the middle seat; up to four more ring around it
+                const signed = offset(i, slot)
+                if (!seated(signed)) return null
+                const seat = signed + middle
                 const on = record.id === highlighted
                 // a card that wraps round the back fades in there rather than sliding across
-                const warped = Math.abs(seat - wrap(i - cameFrom + middle)) > 1
+                const before = offset(i, cameFrom)
+                const warped = !seated(before) || Math.abs(seat - (before + middle)) > 1
                 return (
                   <button
                     key={record.id}
@@ -248,11 +258,11 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
           />
         </svg>
         <span className="display deckname">{active?.profile?.title ?? 'No profile'}</span>
-        <span className="cap">{grindLabel(grinds[active?.id ?? ''])}</span>
         <span className="deckdots">
-          {records.map((record, i) => (
-            <span key={record.id} className={i === activeIndex ? 'on' : undefined} />
-          ))}
+          {Array.from({ length: visible }, (_, k) => {
+            const first = Math.min(Math.max(activeIndex - middle, 0), count - visible)
+            return <span key={k} className={first + k === activeIndex ? 'on' : undefined} />
+          })}
         </span>
       </button>
     </div>

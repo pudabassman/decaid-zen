@@ -5,18 +5,33 @@ import { LiveShot } from './screens/LiveShot'
 import { Journal } from './screens/Journal'
 import { DialIn } from './screens/DialIn'
 import { Settings } from './screens/Settings'
+import { Sleep } from './screens/Sleep'
+import { MOCK } from './lib/mock'
+import { ensureBundledPlugin } from './api/bundledPlugin'
 
 type View = 'home' | 'journal' | 'dialin' | 'settings'
 
+const opening = (): View =>
+  MOCK && window.location.search.includes('settings') ? 'settings' : 'home'
+
 export function App() {
   const machine = useMachine()
-  const [view, setView] = useState<View>('home')
+  const [view, setView] = useState<View>(opening)
+
+  const state = machine.snapshot?.state.state
+  const asleep = state === 'sleeping' || state === 'booting'
+
+  useEffect(() => {
+    ensureBundledPlugin().catch(() => undefined)
+  }, [])
 
   useEffect(() => {
     if (machine.pouring) setView('home')
   }, [machine.pouring])
 
   if (machine.pouring) return <LiveShot machine={machine} />
+
+  if (asleep) return <Sleep onWake={() => setView('home')} />
 
   if (view === 'journal') return <Journal onBack={() => setView('home')} />
 

@@ -1,11 +1,12 @@
 import type { MachineSnapshot, ScaleSnapshot, ShotRecord, WaterLevels, Workflow } from '../api/types'
+import type { ShotSettings } from '../api/settings'
 
 const search = typeof window === 'undefined' ? '' : window.location.search
 
 export const MOCK =
   search.includes('mock') || (import.meta.env.DEV && !search.includes('live'))
 
-const at = (t: number) => new Date(Date.now() - (30 - t) * 1000).toISOString()
+const at = (t: number, span: number) => new Date(Date.now() - (span - t) * 1000).toISOString()
 
 const curve = (t: number) => {
   const pressure = t < 2 ? t * 1.5 : t < 8 ? 3 + (t - 2) * 0.9 : t < 22 ? 8.9 - (t - 8) * 0.12 : 7.2 - (t - 22) * 0.35
@@ -19,7 +20,7 @@ export const mockSnapshot = (): MachineSnapshot => {
   const { pressure, flow, mix } = curve(30)
   return {
     timestamp: new Date().toISOString(),
-    state: { state: 'idle', substate: 'ready' },
+    state: { state: search.includes('asleep') ? 'sleeping' : 'idle', substate: 'ready' },
     flow,
     pressure,
     targetFlow: 2,
@@ -109,6 +110,38 @@ export const mockProfiles = () => [
       ],
     },
   },
+  {
+    id: 'profile:extract',
+    profile: {
+      title: 'Extractamundo Dos',
+      steps: [
+        { name: 'fill', pump: 'flow' as const, flow: 8, seconds: 4 },
+        { name: 'soak', pump: 'pressure' as const, pressure: 4, seconds: 20 },
+        { name: 'pour', pump: 'flow' as const, flow: 2.2, seconds: 20 },
+      ],
+    },
+  },
+  {
+    id: 'profile:turbo',
+    profile: {
+      title: 'Turbo Bomber',
+      steps: [
+        { name: 'fill', pump: 'flow' as const, flow: 9, seconds: 3 },
+        { name: 'pour', pump: 'flow' as const, flow: 5.4, seconds: 14 },
+      ],
+    },
+  },
+  {
+    id: 'profile:gentle',
+    profile: {
+      title: 'Gentle & Sweet',
+      steps: [
+        { name: 'fill', pump: 'flow' as const, flow: 4, seconds: 6 },
+        { name: 'bloom', pump: 'pressure' as const, pressure: 2.4, seconds: 16 },
+        { name: 'push', pump: 'pressure' as const, pressure: 6.4, seconds: 22 },
+      ],
+    },
+  },
 ]
 
 export const mockGrinds = (): Record<string, string> => ({
@@ -117,17 +150,17 @@ export const mockGrinds = (): Record<string, string> => ({
   'profile:italian': '12.5',
 })
 
-export const mockShot = (): ShotRecord => ({
+export const mockShot = (span = 30): ShotRecord => ({
   id: 'mock-shot',
   timestamp: new Date(Date.now() - 26 * 60 * 1000).toISOString(),
   workflow: mockWorkflow(),
   annotations: { actualDoseWeight: 18, actualYield: 38.4, drinkTds: 8.7, drinkEy: 20.4, enjoyment: 4 },
-  measurements: Array.from({ length: 121 }, (_, i) => {
+  measurements: Array.from({ length: Math.round(span * 4) + 1 }, (_, i) => {
     const t = i / 4
     const { pressure, flow, weight, mix } = curve(t)
     return {
       machine: {
-        timestamp: at(t),
+        timestamp: at(t, span),
         state: { state: 'espresso' as const, substate: 'pouring' },
         flow,
         pressure,
@@ -140,8 +173,19 @@ export const mockShot = (): ShotRecord => ({
         profileFrame: t < 6 ? 1 : t < 20 ? 2 : t < 26 ? 3 : 4,
         steamTemperature: 148.6,
       },
-      scale: { timestamp: at(t), weight, weightFlow: t < 6 ? 0 : 1.6 },
+      scale: { timestamp: at(t, span), weight, weightFlow: t < 6 ? 0 : 1.6 },
       volume: weight * 1.02,
     }
   }),
+})
+
+export const mockShotSettings = (): ShotSettings => ({
+  steamSetting: 1,
+  targetSteamTemp: 148,
+  targetSteamDuration: 40,
+  targetHotWaterTemp: 85,
+  targetHotWaterVolume: 120,
+  targetHotWaterDuration: 30,
+  targetShotVolume: 36,
+  groupTemp: 92.5,
 })

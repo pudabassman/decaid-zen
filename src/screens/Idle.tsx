@@ -22,6 +22,8 @@ import {
   type ProfileRecord,
 } from '../api/profiles'
 import { ProfileDeck } from '../components/ProfileDeck'
+import { ShotSpread } from '../components/ShotSpread'
+import { useShotSpread } from '../lib/useShotSpread'
 
 type Machine = ReturnType<typeof useMachine>
 
@@ -82,6 +84,7 @@ export function Idle({
   const beanLength = (ctx?.coffeeName ?? '').length
   const beanSize = beanLength > 46 ? 44 : beanLength > 28 ? 56 : 76
   const listing = useRoasterCatalog(roaster)
+  const reading = useShotSpread(ctx?.coffeeName, workflow?.profile?.title)
   const dose = ctx?.targetDoseWeight ?? 18
   const target = ctx?.targetYield ?? workflow?.profile?.target_weight ?? 36
 
@@ -237,13 +240,14 @@ export function Idle({
       </div>
 
 
-      <div className="row" style={{ marginTop: 18, marginBottom: 12 }}>
+      <div className="row between" style={{ marginTop: 18, marginBottom: 12, alignItems: 'flex-end' }}>
         <ProfileDeck
               records={preferredRecords(records, preferred)}
               activeId={activeId}
               grinds={grinds}
               onPick={pickProfile}
         />
+        {reading && <ShotSpread reading={reading} />}
       </div>
 
       <div className="row between" style={{ height: 0, alignItems: 'center' }}>

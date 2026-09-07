@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200;0,6..72,300;0,6..72,400;1,6..72,300&family=Jost:wght@300;400;500&family=Spectral:wght@200;300&display=swap">
+  <style>
+    body { margin: 0; background: #0b0a09; font-family: "Jost", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #4fbcc6; } a:hover { color: #7fd6de; }
+    .display { font-family: "Newsreader", Georgia, serif; font-weight: 300; font-variant-numeric: lining-nums proportional-nums; }
+    .n { font-family: "Spectral", Georgia, serif; font-weight: 200; letter-spacing: -0.005em; font-variant-numeric: lining-nums proportional-nums; }
+    .cap { font-size: 10px; letter-spacing: 0.34em; text-transform: uppercase; color: rgba(236,231,219,0.16); }
+    .breathe { animation: breathe 6s ease-in-out infinite; }
+    @keyframes breathe { 0%, 100% { opacity: 0.20; } 50% { opacity: 0.62; } }
+    .drift { animation: drift 24s ease-in-out infinite alternate; }
+    @keyframes drift { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
+    @media (prefers-reduced-motion: reduce) {
+      .breathe, .drift { animation: none; }
+    }
+  </style>
+</helmet>
+<div style="width: 1280px; height: 800px; overflow: hidden; background: #0b0a09; color: rgba(236,231,219,0.28); position: relative;">
+
+  <svg viewBox="0 0 1280 800" width="1280" height="800" style="position: absolute; inset: 0; display: block;">
+    <circle cx="214" cy="402" r="3" fill="rgba(236,231,219,0.18)"/>
+    <circle cx="336" cy="368" r="3" fill="rgba(236,231,219,0.18)"/>
+    <circle cx="458" cy="416" r="3" fill="rgba(236,231,219,0.18)"/>
+    <circle cx="580" cy="352" r="3" fill="rgba(236,231,219,0.18)"/>
+    <circle cx="702" cy="392" r="3" fill="rgba(236,231,219,0.18)"/>
+    <circle cx="824" cy="374" r="3" fill="rgba(236,231,219,0.18)"/>
+    <circle cx="946" cy="410" r="3" fill="rgba(236,231,219,0.18)"/>
+    <circle class="breathe" cx="1068" cy="384" r="4.5" fill="#ece7db"/>
+    <line x1="180" y1="384" x2="1100" y2="384" stroke="rgba(211,176,106,0.14)" stroke-width="1" stroke-dasharray="2 7"/>
+  </svg>
+  <span class="cap" style="position: absolute; left: 0; right: 0; top: 300px; text-align: center;">Eight shots &nbsp;&middot;&nbsp; 29 s typical</span>
+
+</div>
+</x-dc>
+</body>
+</html>

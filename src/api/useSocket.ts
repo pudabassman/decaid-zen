@@ -15,7 +15,7 @@ export function useSocket<T>(channel: string, onFrame: (frame: T) => void) {
     let disposed = false
 
     const connect = () => {
-      if (disposed) return
+      if (disposed || !channel) return
       setStatus('connecting')
       socket = new WebSocket(ws(channel))
 
@@ -39,7 +39,7 @@ export function useSocket<T>(channel: string, onFrame: (frame: T) => void) {
       socket.onerror = () => socket?.close()
     }
 
-    connect()
+    if (channel) connect()
     return () => {
       disposed = true
       window.clearTimeout(timer)

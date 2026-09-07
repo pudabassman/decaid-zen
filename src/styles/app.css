@@ -588,3 +588,60 @@ a { color: var(--flow); }
   border-bottom: 1px solid var(--rule-soft);
 }
 .multisearch .search { font-size: 16px; padding: 8px 14px; }
+
+.swatch {
+  position: relative;
+  width: 42px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  overflow: hidden;
+}
+.swatch input {
+  position: absolute;
+  inset: -6px;
+  width: 200%;
+  height: 200%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.sleepscreen {
+  position: fixed;
+  inset: 0;
+  background: #0b0a09;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 80;
+  animation: sleepIn 900ms ease-out both;
+}
+@keyframes sleepIn { from { opacity: 0; } to { opacity: 1; } }
+
+.sleepdrift {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  animation: sleepDrift 600s ease-in-out infinite alternate;
+}
+@keyframes sleepDrift {
+  from { transform: translate(-26px, -18px); }
+  to { transform: translate(26px, 18px); }
+}
+
+.sleepclock {
+  font-size: 168px;
+  line-height: 1;
+  color: rgba(236, 231, 219, 0.3);
+}
+.sleepdate { color: rgba(236, 231, 219, 0.16); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sleepdrift { animation: none; }
+}

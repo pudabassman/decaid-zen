@@ -64,11 +64,49 @@ const state = {
   } as Record<string, unknown>,
   display: { brightness: 100, wakeLockEnabled: true, lowBatteryBrightnessActive: false } as Record<string, unknown>,
   presence: { userPresenceEnabled: true, sleepTimeoutMinutes: 15 } as Record<string, unknown>,
+  cupWarmer: { temperature: 60, enabled: true, currentTemperature: 48 } as Record<string, unknown>,
+  preheat: { enabled: true, leadMinutes: 20, active: false } as Record<string, unknown>,
+  led: {
+    frontStrip: { sleeping: '000000000000', awake: 'FFFF80004000' },
+    backStrip: { sleeping: '000020004000', awake: '4000FFFFC000' },
+  },
+  calibration: { flowMultiplier: 1.02 } as Record<string, unknown>,
+  schedules: [
+    { id: 'wake-1', enabled: true, time: '06:20', days: [1, 2, 3, 4, 5] },
+    { id: 'wake-2', enabled: false, time: '08:10', days: [6, 7] },
+  ],
+  devices: [
+    { id: 'FA:78:82:BA:6B:06', name: 'DE1', type: 'machine', state: 'connected', available: true },
+    { id: 'EC:8B:BE:C7:55:6C', name: 'Acaia Lunar', type: 'scale', state: 'disconnected', available: false },
+    { id: 'D1:22:0A:44:91:7C', name: 'Bookoo Themis', type: 'scale', state: 'connected', available: true },
+  ],
+  skins: [
+    { id: 'decaid-zen', name: 'Decaid Zen', version: '0.2.30' },
+    { id: 'streamline.js', name: 'Streamline', version: '0.1.106' },
+    { id: 'insight', name: 'Insight', version: '0.2.7' },
+  ],
+  defaultSkin: 'decaid-zen',
+  plugins: [
+    { id: 'coffee-catalog.reaplugin', name: 'Coffee catalog', version: '1.2.0', enabled: true, loaded: true },
+    { id: 'dye2.reaplugin', name: 'DYE2 strip', version: '0.4.1', enabled: false, loaded: false },
+  ],
 }
 
+const RECENT: Array<[string, string, string, number]> = [
+  ['Peony', 'Kenya Kirinyaga Kabingara Washed', 'Blooming Espresso', 29.4],
+  ['Peony', 'Kenya Kirinyaga Kabingara Washed', 'Blooming Espresso', 28.1],
+  ['Peony', 'Kenya Kirinyaga Kabingara Washed', 'Blooming Espresso', 30.2],
+  ['Peony', 'Kenya Kirinyaga Kabingara Washed', 'Blooming Espresso', 27.6],
+  ['Peony', 'Kenya Kirinyaga Kabingara Washed', 'Blooming Espresso', 28.8],
+  ['Peony', 'Kenya Kirinyaga Kabingara Washed', 'Blooming Espresso', 26.4],
+  ['Peony', 'Kenya Kirinyaga Kabingara Washed', 'Blooming Espresso', 28.2],
+  ['Peony', 'Kenya Kirinyaga Kabingara Washed', 'Blooming Espresso', 29.0],
+  ['Peony', 'Kenya Kirinyaga Kabingara Washed', 'Blooming Espresso', 27.9],
+]
+
 const shots = (): ShotRecord[] =>
-  BEANS.map(([roaster, bean, profile], i) => {
-    const base = mockShot()
+  [...RECENT, ...BEANS.map((bean) => [...bean, 30] as [string, string, string, number])].map(([roaster, bean, profile, span], i) => {
+    const base = mockShot(span)
     const workflow: Workflow = {
       ...base.workflow,
       profile: { ...base.workflow?.profile, title: profile },
@@ -149,8 +187,16 @@ function route(path: string, method: string, body: unknown): Response | null {
 
   if (pathname.endsWith('/shots/latest')) return ok(shots()[0])
   if (pathname.endsWith('/shots')) {
-    const items = shots()
-    return ok({ items, total: items.length, limit: items.length, offset: 0 })
+    const coffeeName = params.get('coffeeName')
+    const profileTitle = params.get('profileTitle')
+    const limit = Number(params.get('limit') ?? 20)
+    const matching = shots().filter(
+      (shot) =>
+        (!coffeeName || shot.workflow?.context?.coffeeName === coffeeName) &&
+        (!profileTitle || shot.workflow?.profile?.title === profileTitle),
+    )
+    const items = matching.slice(0, limit)
+    return ok({ items, total: matching.length, limit, offset: 0 })
   }
   if (pathname.includes('/shots/')) {
     const id = decodeURIComponent(pathname.split('/').pop() ?? '')
@@ -183,6 +229,47 @@ function route(path: string, method: string, body: unknown): Response | null {
   if (pathname.includes('coffee-catalog.reaplugin/resolve')) {
     return ok({ available: true, roaster: params.get('roaster'), domain: params.get('site'), count: 8 })
   }
+
+  if (pathname.endsWith('/machine/cupWarmer/preheat')) {
+    if (method === 'PUT') return merge(state.preheat)
+    return ok(state.preheat)
+  }
+  if (pathname.endsWith('/machine/cupWarmer')) {
+    if (method === 'PUT') return merge(state.cupWarmer)
+    return ok(state.cupWarmer)
+  }
+  if (pathname.endsWith('/machine/ledStrip')) {
+    if (method === 'PUT') {
+      state.led = body as typeof state.led
+      return ok({})
+    }
+    return ok(state.led)
+  }
+  if (pathname.endsWith('/machine/calibration')) {
+    if (method === 'POST') return merge(state.calibration)
+    return ok(state.calibration)
+  }
+  if (pathname.endsWith('/machine/shotSettings')) return ok({})
+  if (pathname.endsWith('/machine/settings/reset')) return ok({})
+  if (pathname.endsWith('/presence/schedules')) return ok(state.schedules)
+  if (pathname.includes('/presence/schedules/')) return ok({})
+  if (pathname.endsWith('/devices')) return ok(state.devices)
+  if (pathname.endsWith('/devices/forget')) return ok({})
+  if (pathname.endsWith('/webui/skins/default')) {
+    if (method === 'POST') {
+      state.defaultSkin = (body as { skinId: string }).skinId
+      return ok({})
+    }
+    return ok(state.skins.find((skin) => skin.id === state.defaultSkin))
+  }
+  if (pathname.endsWith('/webui/skins/update')) return ok({ updated: [] })
+  if (pathname.endsWith('/webui/skins')) return ok(state.skins)
+  if (pathname.endsWith('/plugins/update')) return ok({ checked: state.plugins.length })
+  if (pathname.includes('/plugins/') && (pathname.endsWith('/enable') || pathname.endsWith('/disable'))) return ok({})
+  if (pathname.endsWith('/plugins')) return ok(state.plugins)
+  if (pathname.endsWith('/info')) return ok({ version: '0.8.5', buildNumber: '2624', commitShort: 'a08bc41e', localIp: '192.168.68.72' })
+  if (pathname.endsWith('/machine/info')) return ok({ model: 'DE1 Pro', version: '1.6', GHC: true })
+  if (pathname.endsWith('/update')) return ok({ phase: 'idle', currentVersion: '0.8.5', latestVersion: null, installable: false })
 
   if (pathname.endsWith('/machine/state')) return ok({ state: { state: 'idle', substate: 'ready' } })
 

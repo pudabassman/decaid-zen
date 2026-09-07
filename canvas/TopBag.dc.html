@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200;0,6..72,300;0,6..72,400;1,6..72,300&family=Jost:wght@300;400;500&family=Spectral:wght@200;300&display=swap">
+  <style>
+    body { margin: 0; background: #131210; font-family: "Jost", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #4fbcc6; } a:hover { color: #7fd6de; }
+    .display { font-family: "Newsreader", Georgia, serif; font-weight: 300; font-variant-numeric: lining-nums proportional-nums; }
+    .n { font-family: "Spectral", Georgia, serif; font-weight: 200; letter-spacing: -0.005em; font-variant-numeric: lining-nums proportional-nums; }
+    .cap { font-size: 10px; letter-spacing: 0.34em; text-transform: uppercase; color: #7d7669; }
+    .rule { height: 1px; background: #302d27; }
+    .pill { border-radius: 999px; border: 1px solid rgba(236,231,219,0.16); color: rgba(236,231,219,0.5); background: transparent; font: inherit; cursor: pointer; }
+    .pill.on { border-color: #ece7db; color: #ece7db; background: rgba(236,231,219,0.08); }
+  </style>
+</helmet>
+<div style="width: 1280px; height: 420px; overflow: hidden; background: #131210; color: #ece7db; position: relative;">
+
+  <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: rgba(143,201,232,0.13);"></div>
+  <div style="position: absolute; left: 0; bottom: 0; width: 3px; height: 62%; background: #8fc9e8;"></div>
+
+  <div style="position: absolute; left: 60px; top: 16px; display: flex; align-items: center; gap: 16px;">
+    <span style="width: 6px; height: 6px; border-radius: 50%; background: #4fbcc6;"></span>
+    <span class="cap" style="color: #ece7db;">Ready</span>
+  </div>
+
+  <div style="position: absolute; right: 60px; top: 12px; display: flex; align-items: baseline; gap: 34px;">
+    <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Group</div><span class="n display" style="font-size: 26px;">93.0&deg;</span></div>
+    <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Steam</div><span class="n display" style="font-size: 26px;">135.5&deg;</span></div>
+    <div style="text-align: right;"><div class="cap" style="margin-bottom: 6px;">Scale</div><span class="n display" style="font-size: 26px;">0.0 g</span></div>
+  </div>
+
+  <div style="position: absolute; left: 60px; top: 84px; right: 60px; display: flex; align-items: flex-end; justify-content: space-between;">
+    <div>
+      <div class="cap" style="margin-bottom: 18px;">Square Mile &nbsp;&middot;&nbsp; roasted 28 January</div>
+      <div class="display" style="font-size: 76px; line-height: 0.98; letter-spacing: -0.02em;">Ethiopia Yirgacheffe</div>
+    </div>
+    <div style="display: flex; align-items: baseline; gap: 40px;">
+      <div style="text-align: right;"><div class="cap" style="margin-bottom: 8px;">Dose</div><span class="n display" style="font-size: 38px;">18.0 g</span></div>
+      <div style="text-align: right;"><div class="cap" style="margin-bottom: 8px;">Yield</div><span class="n display" style="font-size: 38px;">36.0 g</span></div>
+      <div style="text-align: right;"><div class="cap" style="margin-bottom: 8px;">Ratio</div><span class="n display" style="font-size: 38px; color: #d3b06a;">1:2.0</span></div>
+      <div style="text-align: right;"><div class="cap" style="margin-bottom: 8px;">Grind</div><span class="n display" style="font-size: 38px;">2.5</span></div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 60px; top: 258px; display: flex; align-items: center; gap: 18px; height: 52px; padding: 0 20px 0 14px; border: 1px solid #302d27; border-radius: 16px; background: #1a1916;">
+    <svg viewBox="0 0 110 50" width="74" height="30" style="display: block; overflow: visible;">
+      <path d="M0,44 C10,44 16,10 26,8 C40,8 54,14 64,20 C80,30 92,38 110,40" fill="none" stroke="#9fb055" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+    <span class="display" style="font-size: 20px;">Blooming Espresso</span>
+    <span class="cap">grind 17.5</span>
+    <span style="display: flex; gap: 5px; margin-left: 6px;">
+      <span style="width: 5px; height: 5px; border-radius: 50%; background: #45413a;"></span>
+      <span style="width: 5px; height: 5px; border-radius: 50%; background: #ece7db;"></span>
+      <span style="width: 5px; height: 5px; border-radius: 50%; background: #45413a;"></span>
+      <span style="width: 5px; height: 5px; border-radius: 50%; background: #45413a;"></span>
+      <span style="width: 5px; height: 5px; border-radius: 50%; background: #45413a;"></span>
+    </span>
+  </div>
+
+  <div style="position: absolute; left: 60px; right: 60px; top: 330px; display: flex; align-items: baseline; justify-content: space-between;">
+    <span class="cap" style="color: #ece7db;">Last shot &nbsp;&middot;&nbsp; today 10:30 &nbsp;&middot;&nbsp; 1:2.01 &nbsp;&middot;&nbsp; 28.4 s</span>
+    <div style="display: flex; align-items: baseline; gap: 30px;">
+      <div style="display: flex; align-items: baseline; gap: 9px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #d9714f;"></span><span class="n display" style="font-size: 22px; color: #d9714f;">93.2&deg;</span><span class="cap" style="color: #d9714f;">brew</span></div>
+      <div style="display: flex; align-items: baseline; gap: 9px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #9fb055;"></span><span class="n display" style="font-size: 22px; color: #9fb055;">9.1</span><span class="cap" style="color: #9fb055;">peak bar</span></div>
+      <div style="display: flex; align-items: baseline; gap: 9px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #d3b06a;"></span><span class="n display" style="font-size: 22px; color: #d3b06a;">36.2</span><span class="cap" style="color: #d3b06a;">grams</span></div>
+      <div style="display: flex; align-items: baseline; gap: 9px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #4fbcc6;"></span><span class="n display" style="font-size: 22px; color: #4fbcc6;">2.4</span><span class="cap" style="color: #4fbcc6;">ml/s avg</span></div>
+    </div>
+  </div>
+
+  <div style="position: absolute; right: 60px; top: 244px; display: flex; align-items: flex-end; gap: 28px;">
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
+      <div class="cap">Bag</div>
+      <svg viewBox="0 0 300 10" width="300" height="10" style="display: block;">
+        <rect x="0" y="4" width="300" height="2" fill="#302d27"/>
+        <rect x="0" y="3" width="218" height="4" fill="#d3b06a"/>
+      </svg>
+      <div class="cap">250 g &nbsp;&middot;&nbsp; opened 2 February</div>
+    </div>
+    <div style="display: flex; align-items: baseline; gap: 10px;">
+      <span class="n display" style="font-size: 52px; line-height: 1; color: #d3b06a;">182</span>
+      <span class="cap">g &nbsp;&middot;&nbsp; 10 doses</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

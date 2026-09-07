@@ -3,6 +3,13 @@ import type {
   Grinder, MachineSnapshot, MachineStateName, ShotAnnotations, ShotRecord, ShotsPage, WaterLevels, Workflow,
 } from './types'
 
+export interface ShotFilter {
+  coffeeName?: string
+  coffeeRoaster?: string
+  profileTitle?: string
+  beanId?: string
+}
+
 export class ApiError extends Error {
   constructor(readonly status: number, readonly body: string) {
     super(`${status}: ${body.slice(0, 200)}`)
@@ -27,7 +34,13 @@ export const client = {
   grinders: () => request<Grinder[]>('/grinders'),
   createGrinder: (model: string) =>
     request<Grinder>('/grinders', { method: 'POST', body: JSON.stringify({ model }) }),
-  shots: (limit = 20, offset = 0) => request<ShotsPage>(`/shots?limit=${limit}&offset=${offset}`),
+  shots: (limit = 20, offset = 0, filter?: ShotFilter) => {
+    const query = new URLSearchParams({ limit: String(limit), offset: String(offset) })
+    for (const [key, value] of Object.entries(filter ?? {})) {
+      if (value) query.set(key, value)
+    }
+    return request<ShotsPage>(`/shots?${query}`)
+  },
   latestShot: () => request<ShotRecord>('/shots/latest'),
   shot: (id: string) => request<ShotRecord>(`/shots/${encodeURIComponent(id)}`),
   annotateShot: (id: string, annotations: ShotAnnotations) =>

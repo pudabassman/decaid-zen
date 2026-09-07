@@ -107,6 +107,231 @@
       "w": 1280,
       "h": 470,
       "page": "page-2"
+    },
+    {
+      "file": "ProfileCarousel.dc.html",
+      "title": "Option D2 — carousel",
+      "x": 2800,
+      "y": 640,
+      "w": 1280,
+      "h": 470,
+      "page": "page-2"
+    },
+    {
+      "file": "ProfileDeck.dc.html",
+      "title": "Option D3 — stacked deck",
+      "x": 0,
+      "y": 1300,
+      "w": 1280,
+      "h": 470,
+      "page": "page-2"
+    },
+    {
+      "file": "ProfileDeckRest.dc.html",
+      "title": "D3 in place — at rest",
+      "x": 1400,
+      "y": 1300,
+      "w": 1280,
+      "h": 800,
+      "page": "page-2"
+    },
+    {
+      "file": "ProfileDeckFan.dc.html",
+      "title": "D3 in place — fanned",
+      "x": 2800,
+      "y": 1300,
+      "w": 1280,
+      "h": 800,
+      "page": "page-2"
+    },
+    {
+      "file": "TopOrigin.dc.html",
+      "title": "A — origin line",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 420,
+      "page": "page-3"
+    },
+    {
+      "file": "TopRest.dc.html",
+      "title": "B — bean rest",
+      "x": 1400,
+      "y": 0,
+      "w": 1280,
+      "h": 420,
+      "page": "page-3"
+    },
+    {
+      "file": "TopBag.dc.html",
+      "title": "C — bag left",
+      "x": 2800,
+      "y": 0,
+      "w": 1280,
+      "h": 420,
+      "page": "page-3"
+    },
+    {
+      "file": "TopToday.dc.html",
+      "title": "D — this week",
+      "x": 0,
+      "y": 800,
+      "w": 1280,
+      "h": 420,
+      "page": "page-3"
+    },
+    {
+      "file": "TopDrift.dc.html",
+      "title": "E — last eight",
+      "x": 1400,
+      "y": 800,
+      "w": 1280,
+      "h": 420,
+      "page": "page-3"
+    },
+    {
+      "file": "TopReady.dc.html",
+      "title": "F — settled",
+      "x": 2800,
+      "y": 800,
+      "w": 1280,
+      "h": 420,
+      "page": "page-3"
+    },
+    {
+      "file": "TopWarmer.dc.html",
+      "title": "G — cup warmer",
+      "x": 0,
+      "y": 1600,
+      "w": 1280,
+      "h": 420,
+      "page": "page-3"
+    },
+    {
+      "file": "TopWake.dc.html",
+      "title": "H — sleep and wake",
+      "x": 1400,
+      "y": 1600,
+      "w": 1280,
+      "h": 420,
+      "page": "page-3"
+    },
+    {
+      "file": "TopInPlace.dc.html",
+      "title": "B + C in place",
+      "x": 0,
+      "y": 2400,
+      "w": 1280,
+      "h": 800,
+      "page": "page-3"
+    },
+    {
+      "file": "TopRoaster.dc.html",
+      "title": "I — new at your roaster",
+      "x": 2800,
+      "y": 1600,
+      "w": 1280,
+      "h": 420,
+      "page": "page-3"
+    },
+    {
+      "file": "TopGrind.dc.html",
+      "title": "J — grind advice (E with a verdict)",
+      "x": 1400,
+      "y": 2400,
+      "w": 1280,
+      "h": 420,
+      "page": "page-3"
+    },
+    {
+      "file": "SleepStill.dc.html",
+      "title": "A — still",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "page": "page-4"
+    },
+    {
+      "file": "SleepAsh.dc.html",
+      "title": "B — ash",
+      "x": 1400,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "page": "page-4"
+    },
+    {
+      "file": "SleepHours.dc.html",
+      "title": "C — hours",
+      "x": 2800,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "page": "page-4"
+    },
+    {
+      "file": "SleepLoaded.dc.html",
+      "title": "D — loaded",
+      "x": 0,
+      "y": 1080,
+      "w": 1280,
+      "h": 800,
+      "page": "page-4"
+    },
+    {
+      "file": "SleepUntil.dc.html",
+      "title": "E — until",
+      "x": 1400,
+      "y": 1080,
+      "w": 1280,
+      "h": 800,
+      "page": "page-4"
+    },
+    {
+      "file": "SleepGhost.dc.html",
+      "title": "F — ghost",
+      "x": 2800,
+      "y": 1080,
+      "w": 1280,
+      "h": 800,
+      "page": "page-4"
+    },
+    {
+      "file": "SleepConstellation.dc.html",
+      "title": "G — constellation",
+      "x": 0,
+      "y": 2160,
+      "w": 1280,
+      "h": 800,
+      "page": "page-4"
+    },
+    {
+      "file": "SleepTally.dc.html",
+      "title": "H — tally",
+      "x": 1400,
+      "y": 2160,
+      "w": 1280,
+      "h": 800,
+      "page": "page-4"
+    },
+    {
+      "file": "SleepBreath.dc.html",
+      "title": "I — breath",
+      "x": 2800,
+      "y": 2160,
+      "w": 1280,
+      "h": 800,
+      "page": "page-4"
+    },
+    {
+      "file": "SleepHorizon.dc.html",
+      "title": "J — horizon",
+      "x": 0,
+      "y": 3240,
+      "w": 1280,
+      "h": 800,
+      "page": "page-4"
     }
   ],
   "annotations": [
@@ -193,15 +418,223 @@
     {
       "id": "grind-note",
       "x": 1400,
-      "y": 1200,
+      "y": 2220,
       "w": 620,
       "page": "page-2",
       "text": "GRIND IS PER PROFILE\nEvery option shows the grind attached to its profile, because the same bean wants a different setting per profile. Switching profile should switch the grind reading with it, and editing grind should write back against the profile in view."
+    },
+    {
+      "id": "opt-d2",
+      "x": 4300,
+      "y": 640,
+      "w": 380,
+      "page": "page-2",
+      "text": "D2 — CURVE CAROUSEL\nSame curve cards as D, but the strip scrolls: the selected profile sits centre, neighbours peek in at both edges, and the row below marks position in the rotation.\n\nWhy: keeps D's recognise-by-shape advantage without needing all five to fit, so the rotation can grow past five.\nTradeoff: two of the five are always half-hidden, and a swipe target competes with the screen's existing left/right edge gestures."
+    },
+    {
+      "id": "opt-d3",
+      "x": -460,
+      "y": 1300,
+      "w": 380,
+      "page": "page-2",
+      "text": "D3 — STACKED DECK\nThe curve cards stack almost on top of each other: the selected profile is a full card in front, the rest tuck behind and to the side, each showing a sliver of its own curve.\n\nWhy: five profiles cost about the width of two cards, so the rotation can grow without eating the screen, and the deck reads as one object rather than a list.\nTradeoff: only the front card is properly legible — the others are recognised by position and a peek of curve, so switching is swipe-and-look rather than a direct hit."
+    },
+    {
+      "id": "d3-in-place",
+      "x": 1400,
+      "y": 2220,
+      "w": 620,
+      "page": "page-2",
+      "text": "D3 IN PLACE\nAt rest the deck is collapsed to a single 52px badge above the last-shot band — front curve, name, its grind, and five dots for position. The graph keeps 308 of its 341px.\n\nDragging or tapping the badge fans the deck UPWARD out of it, over the dimmed bean and readings block. The last-shot graph is never covered and nothing reflows; picking a card collapses the deck back into the badge."
+    },
+    {
+      "id": "tr-brief",
+      "x": -460,
+      "y": 0,
+      "w": 420,
+      "text": "THE ZONE\nThe band right of the profile badge, above the last-shot rule: about 740 x 92 px of nothing. Every board here is the top of Idle cropped at 420px, so the left side is the screen as it stands and the right side is the idea.\n\nOne idea per board, quietest first. All of them read from the gateway the skin already talks to; the API note under each says what it costs.",
+      "page": "page-3"
+    },
+    {
+      "id": "tr-a",
+      "x": 0,
+      "y": -260,
+      "w": 380,
+      "text": "A — ORIGIN LINE\nWhere the bean came from, set small under the values: region, process, variety, altitude.\n\nWhy: the bean name is already the hero on the left; this finishes the sentence and adds no numbers to a screen that has plenty.\nTradeoff: it never changes between shots, so it is decoration more than information.\nData: GET /api/v1/beans -- country, region, variety, processing, altitude. Empty for beans typed straight into the workflow, so it needs the beans API wired first (or the catalog plugin filling those fields).",
+      "page": "page-3"
+    },
+    {
+      "id": "tr-b",
+      "x": 1400,
+      "y": -260,
+      "w": 380,
+      "text": "B — BEAN REST\nDays off roast against the window where this bean is worth drinking, with the dot moving right one notch a day.\n\nWhy: the one fact about the bean that changes daily and actually changes the shot. Answers 'is it ready yet' without arithmetic.\nTradeoff: the window (4-18 days here) is a guess unless you set it per bean; light roasts and decafs want different numbers.\nData: roastDate on the bean batch -- GET /api/v1/beans/{id}/batches. Nothing else needed.",
+      "page": "page-3"
+    },
+    {
+      "id": "tr-c",
+      "x": 2800,
+      "y": -260,
+      "w": 380,
+      "text": "C — BAG LEFT\nGrams left in the bag, the same figure as doses, with a hairline that empties as you drink it.\n\nWhy: it is the thing you actually want to know before you commit the last 18 g to a dialling-in shot, and the reorder cue.\nTradeoff: only true if every dose is logged against the batch -- a shot pulled from another bag silently skews it.\nData: weight and weightRemaining on the batch. Decrement by targetDoseWeight after each shot with PUT /api/v1/bean-batches/{id}.",
+      "page": "page-3"
+    },
+    {
+      "id": "tr-d",
+      "x": 0,
+      "y": 540,
+      "w": 380,
+      "text": "D — THIS WEEK\nSeven micro bars, one per day, today's in white, with the count beside them.\n\nWhy: warm, human, and it makes the machine feel lived-in rather than instrumented. Costs no thought to read.\nTradeoff: it is a habit tracker, not a brewing aid -- and a quiet week reads as a scolding.\nData: GET /api/v1/shots?limit=100 and bucket the timestamps. One call on load, no new endpoints.",
+      "page": "page-3"
+    },
+    {
+      "id": "tr-e",
+      "x": 1400,
+      "y": 540,
+      "w": 380,
+      "text": "E — LAST EIGHT\nThe last eight shot times as dots around the target band. Tight cluster means dialled in; a drift means the grind is moving.\n\nWhy: the most useful thing on this list. It is the dial-in question -- am I consistent -- answered before you touch the grinder.\nTradeoff: needs eight shots on the same bean and profile to mean anything, so it is blank on a fresh bag. Shot time is the crudest of the three axes; yield deviation or extraction ratio would say more.\nData: GET /api/v1/shots filtered by beanId and profileTitle; time from the measurements, or annotations.actualYield when you log it.",
+      "page": "page-3"
+    },
+    {
+      "id": "tr-f",
+      "x": 2800,
+      "y": 540,
+      "w": 380,
+      "text": "F — SETTLED\nGroup temperature over the last twenty minutes, and whether it has stopped moving.\n\nWhy: turns the raw 93.0 in the corner into an answer. A DE1 at temperature for fourteen minutes pulls a different shot than one two minutes off a heat-up.\nTradeoff: overlaps with the Group reading already up there -- it earns its place only if it replaces it rather than sitting beside it.\nData: the machine snapshot socket you already hold. Keep a ring buffer of groupTemperature; nothing to fetch.",
+      "page": "page-3"
+    },
+    {
+      "id": "tr-g",
+      "x": 0,
+      "y": 1340,
+      "w": 380,
+      "text": "G — CUP WARMER\nMat temperature with off / 40 / 60 as tap targets.\n\nWhy: a real control for real hardware that no screen in this skin exposes, and idle is exactly when you would reach for it.\nTradeoff: the only idea here that writes to the machine, and firmware forgets the manual enable across a power cycle, so the state can lie after a restart.\nData: GET and PUT /api/v1/machine/cupWarmer -- temperature, enabled, currentTemperature. Scheduled pre-warm lives at /cupWarmer/preheat if you want it to be warm before you are.",
+      "page": "page-3"
+    },
+    {
+      "id": "tr-h",
+      "x": 1400,
+      "y": 1340,
+      "w": 380,
+      "text": "H — SLEEP AND WAKE\nHow long before the machine sleeps itself, the next scheduled wake, and a tap to hold it awake.\n\nWhy: the countdown is invisible today -- the machine just goes dark mid-conversation. This makes the rule legible and overridable.\nTradeoff: a ticking clock is the opposite of calm, and it is only interesting in the last few minutes.\nData: GET /api/v1/presence/settings for sleepTimeoutMinutes and keepAwakeUntil, /presence/schedules for the next wake. POST /api/v1/machine/heartbeat to push it back.",
+      "page": "page-3"
+    },
+    {
+      "id": "tr-pick",
+      "x": 0,
+      "y": 2140,
+      "w": 620,
+      "text": "B + C IN PLACE\nRest and bag together, on the badge's baseline: one line about the bean, sitting opposite the profile it will be brewed with. Full screen so the balance is honest.\n\nBoth come from the same batch record, so they cost one fetch, and they are the two numbers that change on their own between visits. E is the one to build next if you want the screen to teach you something.\n\nBoth are blank until beans and batches exist -- today the skin only writes coffeeName into the workflow context. That is the TODO item that unlocks this half of the list.",
+      "page": "page-3"
+    },
+    {
+      "id": "tr-i",
+      "x": 2800,
+      "y": 1340,
+      "w": 380,
+      "page": "page-3",
+      "text": "I — NEW AT YOUR ROASTER\nTwo coffees the roaster has listed since you last looked, and how many they carry in total. Tapping opens the picker you already have.\n\nWhy: the only idea on this page that brings something in from outside the machine. It is the difference between a screen that reports and a screen that tells you something you did not know.\nTradeoff: it is a shop window on a machine you use to make coffee -- pleasant on a Sunday, noise on a Tuesday. Keep it to two names, never a price.\nData: the coffee-catalog plugin -- GET /api/v1/plugins/coffee-catalog.reaplugin/coffees?roaster=... returns name, title and url per coffee, cached 24 h. 'New' is a diff, so the skin has to remember what it saw: keep the last name list in /store/decaid-zen and compare. Blank until the plugin is back on the tablet."
+    },
+    {
+      "id": "tr-j",
+      "x": 1400,
+      "y": 2140,
+      "w": 620,
+      "page": "page-3",
+      "text": "J — GRIND ADVICE\nE plus a verdict: the same eight shots, but plotted as puck resistance rather than seconds, with the grind setting the history says to move to. The dotted line is the trend, the band is where your good shots sat.\n\nTHE MEASURE. Shot time is the crude proxy; resistance is the real one, and the profile gives you the reference. Every measurement carries profileFrame, so bucket the samples by frame and compare like with like: within the plateau frame, R = pressure / flow, in bar per ml/s. That works whichever way the frame is driven -- a flow frame answers in pressure, a pressure frame answers in flow, and R reads both. Target R is the median of past shots on this bean and profile that landed in the yield window (annotations.actualYield) or rated well (annotations.enjoyment).\n\nTHE STEP. Direction is free -- R above target means finer than needed, so go coarser. The SIZE needs a gain, clicks per unit of R, and that is grinder-specific: regress grinderSetting against log R over the shots you already store per profile in grindMemory. Until five or so distinct settings exist for that grinder, say 'a little coarser' and no number. Never suggest inside the noise: hold unless the deviation clears one standard deviation of that bean's own history, and say 'holding' when it does not.\n\nWHAT IT CANNOT SEE. Dose scatter, distribution and tamp, the bean drying out day by day, a temperature change -- all of them move R, none of them are a grind problem. Require the same dose within a few tenths and at least three shots on the bean before it speaks, show the evidence line under the verdict so the suggestion is arguable rather than oracular, and make the number a tap that writes grinderSetting -- never an automatic write.\n\nData: GET /api/v1/shots?beanId&profileTitle for the set, GET /api/v1/shots/{id} for measurements, the profile's steps for the frame targets, and /store/decaid-zen/grindByProfile for what you last dialled."
+    },
+    {
+      "id": "sleep-a",
+      "x": 0,
+      "y": -300,
+      "w": 380,
+      "page": "page-4",
+      "text": "A — STILL\nThe screen you left, faded to a tenth. Nothing is replaced, only dimmed, with one line of instruction at the centre.\n\nWhy: it is the least invented option -- the layout stays where your eye already knows it, and waking feels like a light coming up rather than a screen change.\nTradeoff: a full-detail layout at 10 % is still a busy image, and it is the worst case for burn-in because every element stays exactly where it was."
+    },
+    {
+      "id": "sleep-b",
+      "x": 1400,
+      "y": -300,
+      "w": 380,
+      "page": "page-4",
+      "text": "B — ASH\nBlack, with the water rail left glowing at its level and one word in the corner.\n\nWhy: keeps the one piece of chrome that means something overnight -- if the tank is low you can see it from across the room -- and costs almost no light.\nTradeoff: says nothing else. If you wanted the time or the bean you will still be picking up your phone."
+    },
+    {
+      "id": "sleep-c",
+      "x": 2800,
+      "y": -300,
+      "w": 380,
+      "page": "page-4",
+      "text": "C — HOURS\nThe time, large, in Spectral, with the date beneath it.\n\nWhy: the machine is on a counter you walk past all day; a clock is the thing a dark screen is most often asked for.\nTradeoff: it makes an espresso machine into a clock, and a 168 px numeral parked in one spot is exactly what burns a panel. Drift it."
+    },
+    {
+      "id": "sleep-d",
+      "x": 0,
+      "y": 780,
+      "w": 380,
+      "page": "page-4",
+      "text": "D — LOADED\nWhat is in the hopper: bean, roaster, profile, grind.\n\nWhy: answers the question you actually have when you walk up to a sleeping machine, before you have decided to wake it.\nTradeoff: it goes stale the moment you change bags without telling the app, and it is the same text that will be on the screen the moment you wake it."
+    },
+    {
+      "id": "sleep-e",
+      "x": 1400,
+      "y": 780,
+      "w": 380,
+      "page": "page-4",
+      "text": "E — UNTIL\nThe next scheduled wake and how long until it.\n\nWhy: the one fact that only matters while it is asleep. Also the moment to catch a wrong schedule -- the night before, not at 06:20.\nTradeoff: only interesting if you actually run wake schedules, and a countdown implies the machine is doing something when it is not.\nData: GET /api/v1/presence/settings and /presence/schedules."
+    },
+    {
+      "id": "sleep-f",
+      "x": 2800,
+      "y": 780,
+      "w": 380,
+      "page": "page-4",
+      "text": "F — GHOST\nThe last shot's pressure and weight curves at a tenth of their brightness, drawn edge to edge.\n\nWhy: continuous with Idle, which already ends on that graph -- it reads as the same screen exhaling. Beautiful at a distance, and it is a picture rather than a readout.\nTradeoff: it is the previous shot, forever, which starts to feel like a museum label by the second day."
+    },
+    {
+      "id": "sleep-g",
+      "x": 0,
+      "y": 1860,
+      "w": 380,
+      "page": "page-4",
+      "text": "G — CONSTELLATION\nThe last eight shots as dim dots on their median line -- the new Idle section, at rest.\n\nWhy: keeps the one thing on the screen that has been changing, and it looks like a night sky rather than a chart.\nTradeoff: unreadable as data at this contrast. It is the memory of a chart, so if the point is to check your consistency, this is not it."
+    },
+    {
+      "id": "sleep-h",
+      "x": 1400,
+      "y": 1860,
+      "w": 380,
+      "page": "page-4",
+      "text": "H — TALLY\nThe lifetime shot count.\n\nWhy: the only number that never resets, and a quiet piece of pride from a machine you have kept for years.\nTradeoff: pure vanity, and it needs a total the API does not hand you directly -- GET /api/v1/shots?limit=1 carries `total`, so it is one cheap call, but it counts every flush-adjacent record the database kept."
+    },
+    {
+      "id": "sleep-i",
+      "x": 2800,
+      "y": 1860,
+      "w": 380,
+      "page": "page-4",
+      "text": "I — BREATH\nOne teal dot, breathing on a six-second cycle, dead centre. Nothing else.\n\nWhy: proves the screen is alive without lighting it -- from across the room it reads as 'off but well', and it is the friendliest thing on this page at 3 a.m.\nTradeoff: a moving pixel is a moving pixel; on an OLED it is the safest option here, on an LCD it is a small backlight cost for no information."
+    },
+    {
+      "id": "sleep-j",
+      "x": 0,
+      "y": 2940,
+      "w": 380,
+      "page": "page-4",
+      "text": "J — HORIZON\nA single hairline across the lower third, carrying the four DE1 colours where they fall, with the group temperature cooling beneath it.\n\nWhy: the most 'skin' of the abstract options -- it is the graph's palette reduced to one line, and the temperature gives it a reason to change through the night.\nTradeoff: decorative first, informative second, and the gradient is the one thing on this page the rest of the skin does not do anywhere else."
+    },
+    {
+      "id": "sl-brief",
+      "x": -520,
+      "y": 0,
+      "w": 440,
+      "text": "THE SLEEP SCREEN\nSleep puts the machine down; the screen should follow. Ten directions, all in the skin's own vocabulary -- Newsreader, Spectral numerals, Jost caps, hairlines, no cards -- on a ground one step darker than Idle (#0b0a09 against #131210) so the panel itself reads as dimmed.\n\nEVERY board behaves the same: a tap anywhere wakes the machine (PUT /api/v1/machine/state/idle) and returns to Idle. No visible control -- the whole screen is the target.\n\nBURN-IN. This is a tablet that will hold one image for hours. Anything with fixed bright type (C, E, H) should drift a few pixels on a slow cycle, and nothing should sit above about 30 % ink.",
+      "page": "page-4"
     }
   ],
   "launch": {
     "view": "canvas",
-    "page": "page-2"
+    "page": "page-4"
   },
   "pages": [
     {
@@ -211,6 +644,14 @@
     {
       "id": "page-2",
       "name": "Profile options"
+    },
+    {
+      "id": "page-3",
+      "name": "Top-right ideas"
+    },
+    {
+      "id": "page-4",
+      "name": "Sleep screen"
     }
   ]
 }

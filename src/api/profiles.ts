@@ -12,7 +12,9 @@ const STORE = 'decaid-zen'
 const GRIND_KEY = 'grindByProfile'
 const PREFERRED_KEY = 'preferredProfiles'
 /** the deck holds at most this many profiles */
-export const MAX_DECK = 5
+export const MAX_DECK = 10
+/** how many of them the badge shows at once, as cards and as dots */
+export const DECK_WINDOW = 5
 
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = init?.body ? { 'content-type': 'application/json', ...init?.headers } : init?.headers
