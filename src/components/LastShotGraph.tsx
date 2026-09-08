@@ -14,7 +14,7 @@ const baseSeries = (yieldByWeight: boolean) => [
 ]
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
-const PAD_TOP = 56
+const PAD_TOP = 38
 /** floor and ceiling for the right-hand label gutter */
 const PAD_RIGHT_MIN = 40
 const PAD_RIGHT_MAX = 84

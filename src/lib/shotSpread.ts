@@ -1,5 +1,5 @@
 export const BAND_SECONDS = 2
-export const MIN_SHOTS = 2
+export const MIN_SHOTS = 1
 export const MIN_SECONDS = 8
 
 export type Verdict = 'steady' | 'long' | 'fast'

@@ -2,7 +2,9 @@
 
 html, body, #root {
   margin: 0;
-  height: 100%;
+  /* the keyboard overlays the page; the layout keeps the full window height */
+  height: 100vh;
+  height: 100lvh;
   overflow: hidden;
   background: var(--ground);
   color: var(--ink);
@@ -19,7 +21,7 @@ a { color: var(--flow); }
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 26px var(--margin-x) var(--unit);
+  padding: var(--screen-top) var(--margin-x) var(--unit);
 }
 
 .cap {
@@ -90,13 +92,15 @@ a { color: var(--flow); }
 .btn .trace { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
 .btn .trace rect, .btn .trace circle {
   fill: none;
-  stroke: var(--ink);
+  /* no stroke at rest: a round cap on a fully offset dash paints a dot at the path start */
+  stroke: none;
   stroke-width: 1.5;
   stroke-linecap: round;
   stroke-dasharray: 100;
   stroke-dashoffset: 100;
 }
 .btn.tracing .trace rect, .btn.tracing .trace circle {
+  stroke: var(--ink);
   animation: traceRun 700ms cubic-bezier(0.4, 0, 0.2, 1) forwards,
              traceFade 400ms 720ms ease-out forwards;
 }
@@ -302,9 +306,9 @@ a { color: var(--flow); }
 .deckbadge {
   display: flex;
   align-items: center;
-  gap: 18px;
-  height: 52px;
-  padding: 0 20px 0 14px;
+  gap: clamp(9px, 1.2vw, 18px);
+  height: clamp(38px, 6.4vh, 52px);
+  padding: 0 clamp(11px, 1.4vw, 20px) 0 clamp(8px, 1vw, 14px);
   border: 1px solid var(--rule);
   border-radius: 16px;
   background: var(--panel);
@@ -313,7 +317,7 @@ a { color: var(--flow); }
   cursor: pointer;
   touch-action: none;
 }
-.deckname { font-size: 20px; color: var(--ink); }
+.deckname { font-size: clamp(15px, 1.6vw, 20px); color: var(--ink); }
 .deckdots { display: flex; gap: 5px; margin-left: 6px; }
 .deckdots span { width: 5px; height: 5px; border-radius: 50%; background: var(--grip); }
 .deckdots span.on { background: var(--ink); }
@@ -321,27 +325,23 @@ a { color: var(--flow); }
 .deckveil {
   animation: veilIn 180ms ease-out both;
   position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
+  inset: 0;
   background: rgba(19, 18, 16, 0.88);
   z-index: 60;
 }
 .deckfan {
   position: fixed;
-  left: var(--margin-x);
-  right: var(--margin-x);
   z-index: 61;
   touch-action: none;
 }
 .decktrack {
   position: relative;
+  width: 0;
   height: 184px;
-  overflow: hidden;
 }
 .deckcard {
   animation: cardIn 240ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  transition: left 260ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 260ms ease,
+  transition: right 260ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 260ms ease,
     opacity 260ms ease, border-color 240ms ease;
   position: absolute;
   bottom: 0;
@@ -358,6 +358,7 @@ a { color: var(--flow); }
   box-shadow: -26px 0 46px -24px rgba(0, 0, 0, 0.95);
 }
 .deckcard.on { border-color: #3c3830; background: var(--panel); }
+.deckbadge { position: relative; z-index: 62; }
 .deckcard .deckname { color: var(--ink); }
 .deckcard:not(.on) .cap { color: #5d574c; }
 .deckcard .deckname {
@@ -397,7 +398,7 @@ a { color: var(--flow); }
 
 .lastshotlabel,
 .lastshotstats {
-  transform: translateY(26px);
+  transform: translateY(16px);
   position: relative;
   z-index: 2;
   pointer-events: none;
@@ -645,3 +646,25 @@ a { color: var(--flow); }
 @media (prefers-reduced-motion: reduce) {
   .sleepdrift { animation: none; }
 }
+
+.btn.holding .trace rect, .btn.holding .trace circle {
+  stroke: var(--ink);
+  animation: traceRun var(--hold-ms, 3000ms) linear forwards;
+}
+
+.beanname { font-size: var(--type-bean); }
+.beanname.mid { font-size: var(--type-bean-mid); }
+.beanname.long { font-size: var(--type-bean-long); }
+
+.spreadplot { width: clamp(150px, 21vw, 270px); height: clamp(34px, 6.4vh, 54px); }
+.spreadvalue { font-size: clamp(26px, 3.4vw, 44px); }
+
+.headerright {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: clamp(8px, 1.8vh, 20px);
+  flex: 0 0 auto;
+}
+
+.headerright .deckwrap { align-self: center; }

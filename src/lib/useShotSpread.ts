@@ -14,10 +14,12 @@ async function durationOf(id: string): Promise<number | null> {
   return stats.seconds
 }
 
+export type Basis = 'bean' | 'profile'
+
 export interface Reading {
   spread: Spread
-  /** false when there were too few shots on this bean and the profile alone had to answer */
-  onBean: boolean
+  /** how wide the net had to be cast to find enough shots */
+  basis: Basis
 }
 
 export function useShotSpread(coffeeName: string | undefined, profileTitle: string | undefined, count = 8) {
@@ -46,12 +48,12 @@ export function useShotSpread(coffeeName: string | undefined, profileTitle: stri
       const onBean = spreadOf(coffeeName ? await durations({ coffeeName, profileTitle }) : [])
       if (cancelled) return
       if (onBean) {
-        setReading({ spread: onBean, onBean: true })
+        setReading({ spread: onBean, basis: 'bean' })
         return
       }
       const onProfile = spreadOf(await durations({ profileTitle }))
       if (cancelled) return
-      setReading(onProfile ? { spread: onProfile, onBean: false } : null)
+      setReading(onProfile ? { spread: onProfile, basis: 'profile' } : null)
     }
 
     load().catch(() => {

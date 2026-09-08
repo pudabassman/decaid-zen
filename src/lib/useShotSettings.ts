@@ -10,9 +10,12 @@ export function useShotSettings() {
     if (frame && typeof frame.targetSteamTemp === 'number') setSettings(frame)
   })
 
+  // the machine parses the whole object, so a partial patch would fail on the missing keys
   const patch = (next: Partial<ShotSettings>) => {
-    setSettings((prev) => (prev ? { ...prev, ...next } : prev))
-    return settingsApi.saveShotSettings(next)
+    if (!settings) return Promise.resolve()
+    const merged = { ...settings, ...next }
+    setSettings(merged)
+    return settingsApi.saveShotSettings(merged)
   }
 
   return { settings, patch }

@@ -13,8 +13,9 @@ interface Props {
 
 const CARD_W = 232
 const STEP = 54
-/** where the first seat starts inside the frame */
-const FRONT = 54
+/** where the first seat starts, measured from the badge's left edge */
+const FRONT = 0
+const TRACK_H = 184
 const VIEW_W = 110
 const VIEW_H = 50
 
@@ -50,8 +51,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const [open, setOpen] = useState(MOCK && window.location.search.includes('fan'))
   const [closing, setClosing] = useState(false)
   const [candidate, setCandidate] = useState<string | null>(null)
-  const [anchor, setAnchor] = useState(0)
-  const [anchorBottom, setAnchorBottom] = useState(0)
+  const [anchor, setAnchor] = useState({ top: 0, right: 0, height: 0 })
   const [pan, setPan] = useState(0)
   const rotation = useRef(0)
   const dragging = useRef(false)
@@ -73,11 +73,10 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
     return raw > count / 2 ? raw - count : raw
   }
   const seated = (signed: number) => signed >= -middle && signed <= visible - 1 - middle
-  const slot = wrap(activeIndex - Math.round(pan / STEP))
+  // seats run leftward from the badge, so a drag to the right walks the ring forward
+  const slot = wrap(activeIndex + Math.round(pan / STEP))
   const cameFrom = previousSlot.current
   const highlighted = candidate ?? records[slot]?.id ?? activeId
-  /** not enough room above the badge: drop the deck below it instead */
-  const below = anchor > 0 && anchor < 210
 
   useEffect(() => {
     if (!open) {
@@ -85,10 +84,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
       return
     }
     const rect = badge.current?.getBoundingClientRect()
-    if (rect) {
-      setAnchor(rect.top)
-      setAnchorBottom(rect.bottom)
-    }
+    if (rect) setAnchor({ top: rect.top, right: rect.left, height: rect.height })
   }, [open, records.length])
 
   useEffect(() => {
@@ -118,10 +114,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
 
   const startDrag = (e: ReactPointerEvent, el: HTMLElement | null) => {
     const rect = badge.current?.getBoundingClientRect()
-    if (rect) {
-      setAnchor(rect.top)
-      setAnchorBottom(rect.bottom)
-    }
+    if (rect) setAnchor({ top: rect.top, right: rect.left, height: rect.height })
     el?.setPointerCapture?.(e.pointerId)
     dragging.current = true
     moved.current = false
@@ -157,20 +150,14 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
         <>
           <div
             className={`deckveil${closing ? ' closing' : ''}`}
-            style={
-              below
-                ? { top: anchorBottom + 6, height: Math.max(0, window.innerHeight - anchorBottom - 6) }
-                : { height: Math.max(0, anchor - 6) }
-            }
             onPointerUp={() => commit(null)}
           />
           <div
             className={`deckfan${closing ? ' closing' : ''}`}
-            style={
-              below
-                ? { top: anchorBottom + 14 }
-                : { bottom: Math.max(0, window.innerHeight - anchor + 14) }
-            }
+            style={{
+              top: Math.max(6, anchor.top + anchor.height / 2 - TRACK_H / 2),
+              right: Math.max(6, window.innerWidth - anchor.right + 14),
+            }}
             onPointerDown={(e) => startDrag(e, e.currentTarget)}
             onPointerMove={moveDrag}
             onPointerUp={(e) => {
@@ -195,7 +182,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
                     data-profile={record.id}
                     className={`deckcard${on ? ' on' : ''}${warped ? ' warp' : ''}`}
                     style={{
-                      left: FRONT + seat * STEP,
+                      right: FRONT + seat * STEP,
                       zIndex: 60 - Math.abs(seat - middle),
                       transform: `scale(${seat === middle ? 1 : 0.95})`,
                       animationDelay: `${Math.min(i, 4) * 22}ms`,

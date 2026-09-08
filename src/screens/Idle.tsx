@@ -46,6 +46,8 @@ export function Idle({
   const [records, setRecords] = useState<ProfileRecord[]>([])
   const [grinds, setGrinds] = useState<Record<string, string>>({})
   const [preferred, setPreferred] = useState<string[] | null>(null)
+  const [exiting, setExiting] = useState(false)
+  const exitLabel = useRef<number | undefined>(undefined)
   const loaded = useRef(false)
   const screen = useRef<HTMLDivElement>(null)
   const { run, message, busy } = useAction()
@@ -82,7 +84,7 @@ export function Idle({
   const roaster = ctx?.coffeeRoaster ?? ''
   const activeId = matchRecord(records, workflow?.profile)?.id ?? null
   const beanLength = (ctx?.coffeeName ?? '').length
-  const beanSize = beanLength > 46 ? 44 : beanLength > 28 ? 56 : 76
+  const beanClass = beanLength > 46 ? 'long' : beanLength > 28 ? 'mid' : ''
   const listing = useRoasterCatalog(roaster)
   const reading = useShotSpread(ctx?.coffeeName, workflow?.profile?.title)
   const dose = ctx?.targetDoseWeight ?? 18
@@ -127,9 +129,9 @@ export function Idle({
   return (
     <div className="screen" ref={screen}>
 
-      <div style={{ marginBottom: 6 }}>
-        <div className="row between" style={{ marginBottom: 22, alignItems: 'baseline' }}>
-          <div className="row" style={{ gap: 14 }}>
+      <div className="row between" style={{ alignItems: 'flex-start', gap: 'clamp(16px, 2.6vw, 40px)' }}>
+        <div className="headercol" style={{ minWidth: 0 }}>
+          <div className="row" style={{ gap: 14, marginBottom: 'clamp(6px, 1.4vh, 18px)' }}>
           <span className="cap">
             <EditableValue
               className="cap"
@@ -161,22 +163,10 @@ export function Idle({
             )}
           </div>
 
-          <div className="row baseline" style={{ gap: 34, opacity: asleep ? 0.45 : 1 }}>
-            <Reading label="Group" value={`${fmt(snapshot?.groupTemperature)}°`} />
-            <Reading label="Steam" value={`${fmt(snapshot?.steamTemperature)}°`} />
-            <Reading label="Scale" value={machine.scaleConnected ? `${fmt(scale?.weight ?? 0)} g` : 'none'} />
-          </div>
-        </div>
-
-        <div className="row between" style={{ alignItems: 'flex-end' }}>
-          <div style={{ minWidth: 0, maxWidth: 720 }}>
+          <div style={{ minWidth: 0 }}>
           <div
-            className="display"
-            style={{
-              fontSize: beanSize,
-              lineHeight: 0.98,
-              letterSpacing: '-0.02em',
-            }}
+            className={`display beanname ${beanClass}`}
+            style={{ lineHeight: 0.98, letterSpacing: '-0.02em' }}
           >
             <EditableValue
               className="clamp2 bare"
@@ -188,7 +178,10 @@ export function Idle({
             />
           </div>
           </div>
-          <div className="row baseline" style={{ gap: 40, flex: '0 0 auto' }}>
+          <div
+            className="row baseline"
+            style={{ gap: 'clamp(16px, 2.6vw, 40px)', marginTop: 'clamp(6px, 1.4vh, 16px)' }}
+          >
           <EditableReading
             label="Dose"
             value={fmt(dose)}
@@ -203,7 +196,7 @@ export function Idle({
             numeric
             onCommit={(next) => patchWorkflow({ targetYield: number(next, target) })}
           />
-          <Reading label="Ratio" value={`1:${(target / (dose || 1)).toFixed(1)}`} size={38} color="var(--weight)" />
+          <Reading label="Ratio" value={`1:${(target / (dose || 1)).toFixed(1)}`} size="var(--type-value)" color="var(--weight)" />
           <EditableReading
             label="Grind"
             value={ctx?.grinderSetting ?? ''}
@@ -217,6 +210,20 @@ export function Idle({
           </div>
         </div>
 
+        <div className="headerright">
+          <div className="row baseline" style={{ gap: 'clamp(14px, 2.2vw, 34px)', opacity: asleep ? 0.45 : 1 }}>
+            <Reading label="Group" value={`${fmt(snapshot?.groupTemperature)}°`} />
+            <Reading label="Steam" value={`${fmt(snapshot?.steamTemperature)}°`} />
+            <Reading label="Scale" value={machine.scaleConnected ? `${fmt(scale?.weight ?? 0)} g` : 'none'} />
+          </div>
+          {reading && <ShotSpread reading={reading} />}
+          <ProfileDeck
+            records={preferredRecords(records, preferred)}
+            activeId={activeId}
+            grinds={grinds}
+            onPick={pickProfile}
+          />
+        </div>
       </div>
 
       <div
@@ -240,15 +247,6 @@ export function Idle({
       </div>
 
 
-      <div className="row between" style={{ marginTop: 18, marginBottom: 12, alignItems: 'flex-end' }}>
-        <ProfileDeck
-              records={preferredRecords(records, preferred)}
-              activeId={activeId}
-              grinds={grinds}
-              onPick={pickProfile}
-        />
-        {reading && <ShotSpread reading={reading} />}
-      </div>
 
       <div className="row between" style={{ height: 0, alignItems: 'center' }}>
         <span className="cap strong lastshotlabel">
@@ -257,7 +255,7 @@ export function Idle({
           {stats ? ` · ${stats.seconds.toFixed(1)} s` : ''}
         </span>
         {stats && (
-          <div className="row lastshotstats" style={{ gap: 30, alignItems: 'center' }}>
+          <div className="row lastshotstats" style={{ gap: 'clamp(12px, 2vw, 30px)', alignItems: 'center' }}>
             <Swatch color="var(--temp)" value={`${stats.endBrewTemp.toFixed(1)}°`} label="brew" />
             <Swatch color="var(--bar)" value={stats.peakPressure.toFixed(1)} label="peak bar" />
             <Swatch color="var(--weight)" value={stats.yieldValue.toFixed(1)} label={stats.yieldUnit === 'g' ? 'grams' : 'ml volume'} />
@@ -269,7 +267,7 @@ export function Idle({
       <LastShotGraph shot={last} />
       </div>
 
-      <div style={{ height: 18 }} />
+      <div style={{ height: 'clamp(4px, 1vh, 18px)' }} />
 
       <div className="row between">
         <div className="row" style={{ gap: 14 }}>
@@ -297,13 +295,31 @@ export function Idle({
             height={52}
             hot
             disabled={busy}
+            holdMs={2000}
+            tapWindowMs={1000}
+            onHoldChange={(holding) => {
+              window.clearTimeout(exitLabel.current)
+              if (!holding) {
+                setExiting(false)
+                return
+              }
+              exitLabel.current = window.setTimeout(() => setExiting(true), 1000)
+            }}
+            onHold={() =>
+              run('Sleep and leave', async () => {
+                await client.requestState('sleeping')
+                window.decentApp?.exitToDashboard?.()
+              })
+            }
             onClick={() =>
               asleep
                 ? run('Wake', () => client.requestState('idle'))
                 : run('Sleep', () => client.requestState('sleeping'))
             }
           >
-            <span className="display" style={{ fontSize: 24, letterSpacing: '0.03em' }}>{asleep ? 'Wake' : 'Sleep'}</span>
+            <span className="display" style={{ fontSize: 24, letterSpacing: '0.03em' }}>
+              {asleep ? 'Wake' : exiting ? 'Exit' : 'Sleep'}
+            </span>
           </Button>
         </div>
       </div>
@@ -324,9 +340,9 @@ export function Idle({
 
 function Swatch({ color, value, label }: { color: string; value: string; label: string }) {
   return (
-    <div className="row" style={{ gap: 9, color, alignItems: 'center' }}>
+    <div className="row" style={{ gap: 7, color, alignItems: 'center' }}>
       <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flex: '0 0 auto' }} />
-      <span className="num" style={{ fontSize: 22, lineHeight: 1 }}>{value}</span>
+      <span className="num" style={{ fontSize: 'var(--type-swatch)', lineHeight: 1 }}>{value}</span>
       <span className="cap" style={{ color, lineHeight: 1 }}>{label}</span>
     </div>
   )
@@ -344,10 +360,10 @@ function EditableReading({
 }) {
   return (
     <div style={{ textAlign: 'right' }}>
-      <div className="cap" style={{ marginBottom: 8, lineHeight: 1 }}>{label}</div>
+      <div className="cap" style={{ marginBottom: 5, lineHeight: 1 }}>{label}</div>
       <EditableValue
         className="num bare"
-        style={{ fontSize: 38, lineHeight: 1, display: 'inline-block' }}
+        style={{ fontSize: 'var(--type-value)', lineHeight: 1, display: 'inline-block' }}
         label={label}
         value={value}
         placeholder={placeholder}
@@ -360,11 +376,11 @@ function EditableReading({
   )
 }
 
-function Reading({ label, value, size = 26, color }: { label: string; value: string; size?: number; color?: string }) {
+function Reading({ label, value, size, color }: { label: string; value: string; size?: string; color?: string }) {
   return (
     <div style={{ textAlign: 'right' }}>
-      <div className="cap" style={{ marginBottom: 6, lineHeight: 1 }}>{label}</div>
-      <span className="num" style={{ fontSize: size, color, lineHeight: 1, display: 'inline-block' }}>
+      <div className="cap" style={{ marginBottom: 4, lineHeight: 1 }}>{label}</div>
+      <span className="num" style={{ fontSize: size ?? 'var(--type-reading)', color, lineHeight: 1, display: 'inline-block' }}>
         {value}
       </span>
     </div>

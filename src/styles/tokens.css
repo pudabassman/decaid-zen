@@ -20,8 +20,16 @@
   --weight: #d3b06a;
   --flow: #4fbcc6;
 
-  --unit: 12px;
-  --margin-x: 60px;
+  --unit: clamp(6px, 1.1vh, 12px);
+  --margin-x: clamp(12px, 2.2vw, 34px);
+  --screen-top: clamp(8px, 1.6vh, 20px);
+
+  --type-bean: clamp(30px, 5vw, 62px);
+  --type-bean-mid: clamp(26px, 4vw, 50px);
+  --type-bean-long: clamp(21px, 3.1vw, 40px);
+  --type-value: clamp(22px, 2.7vw, 34px);
+  --type-reading: clamp(16px, 1.9vw, 24px);
+  --type-swatch: clamp(15px, 1.7vw, 21px);
 
   --serif: 'Newsreader', Georgia, serif;
   --sans: 'Jost', system-ui, sans-serif;

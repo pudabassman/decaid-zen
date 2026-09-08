@@ -187,6 +187,10 @@ function route(path: string, method: string, body: unknown): Response | null {
 
   if (pathname.endsWith('/shots/latest')) return ok(shots()[0])
   if (pathname.endsWith('/shots')) {
+    if (typeof window !== 'undefined' && window.location.search.includes('one')) {
+      const one = shots().slice(0, 1)
+      return ok({ items: one, total: one.length, limit: 1, offset: 0 })
+    }
     const coffeeName = params.get('coffeeName')
     const profileTitle = params.get('profileTitle')
     const limit = Number(params.get('limit') ?? 20)

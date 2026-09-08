@@ -18,11 +18,15 @@ export function SchedulesSection({
   return (
     <Section title="Wake schedules">
       {schedules.map((schedule) => {
-        const days = schedule.days?.length === 7
+        const chosen = schedule.daysOfWeek ?? []
+        const days = chosen.length === 7
           ? 'every day'
-          : (schedule.days ?? []).map((d) => DAYS[(d - 1 + 7) % 7]).join(' ') || 'no days'
+          : chosen.length === 0
+            ? 'no days set'
+            : chosen.map((d) => DAYS[(d - 1 + 7) % 7]).join(' ')
+        const hint = schedule.keepAwakeFor ? `${days} · awake ${schedule.keepAwakeFor} min` : days
         return (
-          <Row key={schedule.id} label={schedule.time} hint={days}>
+          <Row key={schedule.id} label={schedule.time} hint={hint}>
             <Toggle on={schedule.enabled} onChange={() => onToggle(schedule)} />
           </Row>
         )

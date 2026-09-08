@@ -60,8 +60,8 @@ export interface WakeSchedule {
   id: string
   enabled: boolean
   time: string
-  days: number[]
-  durationMinutes?: number
+  daysOfWeek: number[]
+  keepAwakeFor?: number
 }
 
 export interface ShotSettings {
@@ -178,7 +178,7 @@ export const settingsApi = {
 
   setRefillLevel: (refillLevel: number) => post('/machine/waterLevels', { refillLevel }),
 
-  saveShotSettings: (patch: Partial<ShotSettings>) => post('/machine/shotSettings', patch),
+  saveShotSettings: (settings: ShotSettings) => post('/machine/shotSettings', settings),
 
   cupWarmer: () => call<CupWarmer>('/machine/cupWarmer'),
   saveCupWarmer: (patch: Partial<Pick<CupWarmer, 'temperature' | 'enabled'>>) =>
