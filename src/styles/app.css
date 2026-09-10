@@ -668,3 +668,26 @@ a { color: var(--flow); }
 }
 
 .headerright .deckwrap { align-self: center; }
+
+.shotplot { cursor: pointer; }
+.shotplot.full {
+  inset: 0;
+  z-index: 90;
+  background: var(--ground);
+  padding: var(--screen-top) var(--margin-x) var(--unit);
+  animation: plotIn 200ms ease-out both;
+}
+@keyframes plotIn { from { opacity: 0.4; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .shotplot.full { animation: none; }
+}
+
+.findscale {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.findscale:disabled { opacity: 0.5; }

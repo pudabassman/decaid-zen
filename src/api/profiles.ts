@@ -58,6 +58,21 @@ export const profiles = {
     }),
 }
 
+/** grind is remembered per profile and coffee; an unknown pairing has no grind, not an old one */
+export const grindKey = (profileId: string, coffeeName: string | undefined) => {
+  const bean = (coffeeName ?? '').trim().toLowerCase()
+  return bean ? `${profileId}::${bean}` : profileId
+}
+
+export function rememberedGrind(
+  memory: Record<string, string>,
+  profileId: string | null,
+  coffeeName: string | undefined,
+) {
+  if (!profileId) return undefined
+  return memory[grindKey(profileId, coffeeName)]
+}
+
 /** the deck shows whatever was chosen; with nothing chosen it falls back to the first few */
 export function preferredRecords(records: ProfileRecord[], ids: string[] | null) {
   if (!ids?.length) return records.slice(0, MAX_DECK)

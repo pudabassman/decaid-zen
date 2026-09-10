@@ -22,15 +22,24 @@ import {
   type MachineSettings,
   type PluginEntry,
   type PresenceSettings,
+  type ShotSettings,
   type SkinEntry,
   type WakeSchedule,
 } from '../api/settings'
 import { useShotSettings } from '../lib/useShotSettings'
 import { client } from '../api/client'
+import type { Workflow } from '../api/types'
 import { bundledPlugin, installBundledPlugin, newerThan, type BundledPlugin } from '../api/bundledPlugin'
 import { CupWarmerSection, ShotSettingsSection } from './settings/BrewSections'
 import { DevicesSection, LedSection, WaterSection } from './settings/HardwareSections'
 import { AboutSection, PluginsSection, SchedulesSection, SkinsSection } from './settings/SoftwareSections'
+
+const CHARGING_RULE: Record<string, string> = {
+  disabled: 'never switched off',
+  longevity: 'keeps 45-55%',
+  balanced: 'keeps 40-80%',
+  highAvailability: 'keeps 80-95%',
+}
 
 export function Settings({ onDone }: { onDone: () => void }) {
   const [app, setApp] = useState<AppSettings | null>(null)
@@ -54,6 +63,7 @@ export function Settings({ onDone }: { onDone: () => void }) {
   const [machineInfo, setMachineInfo] = useState<MachineInfo | null>(null)
   const [update, setUpdate] = useState<AppUpdateState | null>(null)
   const [bundled, setBundled] = useState<BundledPlugin | null>(null)
+  const [workflow, setWorkflow] = useState<Workflow | null>(null)
   const shot = useShotSettings()
   const screen = useRef<HTMLDivElement>(null)
   const { run, message, busy } = useAction()
@@ -82,6 +92,7 @@ export function Settings({ onDone }: { onDone: () => void }) {
     settingsApi.machineInfo().then(setMachineInfo).catch(() => setMachineInfo(null))
     settingsApi.update().then(setUpdate).catch(() => setUpdate(null))
     bundledPlugin().then(setBundled).catch(() => setBundled(null))
+    client.workflow().then(setWorkflow).catch(() => setWorkflow(null))
   }, [])
 
   const togglePreferred = (id: string) => {
@@ -105,6 +116,25 @@ export function Settings({ onDone }: { onDone: () => void }) {
   const patchAdvanced = (patch: Partial<AdvancedSettings>) => {
     setAdvanced((prev) => (prev ? { ...prev, ...patch } : prev))
     run('Save advanced setting', () => settingsApi.saveAdvanced(patch))
+  }
+
+  /**
+   * The app reapplies the workflow's steam settings whenever the machine
+   * connects, so a steam change has to land there too or it reverts.
+   */
+  const keepSteamInWorkflow = async (next: Partial<ShotSettings>) => {
+    const current = shot.settings
+    const temperature =
+      next.targetSteamTemp ??
+      (next.steamSetting === undefined ? undefined : next.steamSetting > 0 ? current?.targetSteamTemp : 0)
+    if (!workflow || (next.targetSteamDuration === undefined && temperature === undefined)) return
+    const steamSettings = {
+      ...workflow.steamSettings,
+      ...(next.targetSteamDuration !== undefined ? { duration: next.targetSteamDuration } : {}),
+      ...(temperature !== undefined ? { targetTemperature: temperature } : {}),
+    }
+    const saved = await client.saveWorkflow({ ...workflow, steamSettings })
+    setWorkflow(saved ?? { ...workflow, steamSettings })
   }
 
   const patchWarmer = (patch: Partial<CupWarmer>) => {
@@ -210,8 +240,32 @@ export function Settings({ onDone }: { onDone: () => void }) {
                   <NumberValue value={machine.fan} unit="°" digits={0} step={1}
                     onCommit={(v) => patchMachine({ fan: v })} />
                 </Row>
-                <Row label="USB port">
-                  <Toggle on={machine.usb} onChange={(v) => patchMachine({ usb: v })} />
+                <Row
+                  label="USB port"
+                  hint={
+                    app
+                      ? `${CHARGING_RULE[app.chargingMode] ?? 'app policy'}${
+                          app.chargingState
+                            ? ` \u00b7 now ${app.chargingState.usbChargerOn ? 'on' : 'off'} at ${app.chargingState.batteryPercent}%`
+                            : ''
+                        }`
+                      : `the port reads ${machine.usb ? 'on' : 'off'}`
+                  }
+                >
+                  {app ? (
+                    <Choice
+                      value={app.chargingMode}
+                      options={[
+                        { value: 'disabled', label: 'Always on' },
+                        { value: 'longevity', label: 'Longevity' },
+                        { value: 'balanced', label: 'Balanced' },
+                        { value: 'highAvailability', label: 'Topped up' },
+                      ]}
+                      onChange={(v) => patchApp({ chargingMode: v })}
+                    />
+                  ) : (
+                    <span className="cap" style={{ color: 'var(--ink)' }}>{machine.usb ? 'on' : 'off'}</span>
+                  )}
                 </Row>
               </>
             ) : (
@@ -260,7 +314,15 @@ export function Settings({ onDone }: { onDone: () => void }) {
             )}
           </Section>
 
-          <ShotSettingsSection settings={shot.settings} patch={(next) => run('Save shot setting', () => shot.patch(next))} />
+          <ShotSettingsSection
+            settings={shot.settings}
+            patch={(next) =>
+              run('Save shot setting', async () => {
+                await shot.patch(next)
+                await keepSteamInWorkflow(next)
+              })
+            }
+          />
 
           <CupWarmerSection
             warmer={warmer}
@@ -411,17 +473,6 @@ export function Settings({ onDone }: { onDone: () => void }) {
                       { value: 'full', label: 'Full' },
                     ]}
                     onChange={(v) => patchApp({ gatewayMode: v })}
-                  />
-                </Row>
-                <Row label="Charging">
-                  <Choice
-                    value={app.chargingMode}
-                    options={[
-                      { value: 'longevity', label: 'Longevity' },
-                      { value: 'balanced', label: 'Balanced' },
-                      { value: 'highAvailability', label: 'Always' },
-                    ]}
-                    onChange={(v) => patchApp({ chargingMode: v })}
                   />
                 </Row>
                 <Row label="Check for updates">

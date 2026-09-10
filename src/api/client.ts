@@ -31,6 +31,15 @@ export const client = {
   workflow: () => request<Workflow>('/workflow'),
   saveWorkflow: (body: Workflow) => request<Workflow>('/workflow', { method: 'PUT', body: JSON.stringify(body) }),
   tare: () => request<void>('/scale/tare', { method: 'PUT' }),
+  /**
+   * Scans and fills the empty machine / scale slots without touching what is
+   * connected. `quick` returns at once and leaves the scan running, so the UI
+   * does not sit on a 15 second BLE window.
+   */
+  findDevices: (quick = true) =>
+    request<unknown[]>(`/devices/scan?connect=true${quick ? '&quick=true' : ''}`),
+  connectDevice: (deviceId: string) =>
+    request<void>('/devices/connect', { method: 'PUT', body: JSON.stringify({ deviceId }) }),
   grinders: () => request<Grinder[]>('/grinders'),
   createGrinder: (model: string) =>
     request<Grinder>('/grinders', { method: 'POST', body: JSON.stringify({ model }) }),

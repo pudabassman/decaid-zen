@@ -34,7 +34,7 @@ export function useMachine() {
     if (!MOCK) return
     setSnapshot(mockSnapshot())
     setScale(mockScale())
-    setScaleConnected(true)
+    setScaleConnected(!window.location.search.includes('noscale'))
     client.workflow().then(setWorkflow).catch(() => setWorkflow(mockWorkflow()))
     client.waterLevels().then(setWater).catch(() => setWater(mockWater()))
 

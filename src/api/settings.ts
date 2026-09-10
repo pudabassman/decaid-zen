@@ -21,6 +21,15 @@ export interface AppSettings {
   nightModeMorningTime: number
   lowBatteryBrightnessLimit: boolean
   keepAwake: boolean
+  chargingState?: ChargingState
+}
+
+export interface ChargingState {
+  mode: string
+  batteryPercent: number
+  usbChargerOn: boolean
+  currentPhase: string
+  nightModeEnabled: boolean
 }
 
 export interface MachineSettings {
@@ -161,7 +170,11 @@ export const settingsApi = {
   saveApp: (patch: Partial<AppSettings>) => post('/settings', patch),
 
   machine: () => call<MachineSettings>('/machine/settings'),
-  saveMachine: (patch: Partial<MachineSettings>) => post('/machine/settings', patch),
+  // the machine reads usb back as a boolean but only accepts 'enable' / 'disable' on write
+  saveMachine: (patch: Partial<MachineSettings>) =>
+    post('/machine/settings', patch.usb === undefined
+      ? patch
+      : { ...patch, usb: patch.usb ? 'enable' : 'disable' }),
 
   advanced: () => call<AdvancedSettings>('/machine/settings/advanced'),
   saveAdvanced: (patch: Partial<AdvancedSettings>) => post('/machine/settings/advanced', patch),

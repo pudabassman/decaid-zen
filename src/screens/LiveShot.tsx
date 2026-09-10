@@ -74,7 +74,13 @@ export function LiveShot({ machine }: { machine: Machine }) {
               <Metric label="Weight" value={`${fmt(weight)} g`} />
             </>
           ) : (
-            <Metric label="Scale" value="not connected" size={28} />
+            <button
+              className="findscale"
+              disabled={busy}
+              onClick={() => run('Looking for the scale', () => client.findDevices())}
+            >
+              <Metric label="Scale" value="not connected" size={28} />
+            </button>
           )}
           <Metric label="Dose" value={`${fmt(dose)} g`} />
         </div>

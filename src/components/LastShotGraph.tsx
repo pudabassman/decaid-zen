@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { stackLabels } from '../lib/labelStack'
 import type { ShotMeasurement, ShotRecord } from '../api/types'
 
 const baseSeries = (yieldByWeight: boolean) => [
@@ -15,6 +16,8 @@ const baseSeries = (yieldByWeight: boolean) => [
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
 const PAD_TOP = 38
+/** the strip under the plot that carries the second ticks, so nothing sits on the edge */
+const PAD_BOTTOM = 18
 /** floor and ceiling for the right-hand label gutter */
 const PAD_RIGHT_MIN = 40
 const PAD_RIGHT_MAX = 84
@@ -22,6 +25,7 @@ const PAD_RIGHT_MAX = 84
 export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const box = useRef<HTMLDivElement>(null)
+  const [full, setFull] = useState(false)
 
   useEffect(() => {
     const el = canvas.current
@@ -40,7 +44,7 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, h)
 
-      const plot = Math.max(1, h - PAD_TOP)
+      const plot = Math.max(1, h - PAD_TOP - PAD_BOTTOM)
 
       // the gutter is only as wide as the widest value that has to live in it
       const measured = shot?.measurements ?? []
@@ -181,12 +185,18 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
         }
       }
 
-      // end values claim their place first; a scale mark too close to one is dropped
-      column.sort((a, b) => b.weight - a.weight || a.y - b.y)
-      const placed: typeof column = []
-      for (const label of column) {
+      // every end value is drawn: they stack rather than drop when they meet
+      const ends = stackLabels(
+        column.filter((label) => label.weight === 1),
+        13,
+        PAD_TOP + 6,
+        h - 6,
+      )
+      // the quieter target values still give way when one lands on an end value
+      const placed = [...ends]
+      for (const label of column.filter((entry) => entry.weight === 0)) {
         if (label.y < PAD_TOP + 4 || label.y > h - 4) continue
-        if (placed.some((other) => Math.abs(other.y - label.y) < 12)) continue
+        if (placed.some((other) => Math.abs(other.y - label.y) < 13)) continue
         placed.push(label)
       }
 
@@ -213,16 +223,16 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
         const x = Math.round(padLeft + (t / span) * plotSpan) + 0.5
         ctx.strokeStyle = '#45413a'
         ctx.beginPath()
-        ctx.moveTo(x, h)
-        ctx.lineTo(x, h - 7)
+        ctx.moveTo(x, h - PAD_BOTTOM + 6)
+        ctx.lineTo(x, h - PAD_BOTTOM)
         ctx.stroke()
         ctx.fillStyle = '#7d7669'
         ctx.textAlign = 'center'
-        ctx.fillText(`${t}s`, x, h - 12)
+        ctx.fillText(`${t}s`, x, h - 2)
       }
       ctx.fillStyle = '#7d7669'
       ctx.textAlign = 'end'
-      ctx.fillText(`${span.toFixed(0)}s`, plotW - 1, h - 12)
+      ctx.fillText(`${span.toFixed(0)}s`, plotW - 1, h - 2)
     }
 
     draw()
@@ -232,7 +242,12 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
   }, [shot])
 
   return (
-    <div ref={box} className="grow" style={{ position: 'relative', minHeight: 120 }}>
+    <div
+      ref={box}
+      className={`grow shotplot${full ? ' full' : ''}`}
+      style={{ position: full ? 'fixed' : 'relative', minHeight: 120 }}
+      onClick={() => shot && setFull((was) => !was)}
+    >
       <canvas ref={canvas} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
       {!shot && (
         <div className="cap" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>

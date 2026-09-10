@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '../components/Button'
 import { EditableValue } from '../components/EditableValue'
 import { useRoasterCatalog } from '../lib/useRoasterCatalog'
@@ -16,9 +16,11 @@ import { useSwipe } from '../lib/useSwipe'
 import { MOCK } from '../lib/mock'
 import { useWaterBudget } from '../lib/waterBudget'
 import {
+  grindKey,
   matchRecord,
   preferredRecords,
   profiles as profileApi,
+  rememberedGrind,
   type ProfileRecord,
 } from '../api/profiles'
 import { ProfileDeck } from '../components/ProfileDeck'
@@ -47,6 +49,7 @@ export function Idle({
   const [grinds, setGrinds] = useState<Record<string, string>>({})
   const [preferred, setPreferred] = useState<string[] | null>(null)
   const [exiting, setExiting] = useState(false)
+  const [seeking, setSeeking] = useState(false)
   const exitLabel = useRef<number | undefined>(undefined)
   const loaded = useRef(false)
   const screen = useRef<HTMLDivElement>(null)
@@ -73,12 +76,22 @@ export function Idle({
       .catch(() => setLast(null))
   }, [])
 
+  useEffect(() => {
+    if (machine.scaleConnected) setSeeking(false)
+  }, [machine.scaleConnected])
+
+  const markSeeking = useCallback(() => {
+    setSeeking(true)
+    window.setTimeout(() => setSeeking(false), 25_000)
+  }, [])
+
   const budget = useWaterBudget(water, snapshot?.state.state, snapshot?.flow)
   const tankPercent = water ? Math.round((water.currentLevel / budget.maxLevel) * 100) : null
   const tankLabel = budget.mlLeft === null ? '' : `tank ${budget.mlLeft} ml`
 
   const stats = shotStats(last)
   const asleep = snapshot?.state.state === 'sleeping' || snapshot?.state.state === 'booting'
+
 
   const ctx = workflow?.context
   const roaster = ctx?.coffeeRoaster ?? ''
@@ -100,24 +113,33 @@ export function Idle({
   const pickProfile = (record: ProfileRecord) =>
     run('Switch profile', async () => {
       if (!workflow) return
-      const remembered = grinds[record.id]
+      const remembered = rememberedGrind(grinds, record.id, ctx?.coffeeName)
       await client.saveWorkflow({
         ...workflow,
         profile: record.profile,
-        context: {
-          ...workflow.context,
-          ...(remembered ? { grinderSetting: remembered } : {}),
-        },
+        context: { ...workflow.context, grinderSetting: remembered ?? '' },
       })
       machine.refreshWorkflow()
     })
 
   const rememberGrind = (value: string) => {
     if (!activeId) return
-    const next = { ...grinds, [activeId]: value }
+    const next = { ...grinds, [grindKey(activeId, ctx?.coffeeName)]: value }
     setGrinds(next)
     profileApi.saveGrindMemory(next).catch(() => undefined)
   }
+
+  /** a new coffee brings its own grind for the profile in play */
+  const pickCoffee = (coffeeName: string) => {
+    patchWorkflow({
+      coffeeName,
+      grinderSetting: rememberedGrind(grinds, activeId, coffeeName) ?? '',
+    })
+  }
+
+  const deckGrinds = Object.fromEntries(
+    records.map((record) => [record.id, rememberedGrind(grinds, record.id, ctx?.coffeeName) ?? '']),
+  )
 
   const number = (raw: string, fallback: number) => {
     const parsed = Number.parseFloat(raw)
@@ -174,7 +196,7 @@ export function Idle({
               value={ctx?.coffeeName ?? ''}
               placeholder="No bean loaded"
               width={620}
-              onCommit={(next) => patchWorkflow({ coffeeName: next })}
+              onCommit={pickCoffee}
             />
           </div>
           </div>
@@ -214,13 +236,26 @@ export function Idle({
           <div className="row baseline" style={{ gap: 'clamp(14px, 2.2vw, 34px)', opacity: asleep ? 0.45 : 1 }}>
             <Reading label="Group" value={`${fmt(snapshot?.groupTemperature)}°`} />
             <Reading label="Steam" value={`${fmt(snapshot?.steamTemperature)}°`} />
-            <Reading label="Scale" value={machine.scaleConnected ? `${fmt(scale?.weight ?? 0)} g` : 'none'} />
+            {machine.scaleConnected ? (
+              <Reading label="Scale" value={`${fmt(scale?.weight ?? 0)} g`} />
+            ) : (
+              <button
+                className="findscale"
+                disabled={seeking}
+                onClick={() => {
+                  markSeeking()
+                  run('Looking for the scale', () => client.findDevices())
+                }}
+              >
+                <Reading label="Scale" value={seeking ? 'looking' : 'none'} color="var(--muted)" />
+              </button>
+            )}
           </div>
           {reading && <ShotSpread reading={reading} />}
           <ProfileDeck
             records={preferredRecords(records, preferred)}
             activeId={activeId}
-            grinds={grinds}
+            grinds={deckGrinds}
             onPick={pickProfile}
           />
         </div>
@@ -257,9 +292,9 @@ export function Idle({
         {stats && (
           <div className="row lastshotstats" style={{ gap: 'clamp(12px, 2vw, 30px)', alignItems: 'center' }}>
             <Swatch color="var(--temp)" value={`${stats.endBrewTemp.toFixed(1)}°`} label="brew" />
-            <Swatch color="var(--bar)" value={stats.peakPressure.toFixed(1)} label="peak bar" />
+            <Swatch color="var(--bar)" value={stats.endPressure.toFixed(1)} label="bar" />
             <Swatch color="var(--weight)" value={stats.yieldValue.toFixed(1)} label={stats.yieldUnit === 'g' ? 'grams' : 'ml volume'} />
-            <Swatch color="var(--flow)" value={stats.avgFlow.toFixed(1)} label="ml/s avg" />
+            <Swatch color="var(--flow)" value={stats.endFlow.toFixed(1)} label="ml/s" />
           </div>
         )}
       </div>
@@ -295,15 +330,15 @@ export function Idle({
             height={52}
             hot
             disabled={busy}
-            holdMs={2000}
-            tapWindowMs={1000}
+            holdMs={1000}
+            tapWindowMs={500}
             onHoldChange={(holding) => {
               window.clearTimeout(exitLabel.current)
               if (!holding) {
                 setExiting(false)
                 return
               }
-              exitLabel.current = window.setTimeout(() => setExiting(true), 1000)
+              exitLabel.current = window.setTimeout(() => setExiting(true), 500)
             }}
             onHold={() =>
               run('Sleep and leave', async () => {
@@ -330,7 +365,7 @@ export function Idle({
           onClose={() => setPicking(false)}
           onPick={(name) => {
             setPicking(false)
-            patchWorkflow({ coffeeName: name })
+            pickCoffee(name)
           }}
         />
       )}

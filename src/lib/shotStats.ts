@@ -2,8 +2,8 @@ import type { ShotRecord } from '../api/types'
 
 export interface ShotStats {
   seconds: number
-  peakPressure: number
-  avgFlow: number
+  endPressure: number
+  endFlow: number
   endBrewTemp: number
   yieldValue: number
   yieldUnit: 'g' | 'ml'
@@ -20,20 +20,17 @@ export function shotStats(shot: ShotRecord | null): ShotStats | null {
   const weights = points.map((m) => m.scale?.weight ?? 0)
   const byWeight = weights.some((w) => w > 0)
   const volumes = points.map((m) => m.volume ?? 0)
+  // the graph ends on the last sample, so the swatch reads the same number;
+  // annotations.actualYield is the app's own figure and can differ
+  const endWeight = weights[weights.length - 1] || Math.max(...weights)
 
-  const pouring = points.filter((m) => m.machine.flow > 0.2)
-  const avgFlow = pouring.length
-    ? pouring.reduce((sum, m) => sum + m.machine.flow, 0) / pouring.length
-    : 0
 
   return {
     seconds,
-    peakPressure: Math.max(...points.map((m) => m.machine.pressure)),
-    avgFlow,
+    endPressure: points[points.length - 1].machine.pressure,
+    endFlow: points[points.length - 1].machine.flow,
     endBrewTemp: points[points.length - 1].machine.mixTemperature,
-    yieldValue: byWeight
-      ? shot?.annotations?.actualYield ?? Math.max(...weights)
-      : Math.max(...volumes),
+    yieldValue: byWeight ? endWeight : Math.max(...volumes),
     yieldUnit: byWeight ? 'g' : 'ml',
     dose: shot?.annotations?.actualDoseWeight ?? shot?.workflow?.context?.targetDoseWeight,
   }
