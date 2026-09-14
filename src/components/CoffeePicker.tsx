@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { catalog, type CatalogCoffee } from '../api/catalog'
+import { client } from '../api/client'
 import { Button } from './Button'
 import { Dots } from './Dots'
 
@@ -24,6 +25,7 @@ export function CoffeePicker({ roaster, onPick, onClose }: Props) {
   const [query, setQuery] = useState('')
   const [fetchedAt, setFetchedAt] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
+  const [pours, setPours] = useState<Record<string, number>>({})
 
   const load = useCallback(
     (refresh: boolean) => {
@@ -49,8 +51,28 @@ export function CoffeePicker({ roaster, onPick, onClose }: Props) {
     void load(false)
   }, [load])
 
+  // how often each coffee has actually been brewed, newest history first
+  useEffect(() => {
+    client
+      .shots(100, 0)
+      .then((page) => {
+        const counts: Record<string, number> = {}
+        for (const shot of page.items) {
+          const name = shot.workflow?.context?.coffeeName?.trim().toLowerCase()
+          if (name) counts[name] = (counts[name] ?? 0) + 1
+        }
+        setPours(counts)
+      })
+      .catch(() => undefined)
+  }, [])
+
   const needle = query.trim().toLowerCase()
-  const shown = (coffees ?? []).filter((coffee) => !needle || coffee.name.toLowerCase().includes(needle))
+  const shown = (coffees ?? [])
+    .filter((coffee) => !needle || coffee.name.toLowerCase().includes(needle))
+    .sort((a, b) => {
+      const used = (pours[b.name.trim().toLowerCase()] ?? 0) - (pours[a.name.trim().toLowerCase()] ?? 0)
+      return used !== 0 ? used : a.name.localeCompare(b.name)
+    })
 
   return (
     <>

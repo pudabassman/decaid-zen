@@ -38,14 +38,21 @@ export function LiveShot({ machine }: { machine: Machine }) {
     return out
   }, [steps])
 
-  const labels = [
+  const steaming = snapshot?.state.state === 'steam'
+
+  const labels = steaming
+    ? [
+        { key: 'steam' as const, value: `${fmt(snapshot?.steamTemperature)}°`, caption: 'STEAM' },
+        { key: 'flow' as const, value: fmt(snapshot?.flow), caption: `ML/S · OF ${fmt(snapshot?.targetFlow)}` },
+      ]
+    : [
     { key: 'mix' as const, value: `${fmt(snapshot?.mixTemperature)}°`, caption: `BREW · OF ${fmt(snapshot?.targetMixTemperature)}` },
     { key: 'pressure' as const, value: fmt(snapshot?.pressure), caption: `BAR · OF ${fmt(snapshot?.targetPressure)}` },
     ...(scaleConnected
       ? [{ key: 'weight' as const, value: fmt(weight), caption: `GRAMS · OF ${fmt(target)}` }]
       : []),
     { key: 'flow' as const, value: fmt(snapshot?.flow), caption: `ML/S · OF ${fmt(snapshot?.targetFlow)}` },
-  ]
+      ]
 
   return (
     <div className="screen" ref={screen}>
@@ -54,10 +61,12 @@ export function LiveShot({ machine }: { machine: Machine }) {
           <div className="row" style={{ gap: 16 }}>
             <span className="statusdot live" />
             <span className="cap strong">{snapshot?.state.substate || snapshot?.state.state || 'idle'}</span>
-            <span className="cap">
-              Frame {frameIndex} of {steps.length || '—'}
-              {steps[frameIndex - 1]?.name ? ` · ${steps[frameIndex - 1].name}` : ''}
-            </span>
+            {!steaming && (
+              <span className="cap">
+                Frame {frameIndex} of {steps.length || '—'}
+                {steps[frameIndex - 1]?.name ? ` · ${steps[frameIndex - 1].name}` : ''}
+              </span>
+            )}
           </div>
           <div className="row baseline" style={{ gap: 10 }}>
             <span className="num" style={{ fontSize: 34 }}>{elapsed.toFixed(1)}</span>
@@ -65,10 +74,19 @@ export function LiveShot({ machine }: { machine: Machine }) {
           </div>
         </div>
 
-        <ShotGraph samples={samples} live window={elapsed} marks={marks} labels={labels} />
+        <ShotGraph
+          samples={samples}
+          live
+          window={elapsed}
+          steps={steaming ? [] : steps.map((profileStep) => profileStep.seconds ?? 0)}
+          marks={steaming ? [] : marks}
+          labels={labels}
+        />
 
         <div className="row" style={{ gap: 46, marginTop: 32 }}>
-          {scaleConnected ? (
+          {steaming ? (
+            <Metric label="Steam" value={`${fmt(snapshot?.steamTemperature)} °`} color="var(--temp)" />
+          ) : scaleConnected ? (
             <>
               <Metric label="Ratio" value={`1:${(weight / (dose || 1)).toFixed(2)}`} color="var(--weight)" />
               <Metric label="Weight" value={`${fmt(weight)} g`} />
@@ -82,7 +100,7 @@ export function LiveShot({ machine }: { machine: Machine }) {
               <Metric label="Scale" value="not connected" size={28} />
             </button>
           )}
-          <Metric label="Dose" value={`${fmt(dose)} g`} />
+          {!steaming && <Metric label="Dose" value={`${fmt(dose)} g`} />}
         </div>
 
         <div className="rule" style={{ margin: '12px 0' }} />

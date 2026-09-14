@@ -1,4 +1,4 @@
-import { Choice, NumberValue, Row, Section, Toggle } from '../../components/SettingControls'
+import { NumberValue, Row, Section, SingleSelect, Toggle } from '../../components/SettingControls'
 import type { CupWarmer, CupWarmerPreheat, ShotSettings } from '../../api/settings'
 
 export function ShotSettingsSection({
@@ -73,7 +73,7 @@ export function CupWarmerSection({
         <Toggle on={warmer.enabled} onChange={(on) => patchWarmer({ enabled: on })} />
       </Row>
       <Row label="Mat temperature" hint="0 turns it off">
-        <Choice
+        <SingleSelect
           value={warmer.temperature}
           options={[
             { value: 0, label: 'Off' },

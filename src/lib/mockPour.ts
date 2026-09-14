@@ -3,7 +3,7 @@ import { MOCK } from './mock'
 const search = typeof window === 'undefined' ? '' : window.location.search
 
 /** ?shot=1 runs a fake pour so the live screen can be worked on without a machine */
-export const MOCK_SHOT = MOCK && search.includes('shot')
+export const MOCK_SHOT = MOCK && (search.includes('shot') || search.includes('steam'))
 
 export const pourAt = (t: number) => {
   const clamped = Math.min(t, 34)

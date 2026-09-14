@@ -2,14 +2,21 @@ import { useEffect, useRef, useState, type MutableRefObject } from 'react'
 import type { Sample } from '../api/useMachine'
 
 const GUTTER = 200
-const MIN_WINDOW = 15
-const AXIS_TICKS = [10, 20, 30, 40, 50, 60]
+/** the axis a step opens with when the profile does not say how long it runs */
+const MIN_WINDOW = 10
+/** never squeeze a step into less than this, however short the profile says it is */
+const MIN_STEP = 4
+/** how long the view takes to travel from one step to the next */
+const SLIDE_MS = 1000
+
+const easeInOut = (p: number) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2)
 
 const SERIES = [
   { key: 'mix', target: 'targetMix', color: '#d9714f', min: 80, max: 100, band: 0.34, width: 2 },
   { key: 'pressure', target: 'targetPressure', color: '#9fb055', min: 0, max: 12, band: 1, width: 2.4 },
   { key: 'weight', target: null, color: '#d3b06a', min: 0, max: 40, band: 1, width: 2.4 },
   { key: 'flow', target: 'targetFlow', color: '#4fbcc6', min: 0, max: 6, band: 1, width: 2 },
+  { key: 'steam', target: null, color: '#d9714f', min: 100, max: 170, band: 1, width: 2.4 },
 ] as const
 
 type SeriesKey = (typeof SERIES)[number]['key']
@@ -23,6 +30,8 @@ interface Props {
   samples: MutableRefObject<Sample[]>
   live: boolean
   window: number
+  /** how long the profile expects each step to run, in order */
+  steps: number[]
   marks: FrameMark[]
   labels: { key: SeriesKey; value: string; caption: string }[]
 }
@@ -33,10 +42,15 @@ const yFor = (s: (typeof SERIES)[number], v: number, height: number) => {
   return s.band === 1 ? (1 - frac) * height : (1 - frac) * height * s.band
 }
 
-export function ShotGraph({ samples, live, window: seconds, marks, labels }: Props) {
+export function ShotGraph({ samples, live, window: seconds, steps, marks, labels }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const box = useRef<HTMLDivElement>(null)
   const [labelY, setLabelY] = useState<Record<string, number>>({})
+
+  // the draw loop reads the latest props through a ref: rebuilding it on every
+  // sample would reset the view it is animating ten times a second
+  const props = useRef({ live, seconds, steps, marks, labels })
+  props.current = { live, seconds, steps, marks, labels }
 
   useEffect(() => {
     const el = canvas.current
@@ -45,8 +59,16 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
 
     let raf = 0
     let phase = 0
+    // the view: its left edge and how many seconds it holds. Both glide together,
+    // so a step change is one smooth move rather than a pan and a snap.
+    let from = 0
+    let span = MIN_WINDOW
+    let stable = 0
+    // a step change starts a one second glide from where the view is to where it belongs
+    let slide: { from: number; span: number; toFrom: number; toSpan: number; at: number } | null = null
 
     const draw = () => {
+      const { live, seconds, steps, marks, labels } = props.current
       const dpr = globalThis.devicePixelRatio || 1
       const w = wrap.clientWidth
       const h = wrap.clientHeight
@@ -60,8 +82,51 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
       ctx.clearRect(0, 0, w, h)
 
       const plot = Math.max(60, w - GUTTER)
-      const span = Math.max(seconds, MIN_WINDOW)
-      const xFor = (t: number) => (t / span) * plot
+      const data = samples.current
+      const now = data.length ? data[data.length - 1].t : seconds
+
+      // the view holds the step in play: its first sample sits on the left edge.
+      // a frame only counts once two samples agree, so a flicker cannot yank the view
+      const latest = data.length ? data[data.length - 1].frame : 0
+      const previous = data.length > 1 ? data[data.length - 2].frame : latest
+      if (latest === previous) stable = latest
+
+      let stepStart = 0
+      for (let i = data.length - 1; i >= 0; i -= 1) {
+        if (data[i].frame !== stable) break
+        stepStart = data[i].t
+      }
+
+      // a fresh shot starts the view over rather than easing in from the last one
+      if (now + 0.5 < from) {
+        from = 0
+        span = MIN_WINDOW
+      }
+
+      const targetFrom = Math.max(0, Math.min(stepStart, now - 0.1))
+      // the plan comes from the same step the left edge is using, so the scale
+      // never changes ahead of the pan
+      const planned = steps[stable - 1] ?? 0
+      // the step fills the plot by the time the profile says it ends, and only
+      // widens if it runs long
+      const targetSpan = Math.max(planned || MIN_WINDOW, MIN_STEP, now - targetFrom)
+
+      // a new destination starts one glide; the same destination keeps the one running
+      if (Math.abs(targetFrom - (slide ? slide.toFrom : from)) > 0.05) {
+        slide = { from, span, toFrom: targetFrom, toSpan: targetSpan, at: performance.now() }
+      }
+
+      if (slide) {
+        const p = Math.min(1, (performance.now() - slide.at) / SLIDE_MS)
+        const eased = easeInOut(p)
+        from = slide.from + (targetFrom - slide.from) * eased
+        span = slide.span + (targetSpan - slide.span) * eased
+        if (p === 1) slide = null
+      } else {
+        from = targetFrom
+        span = targetSpan
+      }
+      const xFor = (t: number) => ((t - from) / span) * plot
 
       ctx.strokeStyle = '#201e1a'
       ctx.lineWidth = 1
@@ -81,7 +146,7 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
       ctx.strokeStyle = '#302d27'
       ctx.setLineDash([1, 5])
       for (const mark of marks) {
-        if (mark.t >= span) continue
+        if (mark.t <= from || mark.t >= from + span) continue
         const x = Math.round(xFor(mark.t)) + 0.5
         ctx.beginPath()
         ctx.moveTo(x, 0)
@@ -90,12 +155,16 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
       }
       ctx.setLineDash([])
 
-      const data = samples.current
       const positions: Record<string, number> = {}
 
       const visible = new Set(labels.map((l) => l.key))
 
       // the profile's targets, quiet and dashed behind the live lines
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(0, -20, plot, h + 40)
+      ctx.clip()
+
       for (const s of SERIES) {
         if (data.length < 2 || !s.target || !visible.has(s.key)) continue
         ctx.save()
@@ -105,7 +174,7 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
         ctx.beginPath()
         let open = false
         for (const point of data) {
-          if (point.t > span) break
+          if (point.t > from + span) break
           const value = point[s.target]
           if (value === undefined) continue
           const x = xFor(point.t)
@@ -124,7 +193,7 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
         if (data.length < 2 || !visible.has(s.key)) continue
         const drawn: Array<[number, number]> = []
         for (const point of data) {
-          if (point.t > span) break
+          if (point.t > from + span) break
           drawn.push([xFor(point.t), yFor(s, point[s.key], h)])
         }
 
@@ -145,6 +214,8 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
         const last = data[data.length - 1]
         positions[s.key] = yFor(s, last[s.key], h)
       }
+
+      ctx.restore()
 
       if (data.length > 1) {
         const lastT = data[data.length - 1].t
@@ -186,12 +257,12 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
       ctx.fillText('6', -14, h * 0.5 + 4)
       ctx.fillText('0', -14, h + 2)
       ctx.textAlign = 'center'
-      for (const tick of AXIS_TICKS) {
-        if (tick > span * 0.93) continue
-        ctx.fillText(`${tick}s`, xFor(tick), h + 20)
+      const every = span > 40 ? 20 : span > 20 ? 10 : 5
+      for (let tick = every; tick < span * 0.93; tick += every) {
+        ctx.fillText(`${tick}s`, xFor(from + tick), h + 20)
       }
       ctx.fillStyle = '#b8b1a2'
-      ctx.fillText(`${span.toFixed(1)}s`, plot, h + 20)
+      ctx.fillText(`${now.toFixed(1)}s`, plot, h + 20)
 
       setLabelY((prev) => {
         const changed = SERIES.some((s) => Math.abs((prev[s.key] ?? -99) - (positions[s.key] ?? -99)) > 0.75)
@@ -204,7 +275,7 @@ export function ShotGraph({ samples, live, window: seconds, marks, labels }: Pro
 
     raf = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(raf)
-  }, [samples, marks, seconds, live, labels])
+  }, [samples])
 
   const spread = spreadLabels(labels.map((l) => labelY[l.key] ?? 0))
 

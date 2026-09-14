@@ -67,6 +67,53 @@ export function Choice<T extends string | number>({
   )
 }
 
+export function SingleSelect<T extends string | number>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T
+  options: Array<{ value: T; label: string }>
+  onChange: (next: T) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const chosen = options.find((option) => option.value === value)
+
+  return (
+    <div className="multiwrap">
+      <button className="multibutton" onClick={() => setOpen((was) => !was)}>
+        <span className="cap">{chosen?.label ?? 'choose'}</span>
+        <span className={`multicaret${open ? ' open' : ''}`}>
+          <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth={1.4} strokeLinecap="round">
+            <path d="M6 9l6 6-6-6" />
+          </svg>
+        </span>
+      </button>
+
+      {open && (
+        <>
+          <div className="multiveil" onPointerDown={() => setOpen(false)} />
+          <div className="multipanel">
+            {options.map((option) => (
+              <button
+                key={String(option.value)}
+                className={`multirow${option.value === value ? ' on' : ''}`}
+                onClick={() => {
+                  onChange(option.value)
+                  setOpen(false)
+                }}
+              >
+                <span className="multitick">{option.value === value ? '\u00b7' : ''}</span>
+                <span className="display">{option.label}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export function NumberValue({
   value,
   unit,

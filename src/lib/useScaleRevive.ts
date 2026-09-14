@@ -7,13 +7,19 @@ const COOLDOWN = 30_000
  * The scale usually sleeps with the machine and does not always come back on
  * its own, so waking the app is a good moment to go looking for it.
  */
-export function useScaleRevive(asleep: boolean, scaleConnected: boolean, onAttempt?: () => void) {
+export function useScaleRevive(
+  asleep: boolean,
+  scaleConnected: boolean,
+  pouring: boolean,
+  onAttempt?: () => void,
+) {
   const lastTry = useRef(0)
   const wasAsleep = useRef(asleep)
 
   useEffect(() => {
     const attempt = () => {
-      if (scaleConnected) return
+      // never scan mid-shot: the radio is busy carrying the shot itself
+      if (scaleConnected || pouring) return
       const now = Date.now()
       if (now - lastTry.current < COOLDOWN) return
       lastTry.current = now
@@ -29,5 +35,5 @@ export function useScaleRevive(asleep: boolean, scaleConnected: boolean, onAttem
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [asleep, scaleConnected, onAttempt])
+  }, [asleep, scaleConnected, pouring, onAttempt])
 }

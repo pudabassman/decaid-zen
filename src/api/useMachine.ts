@@ -7,6 +7,8 @@ import type { MachineSnapshot, ScaleFrame, ScaleSnapshot, WaterLevels, Workflow 
 
 export interface Sample {
   t: number
+  frame: number
+  steam: number
   pressure: number
   flow: number
   weight: number
@@ -17,6 +19,8 @@ export interface Sample {
 }
 
 const POURING = new Set(['espresso', 'hotWater', 'steam', 'flush'])
+/** the clock starts when water actually moves, not while the machine gets ready */
+const RUNNING = new Set(['preinfusion', 'pouring'])
 
 export function useMachine() {
   const [snapshot, setSnapshot] = useState<MachineSnapshot | null>(null)
@@ -42,12 +46,18 @@ export function useMachine() {
     const startedAt = Date.now()
     samples.current = []
     const id = window.setInterval(() => {
-      const t = (Date.now() - startedAt) / 1000
+      const raw = (Date.now() - startedAt) / 1000
+      const preparing = raw < 2
+      const t = Math.max(0, raw - 2)
       const pour = pourAt(t)
       setSnapshot({
         ...mockSnapshot(),
         timestamp: new Date().toISOString(),
-        state: { state: 'espresso', substate: 'pouring' },
+        steamTemperature: 138 + Math.min(12, t * 0.6),
+        state: {
+          state: window.location.search.includes('steam') ? 'steam' : 'espresso',
+          substate: preparing ? 'preparingForShot' : 'pouring',
+        },
         pressure: pour.pressure,
         flow: pour.flow,
         mixTemperature: pour.mix,
@@ -57,8 +67,11 @@ export function useMachine() {
         profileFrame: t < 6 ? 1 : t < 20 ? 2 : 3,
       })
       setScale({ timestamp: new Date().toISOString(), weight: pour.weight })
+      if (preparing) return
       samples.current.push({
         t,
+        frame: t < 6 ? 1 : t < 20 ? 2 : 3,
+        steam: 138 + Math.min(12, t * 0.6),
         pressure: pour.pressure,
         flow: pour.flow,
         weight: pour.weight,
@@ -78,16 +91,22 @@ export function useMachine() {
     const pouring = POURING.has(frame.state.state)
     const now = Date.parse(frame.timestamp) || Date.now()
 
-    if (pouring && shotStart.current === null) {
+    const running = pouring && RUNNING.has(frame.state.substate)
+    if (running && shotStart.current === null) {
       shotStart.current = now
       samples.current = []
     }
-    if (!pouring && shotStart.current !== null) shotStart.current = null
+    if (!pouring && shotStart.current !== null) {
+      shotStart.current = null
+      setElapsed(0)
+    }
 
     if (shotStart.current !== null) {
       const t = (now - shotStart.current) / 1000
       samples.current.push({
         t,
+        frame: frame.profileFrame,
+        steam: frame.steamTemperature,
         pressure: frame.pressure,
         flow: frame.flow,
         weight: weight.current,

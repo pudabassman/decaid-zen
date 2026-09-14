@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../components/Button'
-import { Choice, MultiSelect, NumberValue, Row, Section, Toggle } from '../components/SettingControls'
+import { MultiSelect, NumberValue, Row, Section, SingleSelect, Toggle } from '../components/SettingControls'
 import { EditableValue } from '../components/EditableValue'
 import { useSwipe } from '../lib/useSwipe'
 import { MAX_DECK, profiles as profileApi, type ProfileRecord } from '../api/profiles'
@@ -222,7 +222,7 @@ export function Settings({ onDone }: { onDone: () => void }) {
                     onCommit={(v) => patchMachine({ steamFlow: v })} />
                 </Row>
                 <Row label="Steam purge" hint="how the wand clears after steaming">
-                  <Choice
+                  <SingleSelect
                     value={machine.steamPurgeMode}
                     options={[
                       { value: 0, label: 'Off' },
@@ -253,7 +253,7 @@ export function Settings({ onDone }: { onDone: () => void }) {
                   }
                 >
                   {app ? (
-                    <Choice
+                    <SingleSelect
                       value={app.chargingMode}
                       options={[
                         { value: 'disabled', label: 'Always on' },
@@ -298,7 +298,7 @@ export function Settings({ onDone }: { onDone: () => void }) {
                   </span>
                 </Row>
                 <Row label="Refill kit">
-                  <Choice
+                  <SingleSelect
                     value={advanced.refillKitSetting}
                     options={[
                       { value: 0, label: 'Off' },
@@ -371,7 +371,7 @@ export function Settings({ onDone }: { onDone: () => void }) {
                   <Toggle on={app.stopHotWaterAtWeight} onChange={(v) => patchApp({ stopHotWaterAtWeight: v })} />
                 </Row>
                 <Row label="Scale power" hint="what happens to the scale when idle">
-                  <Choice
+                  <SingleSelect
                     value={app.scalePowerMode}
                     options={[
                       { value: 'disabled', label: 'Leave on' },
@@ -465,7 +465,7 @@ export function Settings({ onDone }: { onDone: () => void }) {
             {app && (
               <>
                 <Row label="Gateway mode" hint="full hands the machine to the skin">
-                  <Choice
+                  <SingleSelect
                     value={app.gatewayMode}
                     options={[
                       { value: 'disabled', label: 'Off' },
@@ -480,7 +480,7 @@ export function Settings({ onDone }: { onDone: () => void }) {
                     onChange={(v) => patchApp({ automaticUpdateCheck: v })} />
                 </Row>
                 <Row label="Log level">
-                  <Choice
+                  <SingleSelect
                     value={app.logLevel}
                     options={[
                       { value: 'INFO', label: 'Info' },

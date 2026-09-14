@@ -1,5 +1,5 @@
 import { Button } from '../../components/Button'
-import { Choice, Row, Section, Toggle } from '../../components/SettingControls'
+import { Row, Section, SingleSelect, Toggle } from '../../components/SettingControls'
 import type {
   AppUpdateState, BuildInfo, MachineInfo, PluginEntry, SkinEntry, WakeSchedule,
 } from '../../api/settings'
@@ -136,7 +136,7 @@ export function AboutSection({
     <Section title="About">
       {theme !== undefined && (
         <Row label="Theme">
-          <Choice
+          <SingleSelect
             value={theme}
             options={[
               { value: 'dark', label: 'Dark' },

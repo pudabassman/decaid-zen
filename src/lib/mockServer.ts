@@ -40,7 +40,7 @@ const state = {
     volumeFlowMultiplier: 0.3,
     hotWaterFlowMultiplier: 0.3,
     scalePowerMode: 'disconnect',
-    blockOnNoScale: false,
+    blockOnNoScale: true,
     blockTareDuringShot: false,
     stopHotWaterAtWeight: true,
     preferredMachineId: 'FA:78:82:BA:6B:06',

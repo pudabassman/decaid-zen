@@ -15,6 +15,7 @@ import { useAction } from '../lib/useAction'
 import { useSwipe } from '../lib/useSwipe'
 import { MOCK } from '../lib/mock'
 import { useWaterBudget } from '../lib/waterBudget'
+import { settingsApi } from '../api/settings'
 import {
   grindKey,
   matchRecord,
@@ -50,6 +51,7 @@ export function Idle({
   const [preferred, setPreferred] = useState<string[] | null>(null)
   const [exiting, setExiting] = useState(false)
   const [seeking, setSeeking] = useState(false)
+  const [blocking, setBlocking] = useState(false)
   const exitLabel = useRef<number | undefined>(undefined)
   const loaded = useRef(false)
   const screen = useRef<HTMLDivElement>(null)
@@ -64,6 +66,7 @@ export function Idle({
     profileApi.list().then(setRecords).catch(() => setRecords([]))
     profileApi.grindMemory().then((map) => setGrinds(map ?? {})).catch(() => undefined)
     profileApi.preferred().then(setPreferred).catch(() => undefined)
+    settingsApi.app().then((app) => setBlocking(app.blockOnNoScale)).catch(() => undefined)
   }, [])
 
   useEffect(() => {
@@ -154,9 +157,9 @@ export function Idle({
       <div className="row between" style={{ alignItems: 'flex-start', gap: 'clamp(16px, 2.6vw, 40px)' }}>
         <div className="headercol" style={{ minWidth: 0 }}>
           <div className="row" style={{ gap: 14, marginBottom: 'clamp(6px, 1.4vh, 18px)' }}>
-          <span className="cap">
+          <span className="cap strong">
             <EditableValue
-              className="cap"
+              className="cap strong"
               label="Roaster"
               value={ctx?.coffeeRoaster ?? ''}
               placeholder="No roaster"
@@ -260,6 +263,39 @@ export function Idle({
           />
         </div>
       </div>
+
+      {blocking && !machine.scaleConnected && (
+        <div className="noscale row" style={{ gap: 18 }}>
+          <span className="cap" style={{ color: 'var(--temp)' }}>
+            No scale · the machine will not pull without one
+          </span>
+          <Button
+            width={150}
+            height={40}
+            quiet
+            disabled={seeking}
+            onClick={() => {
+              markSeeking()
+              run('Looking for the scale', () => client.findDevices())
+            }}
+          >
+            <span className="cap">{seeking ? 'looking' : 'reconnect'}</span>
+          </Button>
+          <Button
+            width={150}
+            height={40}
+            quiet
+            onClick={() =>
+              run('Allow shots without a scale', async () => {
+                await settingsApi.saveApp({ blockOnNoScale: false })
+                setBlocking(false)
+              })
+            }
+          >
+            <span className="cap">pull anyway</span>
+          </Button>
+        </div>
+      )}
 
       <div
         style={{

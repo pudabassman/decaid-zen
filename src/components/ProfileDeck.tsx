@@ -12,10 +12,8 @@ interface Props {
 }
 
 const CARD_W = 232
-const STEP = 54
-/** where the first seat starts, measured from the badge's left edge */
-const FRONT = 0
-const TRACK_H = 184
+/** the carousel runs down the screen: one seat every STEP pixels */
+const STEP = 106
 const VIEW_W = 110
 const VIEW_H = 50
 
@@ -47,6 +45,34 @@ export function profileCurve(profile: Profile | undefined) {
 
 const grindLabel = (value: string | undefined) => `grind ${value && value.trim() ? value : '-'}`
 
+/** the few numbers that tell one profile from another, coloured as the graph draws them */
+function profileFacts(profile: Profile | undefined) {
+  const steps = profile?.steps ?? []
+  const pick = (get: (step: NonNullable<Profile['steps']>[number]) => number | undefined) => {
+    const values = steps.map(get).filter((v): v is number => typeof v === 'number' && v > 0)
+    return values.length ? Math.max(...values) : undefined
+  }
+  const temps = steps.map((step) => step.temperature).filter((v): v is number => typeof v === 'number' && v > 0)
+  const first = temps[0]
+  const last = temps[temps.length - 1]
+  // a profile that ramps its temperature says so: 93 → 88
+  const temp = first === undefined
+    ? undefined
+    : Math.abs(first - (last ?? first)) < 0.5
+      ? `${first.toFixed(0)}°`
+      : `${first.toFixed(0)}\u2192${(last ?? first).toFixed(0)}°`
+  const bar = pick((step) => (step.pump === 'pressure' ? step.pressure : undefined))
+  const flow = pick((step) => (step.pump === 'flow' ? step.flow : undefined))
+  const weight = profile?.target_weight
+
+  return [
+    temp !== undefined ? { value: temp, color: 'var(--temp)' } : null,
+    bar !== undefined ? { value: `${bar.toFixed(1)} bar`, color: 'var(--bar)' } : null,
+    flow !== undefined ? { value: `${flow.toFixed(1)} ml/s`, color: 'var(--flow)' } : null,
+    weight ? { value: `${weight.toFixed(0)} g`, color: 'var(--weight)' } : null,
+  ].filter(Boolean) as Array<{ value: string; color: string }>
+}
+
 export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const [open, setOpen] = useState(MOCK && window.location.search.includes('fan'))
   const [closing, setClosing] = useState(false)
@@ -58,6 +84,8 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const moved = useRef(false)
   const origin = useRef({ x: 0, y: 0 })
   const badge = useRef<HTMLButtonElement>(null)
+  /** true while the finger that opened the deck is still down */
+  const holding = useRef(false)
   const previousSlot = useRef(0)
 
   const activeIndex = Math.max(0, records.findIndex((r) => r.id === activeId))
@@ -73,8 +101,8 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
     return raw > count / 2 ? raw - count : raw
   }
   const seated = (signed: number) => signed >= -middle && signed <= visible - 1 - middle
-  // seats run leftward from the badge, so a drag to the right walks the ring forward
-  const slot = wrap(activeIndex + Math.round(pan / STEP))
+  // seats run down the screen, so dragging down walks back up the ring
+  const slot = wrap(activeIndex - Math.round(pan / STEP))
   const cameFrom = previousSlot.current
   const highlighted = candidate ?? records[slot]?.id ?? activeId
 
@@ -101,6 +129,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
 
   const close = () => {
     dragging.current = false
+    holding.current = false
     setClosing(true)
     window.setTimeout(() => {
       setClosing(false)
@@ -128,8 +157,8 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
     const dy = e.clientY - origin.current.y
     if (!moved.current && Math.hypot(dx, dy) < 8) return
     moved.current = true
-    if (Math.abs(dx) > Math.abs(dy)) {
-      setPan(rotation.current + dx)
+    if (Math.abs(dy) >= Math.abs(dx)) {
+      setPan(rotation.current + dy)
       setCandidate(null)
       return
     }
@@ -155,15 +184,23 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
           <div
             className={`deckfan${closing ? ' closing' : ''}`}
             style={{
-              top: Math.max(6, anchor.top + anchor.height / 2 - TRACK_H / 2),
-              right: Math.max(6, window.innerWidth - anchor.right + 14),
+              top: '50%',
+              transform: 'translateY(-50%)',
+              right: Math.max(6, window.innerWidth - anchor.right / 2 - CARD_W / 2),
             }}
             onPointerDown={(e) => startDrag(e, e.currentTarget)}
             onPointerMove={moveDrag}
             onPointerUp={(e) => {
               e.currentTarget.releasePointerCapture?.(e.pointerId)
-              if (!moved.current) return
-              commit(highlighted)
+              dragging.current = false
+              // the fan holds the pointer capture, so a tap on a card lands here
+              if (!moved.current) {
+                const tapped = cardAt(e.clientX, e.clientY)
+                if (tapped) commit(tapped)
+                return
+              }
+              // a held finger picks on release; after a tap the wheel keeps spinning
+              if (holding.current) commit(highlighted)
             }}
           >
             <div className="decktrack">
@@ -182,9 +219,10 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
                     data-profile={record.id}
                     className={`deckcard${on ? ' on' : ''}${warped ? ' warp' : ''}`}
                     style={{
-                      right: FRONT + seat * STEP,
+                      top: (seat - middle) * STEP,
                       zIndex: 60 - Math.abs(seat - middle),
-                      transform: `scale(${seat === middle ? 1 : 0.95})`,
+                      transform: `translateY(-50%) scale(${seat === middle ? 1 : 0.94})`,
+                      opacity: seat === middle ? 1 : 0.72,
                       animationDelay: `${Math.min(i, 4) * 22}ms`,
                     }}
                     onPointerUp={(e) => {
@@ -204,6 +242,13 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
                       />
                     </svg>
                     <span className="display deckname">{record.profile?.title ?? 'Untitled'}</span>
+                    <span className="deckfacts">
+                      {profileFacts(record.profile).map((fact) => (
+                        <span key={fact.value} className="num" style={{ color: fact.color }}>
+                          {fact.value}
+                        </span>
+                      ))}
+                    </span>
                     <span className="cap">{grindLabel(grinds[record.id])}</span>
                   </button>
                 )
@@ -218,13 +263,16 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
         ref={badge}
         onPointerDown={(e) => {
           startDrag(e, badge.current)
+          holding.current = true
           setOpen(true)
         }}
         onPointerMove={moveDrag}
         onPointerUp={(e) => {
           badge.current?.releasePointerCapture?.(e.pointerId)
           if (!moved.current) {
+            // a plain tap leaves the wheel open to spin; the next tap picks
             dragging.current = false
+            holding.current = false
             return
           }
           commit(cardAt(e.clientX, e.clientY) ?? highlighted)
@@ -232,6 +280,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
         onPointerCancel={() => {
           dragging.current = false
           moved.current = false
+          holding.current = false
         }}
       >
         <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} width={74} height={30} aria-hidden="true">

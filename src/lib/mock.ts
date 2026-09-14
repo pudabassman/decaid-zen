@@ -20,7 +20,10 @@ export const mockSnapshot = (): MachineSnapshot => {
   const { pressure, flow, mix } = curve(30)
   return {
     timestamp: new Date().toISOString(),
-    state: { state: search.includes('asleep') ? 'sleeping' : 'idle', substate: 'ready' },
+    state: {
+      state: search.includes('asleep') ? 'sleeping' : search.includes('steam') ? 'steam' : 'idle',
+      substate: search.includes('steam') ? 'pouring' : 'ready',
+    },
     flow,
     pressure,
     targetFlow: 2,
@@ -48,7 +51,7 @@ export const mockWorkflow = (): Workflow => ({
     title: 'Blooming Espresso',
     target_weight: 38,
     steps: [
-      { name: 'fill', pump: 'flow', flow: 4, seconds: 6 },
+      { name: 'fill', pump: 'flow', flow: 4, seconds: 6, temperature: 92 },
       { name: 'bloom', pump: 'flow', flow: 0, seconds: 20 },
       { name: 'ramp', pump: 'pressure', pressure: 9, seconds: 6 },
       { name: 'decline', pump: 'pressure', pressure: 6, seconds: 20 },
@@ -70,10 +73,10 @@ export const mockProfiles = () => [
     profile: {
       title: "Damian's LRv2",
       steps: [
-        { name: 'fill', pump: 'flow' as const, flow: 6, seconds: 4 },
-        { name: 'preinfuse', pump: 'pressure' as const, pressure: 3, seconds: 10 },
-        { name: 'ramp', pump: 'pressure' as const, pressure: 8.6, seconds: 6 },
-        { name: 'decline', pump: 'pressure' as const, pressure: 5.4, seconds: 18 },
+        { name: 'fill', pump: 'flow' as const, flow: 6, seconds: 4, temperature: 92 },
+        { name: 'preinfuse', pump: 'pressure' as const, pressure: 3, seconds: 10, temperature: 92 },
+        { name: 'ramp', pump: 'pressure' as const, pressure: 8.6, seconds: 6, temperature: 90 },
+        { name: 'decline', pump: 'pressure' as const, pressure: 5.4, seconds: 18, temperature: 88 },
       ],
     },
   },
@@ -83,7 +86,7 @@ export const mockProfiles = () => [
     profile: {
       title: 'D-Flow',
       steps: [
-        { name: 'fill', pump: 'flow' as const, flow: 8, seconds: 3 },
+        { name: 'fill', pump: 'flow' as const, flow: 8, seconds: 3, temperature: 90 },
         { name: 'infuse', pump: 'flow' as const, flow: 2.2, seconds: 12 },
         { name: 'hold', pump: 'flow' as const, flow: 1.8, seconds: 14 },
       ],
@@ -94,7 +97,7 @@ export const mockProfiles = () => [
     profile: {
       title: 'Classic Italian',
       steps: [
-        { name: 'ramp', pump: 'pressure' as const, pressure: 9, seconds: 4 },
+        { name: 'ramp', pump: 'pressure' as const, pressure: 9, seconds: 4, temperature: 94 },
         { name: 'hold', pump: 'pressure' as const, pressure: 9, seconds: 24 },
       ],
     },
@@ -104,7 +107,7 @@ export const mockProfiles = () => [
     profile: {
       title: 'A-Flow light',
       steps: [
-        { name: 'fill', pump: 'flow' as const, flow: 5, seconds: 5 },
+        { name: 'fill', pump: 'flow' as const, flow: 5, seconds: 5, temperature: 91 },
         { name: 'bloom', pump: 'pressure' as const, pressure: 2, seconds: 14 },
         { name: 'push', pump: 'pressure' as const, pressure: 7.4, seconds: 16 },
       ],
@@ -115,7 +118,7 @@ export const mockProfiles = () => [
     profile: {
       title: 'Extractamundo Dos',
       steps: [
-        { name: 'fill', pump: 'flow' as const, flow: 8, seconds: 4 },
+        { name: 'fill', pump: 'flow' as const, flow: 8, seconds: 4, temperature: 93 },
         { name: 'soak', pump: 'pressure' as const, pressure: 4, seconds: 20 },
         { name: 'pour', pump: 'flow' as const, flow: 2.2, seconds: 20 },
       ],
@@ -126,7 +129,7 @@ export const mockProfiles = () => [
     profile: {
       title: 'Turbo Bomber',
       steps: [
-        { name: 'fill', pump: 'flow' as const, flow: 9, seconds: 3 },
+        { name: 'fill', pump: 'flow' as const, flow: 9, seconds: 3, temperature: 89 },
         { name: 'pour', pump: 'flow' as const, flow: 5.4, seconds: 14 },
       ],
     },

@@ -108,7 +108,7 @@ a { color: var(--flow); }
 @keyframes traceFade { to { opacity: 0; } }
 
 .drawer {
-  z-index: 31;
+  z-index: 72;
   position: absolute;
   top: 0;
   right: 0;
@@ -211,7 +211,7 @@ a { color: var(--flow); }
   background: transparent;
   border: 0;
   border-top: 1px solid var(--rule-soft);
-  color: var(--muted);
+  color: var(--ink);
   font-family: 'Newsreader', Georgia, serif;
   font-weight: 300;
   font-size: 22px;
@@ -337,14 +337,14 @@ a { color: var(--flow); }
 .decktrack {
   position: relative;
   width: 0;
-  height: 184px;
+  height: 0;
 }
 .deckcard {
   animation: cardIn 240ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  transition: right 260ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 260ms ease,
+  transition: top 260ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 260ms ease,
     opacity 260ms ease, border-color 240ms ease;
   position: absolute;
-  bottom: 0;
+  right: 0;
   width: 232px;
   padding: 18px 16px 16px;
   border-radius: 18px;
@@ -354,7 +354,7 @@ a { color: var(--flow); }
   font: inherit;
   text-align: start;
   cursor: pointer;
-  transform-origin: center bottom;
+  transform-origin: right center;
   box-shadow: -26px 0 46px -24px rgba(0, 0, 0, 0.95);
 }
 .deckcard.on { border-color: #3c3830; background: var(--panel); }
@@ -380,7 +380,7 @@ a { color: var(--flow); }
   border: 1px solid var(--rule);
   border-radius: 999px;
   background: transparent;
-  color: var(--muted);
+  color: var(--ink);
   font: inherit;
   cursor: pointer;
   transition: color 260ms ease, border-color 260ms ease;
@@ -393,7 +393,7 @@ a { color: var(--flow); }
   position: fixed;
   inset: 0;
   background: rgba(19, 18, 16, 0.5);
-  z-index: 30;
+  z-index: 71;
 }
 
 .lastshotlabel,
@@ -691,3 +691,21 @@ a { color: var(--flow); }
   cursor: pointer;
 }
 .findscale:disabled { opacity: 0.5; }
+
+.deckfacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 13px;
+  line-height: 1;
+  margin: 2px 0 4px;
+}
+
+.noscale {
+  align-items: center;
+  margin: clamp(2px, 0.6vh, 8px) 0;
+  padding: 8px clamp(10px, 1.4vw, 18px);
+  border: 1px solid rgba(217, 113, 79, 0.35);
+  border-radius: 16px;
+  background: rgba(217, 113, 79, 0.06);
+}

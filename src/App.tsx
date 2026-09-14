@@ -9,6 +9,7 @@ import { Sleep } from './screens/Sleep'
 import { MOCK } from './lib/mock'
 import { ensureBundledPlugin } from './api/bundledPlugin'
 import { useScaleRevive } from './lib/useScaleRevive'
+import { useShotTare } from './lib/useShotTare'
 
 type View = 'home' | 'journal' | 'dialin' | 'settings'
 
@@ -23,7 +24,8 @@ export function App() {
   const asleep = state === 'sleeping' || state === 'booting'
 
   // the scale sleeps with the machine; waking is the moment to go looking for it
-  useScaleRevive(asleep, machine.scaleConnected)
+  useScaleRevive(asleep, machine.scaleConnected, machine.pouring)
+  useShotTare(machine.snapshot, machine.scaleConnected)
 
   useEffect(() => {
     ensureBundledPlugin().catch(() => undefined)
