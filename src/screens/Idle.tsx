@@ -17,9 +17,10 @@ import { MOCK } from '../lib/mock'
 import { useWaterBudget } from '../lib/waterBudget'
 import { settingsApi } from '../api/settings'
 import {
+  activeProfileId,
   grindKey,
-  matchRecord,
   preferredRecords,
+  profileYield,
   profiles as profileApi,
   rememberedGrind,
   type ProfileRecord,
@@ -27,6 +28,8 @@ import {
 import { ProfileDeck } from '../components/ProfileDeck'
 import { ShotSpread } from '../components/ShotSpread'
 import { useShotSpread } from '../lib/useShotSpread'
+import { useDemoMode } from '../lib/demoMode'
+import { reloadThenReplay } from '../lib/demoReplay'
 
 type Machine = ReturnType<typeof useMachine>
 
@@ -91,6 +94,13 @@ export function Idle({
   const budget = useWaterBudget(water, snapshot?.state.state, snapshot?.flow)
   const tankPercent = water ? Math.round((water.currentLevel / budget.maxLevel) * 100) : null
   const tankLabel = budget.mlLeft === null ? '' : `tank ${budget.mlLeft} ml`
+  // the tank speaks up only when the next drink would not fit whole
+  const waterNote =
+    budget.nextDrink === 'shot'
+      ? 'Water: espresso only, not a milk drink'
+      : budget.nextDrink === 'none'
+        ? 'Water: top up before the next shot'
+        : ''
 
   const stats = shotStats(last)
   const asleep = snapshot?.state.state === 'sleeping' || snapshot?.state.state === 'booting'
@@ -98,11 +108,12 @@ export function Idle({
 
   const ctx = workflow?.context
   const roaster = ctx?.coffeeRoaster ?? ''
-  const activeId = matchRecord(records, workflow?.profile)?.id ?? null
+  const activeId = activeProfileId(records, workflow)
   const beanLength = (ctx?.coffeeName ?? '').length
   const beanClass = beanLength > 46 ? 'long' : beanLength > 28 ? 'mid' : ''
   const listing = useRoasterCatalog(roaster)
   const reading = useShotSpread(ctx?.coffeeName, workflow?.profile?.title)
+  const demo = useDemoMode()
   const dose = ctx?.targetDoseWeight ?? 18
   const target = ctx?.targetYield ?? workflow?.profile?.target_weight ?? 36
 
@@ -120,7 +131,12 @@ export function Idle({
       await client.saveWorkflow({
         ...workflow,
         profile: record.profile,
-        context: { ...workflow.context, grinderSetting: remembered ?? '' },
+        context: {
+          ...workflow.context,
+          profileId: record.id,
+          grinderSetting: remembered ?? '',
+          ...profileYield(record.profile),
+        },
       })
       machine.refreshWorkflow()
     })
@@ -237,10 +253,10 @@ export function Idle({
 
         <div className="headerright">
           <div className="row baseline" style={{ gap: 'clamp(14px, 2.2vw, 34px)', opacity: asleep ? 0.45 : 1 }}>
-            <Reading label="Group" value={`${fmt(snapshot?.groupTemperature)}°`} />
-            <Reading label="Steam" value={`${fmt(snapshot?.steamTemperature)}°`} />
+            <Reading inline label="Group" value={`${fmt(snapshot?.groupTemperature)}°`} />
+            <Reading inline label="Steam" value={`${fmt(snapshot?.steamTemperature)}°`} />
             {machine.scaleConnected ? (
-              <Reading label="Scale" value={`${fmt(scale?.weight ?? 0)} g`} />
+              <Reading inline label="Scale" value={`${fmt(scale?.weight ?? 0)} g`} />
             ) : (
               <button
                 className="findscale"
@@ -250,7 +266,7 @@ export function Idle({
                   run('Looking for the scale', () => client.findDevices())
                 }}
               >
-                <Reading label="Scale" value={seeking ? 'looking' : 'none'} color="var(--muted)" />
+                <Reading inline label="Scale" value={seeking ? 'looking' : 'none'} color="var(--muted)" />
               </button>
             )}
           </div>
@@ -307,7 +323,14 @@ export function Idle({
         }}
       >
       <div
-        className={`waterrail${budget.lastDrink || (MOCK && window.location.search.includes('low')) ? ' low' : ''}`}
+        className={`waterrail${
+          budget.lastDrink ||
+          budget.nextDrink === 'shot' ||
+          budget.nextDrink === 'none' ||
+          (MOCK && window.location.search.includes('low'))
+            ? ' low'
+            : ''
+        }`}
         aria-label={
           budget.lastDrink
             ? 'Water low: one shot and steam left'
@@ -320,6 +343,11 @@ export function Idle({
 
 
       <div className="row between" style={{ height: 0, alignItems: 'center' }}>
+        {waterNote && (
+          <span className="cap waternote" style={{ color: 'var(--water-low)' }}>
+            {waterNote}
+          </span>
+        )}
         <span className="cap strong lastshotlabel">
           Last shot
           {last ? ` · ${new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
@@ -351,6 +379,17 @@ export function Idle({
           {machine.scaleConnected && (
             <Button width={130} height={52} quiet disabled={busy} onClick={() => run('Tare', client.tare)}>
               <span className="cap">Tare</span>
+            </Button>
+          )}
+          {demo.on && (
+            <Button
+              width={150}
+              height={52}
+              quiet
+              disabled={busy}
+              onClick={() => reloadThenReplay()}
+            >
+              <span className="cap">Replay last</span>
             </Button>
           )}
           <button className="gear" aria-label="Settings" onClick={onSettings}>
@@ -447,7 +486,30 @@ function EditableReading({
   )
 }
 
-function Reading({ label, value, size, color }: { label: string; value: string; size?: string; color?: string }) {
+function Reading({
+  label,
+  value,
+  size,
+  color,
+  inline,
+}: {
+  label: string
+  value: string
+  size?: string
+  color?: string
+  inline?: boolean
+}) {
+  if (inline) {
+    return (
+      <span className="row" style={{ gap: 7, alignItems: 'baseline' }}>
+        <span className="cap" style={{ lineHeight: 1 }}>{label}</span>
+        <span className="num" style={{ fontSize: 14, color: color ?? 'var(--ink)', lineHeight: 1 }}>
+          {value}
+        </span>
+      </span>
+    )
+  }
+
   return (
     <div style={{ textAlign: 'right' }}>
       <div className="cap" style={{ marginBottom: 4, lineHeight: 1 }}>{label}</div>

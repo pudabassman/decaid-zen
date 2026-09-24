@@ -5,6 +5,8 @@ import type { MachineStateName, WaterLevels } from '../api/types'
 const STORE = 'decaid-zen'
 const KEY = 'waterUse'
 const KEEP = 5
+/** never promise a drink the tank can only just cover */
+const MARGIN = 1.25
 const DEFAULT_MAX_MM = 45
 /** the DE1 tank holds roughly this much between empty and the top of the sensor */
 const TANK_ML = 1500
@@ -135,6 +137,16 @@ export function useWaterBudget(
   const mlPerMm = learned ?? TANK_ML / maxLevel
   const mlLeft = water ? Math.round(usable * mlPerMm) : null
 
+  // what the tank can still serve, so a refill never lands mid-drink
+  const nextDrink: 'both' | 'shot' | 'none' | 'unknown' =
+    perShot === null
+      ? 'unknown'
+      : perSteam !== null && usable >= (perShot + perSteam) * MARGIN
+        ? 'both'
+        : usable >= perShot * MARGIN
+          ? 'shot'
+          : 'none'
+
   return {
     maxLevel,
     calibrated: learned !== null,
@@ -143,6 +155,7 @@ export function useWaterBudget(
     drinksLeft,
     mlLeft,
     mlPerMm,
+    nextDrink,
     samples: { shot: use.shot.length, steam: use.steam.length },
     /** one shot plus its steam is all that is left in the tank */
     lastDrink: drinksLeft !== null && drinksLeft < 2,

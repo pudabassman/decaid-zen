@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '../components/Button'
 import { Metric } from '../components/Metric'
-import { ShotGraph, type FrameMark } from '../components/ShotGraph'
+import { ShotGraph } from '../components/ShotGraph'
 import { client } from '../api/client'
 import type { useMachine } from '../api/useMachine'
 import { useAction } from '../lib/useAction'
@@ -20,7 +20,7 @@ export function LiveShot({ machine }: { machine: Machine }) {
     onLeft: (fromRightEdge) => fromRightEdge && setDrawer(true),
     onRight: () => setDrawer(false),
   })
-  const { snapshot, scale, workflow, samples, elapsed, scaleConnected } = machine
+  const { snapshot, scale, workflow, samples, shotOrigin, elapsed, scaleConnected } = machine
 
   const dose = workflow?.context?.targetDoseWeight ?? 18
   const target = workflow?.context?.targetYield ?? workflow?.profile?.target_weight ?? 36
@@ -28,30 +28,20 @@ export function LiveShot({ machine }: { machine: Machine }) {
   const steps = workflow?.profile?.steps ?? []
   const frameIndex = snapshot?.profileFrame ?? 0
 
-  const marks = useMemo<FrameMark[]>(() => {
-    let t = 0
-    const out: FrameMark[] = []
-    steps.forEach((step, i) => {
-      t += step.seconds ?? 0
-      if (i < steps.length - 1) out.push({ t, label: (steps[i + 1]?.name ?? '').toUpperCase() })
-    })
-    return out
-  }, [steps])
-
   const steaming = snapshot?.state.state === 'steam'
+  // the frame number still reads from the last shot until the first step begins
+  const preparing = snapshot?.state.substate === 'preparingForShot'
 
   const labels = steaming
     ? [
         { key: 'steam' as const, value: `${fmt(snapshot?.steamTemperature)}°`, caption: 'STEAM' },
-        { key: 'flow' as const, value: fmt(snapshot?.flow), caption: `ML/S · OF ${fmt(snapshot?.targetFlow)}` },
+        { key: 'flow' as const, value: fmt(snapshot?.flow), caption: 'ML/S' },
       ]
     : [
-    { key: 'mix' as const, value: `${fmt(snapshot?.mixTemperature)}°`, caption: `BREW · OF ${fmt(snapshot?.targetMixTemperature)}` },
-    { key: 'pressure' as const, value: fmt(snapshot?.pressure), caption: `BAR · OF ${fmt(snapshot?.targetPressure)}` },
-    ...(scaleConnected
-      ? [{ key: 'weight' as const, value: fmt(weight), caption: `GRAMS · OF ${fmt(target)}` }]
-      : []),
-    { key: 'flow' as const, value: fmt(snapshot?.flow), caption: `ML/S · OF ${fmt(snapshot?.targetFlow)}` },
+    { key: 'mix' as const, value: `${fmt(snapshot?.mixTemperature)}°`, caption: 'BREW' },
+    { key: 'pressure' as const, value: fmt(snapshot?.pressure), caption: 'BAR' },
+    ...(scaleConnected ? [{ key: 'weight' as const, value: fmt(weight), caption: 'GRAMS' }] : []),
+    { key: 'flow' as const, value: fmt(snapshot?.flow), caption: 'ML/S' },
       ]
 
   return (
@@ -60,11 +50,14 @@ export function LiveShot({ machine }: { machine: Machine }) {
         <div className="row between" style={{ marginBottom: 12 }}>
           <div className="row" style={{ gap: 16 }}>
             <span className="statusdot live" />
-            <span className="cap strong">{snapshot?.state.substate || snapshot?.state.state || 'idle'}</span>
-            {!steaming && (
+            <span className="cap strong">
+              {/* the machine reports steaming as a pour, which reads wrong on the steam screen */}
+              {steaming ? 'steaming' : snapshot?.state.substate || snapshot?.state.state || 'idle'}
+            </span>
+            {!steaming && !preparing && (
               <span className="cap">
-                Frame {frameIndex} of {steps.length || '—'}
-                {steps[frameIndex - 1]?.name ? ` · ${steps[frameIndex - 1].name}` : ''}
+                Frame {frameIndex + 1} of {steps.length || '—'}
+                {steps[frameIndex]?.name ? ` · ${steps[frameIndex].name}` : ''}
               </span>
             )}
           </div>
@@ -76,10 +69,11 @@ export function LiveShot({ machine }: { machine: Machine }) {
 
         <ShotGraph
           samples={samples}
+          origin={shotOrigin}
           live
           window={elapsed}
           steps={steaming ? [] : steps.map((profileStep) => profileStep.seconds ?? 0)}
-          marks={steaming ? [] : marks}
+          targetYield={steaming || !scaleConnected ? 0 : target}
           labels={labels}
         />
 
@@ -112,7 +106,16 @@ export function LiveShot({ machine }: { machine: Machine }) {
             {workflow?.profile?.title ? ` · ${workflow.profile.title}` : ''}
             {workflow?.context?.grinderModel ? ` · ${workflow.context.grinderModel} ${workflow.context.grinderSetting ?? ''}` : ''}
           </span>
-          <Button width={196} height={52} hot disabled={busy} onClick={() => run('Stop', () => client.requestState('idle'))}>
+          <Button
+            width={196}
+            height={52}
+            hot
+            disabled={busy}
+            onClick={() =>
+              // a replay has no machine behind it, so stopping is purely local
+              machine.replay ? machine.stopReplay() : run('Stop', () => client.requestState('idle'))
+            }
+          >
             <span className="display" style={{ fontSize: 24, letterSpacing: '0.03em' }}>Stop</span>
           </Button>
         </div>

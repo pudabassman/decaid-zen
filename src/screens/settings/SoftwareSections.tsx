@@ -1,7 +1,7 @@
 import { Button } from '../../components/Button'
 import { Row, Section, SingleSelect, Toggle } from '../../components/SettingControls'
 import type {
-  AppUpdateState, BuildInfo, MachineInfo, PluginEntry, SkinEntry, WakeSchedule,
+  AppUpdateState, BuildInfo, MachineCounts, MachineInfo, PluginEntry, SkinEntry, WakeSchedule,
 } from '../../api/settings'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -123,6 +123,10 @@ export function AboutSection({
   onTheme,
   onReset,
   busy,
+  demo,
+  onDemo,
+  counts,
+  skinVersion,
 }: {
   build: BuildInfo | null
   machine: MachineInfo | null
@@ -131,6 +135,10 @@ export function AboutSection({
   onTheme: (next: string) => void
   onReset: () => void
   busy: boolean
+  demo: boolean
+  onDemo: (on: boolean) => void
+  counts: MachineCounts | null
+  skinVersion: string
 }) {
   return (
     <Section title="About">
@@ -156,15 +164,33 @@ export function AboutSection({
       {machine?.model && (
         <Row
           label={machine.model}
-          hint={['firmware ' + (machine.version ?? '--'), machine.GHC ? 'GHC' : null].filter(Boolean).join(' · ')}
+          hint={[
+            'firmware ' + (machine.version ?? '--'),
+            machine.serialNumber ? 'serial ' + machine.serialNumber : null,
+            machine.extra?.voltage ? machine.extra.voltage + 'V' : null,
+            machine.GHC ? 'GHC' : null,
+            machine.extra?.refillKit ? 'refill kit' : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         >{null}</Row>
       )}
+      {counts && (
+        <Row
+          label="Recorded"
+          hint={`${counts.shots.toLocaleString()} shots · ${counts.steams.toLocaleString()} steams`}
+        >{null}</Row>
+      )}
+      <Row label="Skin" hint={`Decaid Zen ${skinVersion}`}>{null}</Row>
       {update && (
         <Row
           label="App update"
           hint={update.phase === 'available' ? `${update.latestVersion} available` : update.phase}
         >{null}</Row>
       )}
+      <Row label="Demo" hint="replay a stored shot on the live screen">
+        <Toggle on={demo} onChange={onDemo} />
+      </Row>
       <Row label="Reset machine settings" hint="puts the DE1 back to its defaults">
         <Button width={130} height={42} quiet disabled={busy} onClick={onReset}>
           <span className="cap">reset</span>

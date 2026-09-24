@@ -1,5 +1,5 @@
 import { api } from '../lib/gateway'
-import type { Profile } from './types'
+import type { Profile, Workflow } from './types'
 
 export interface ProfileRecord {
   id: string
@@ -42,6 +42,19 @@ export function matchRecord(records: ProfileRecord[], profile: Profile | undefin
   const sameShape = records.find((r) => profileKey(r.profile).split('::')[1] === shape)
   if (sameShape) return sameShape
   return records.find((r) => r.profile?.title === profile.title) ?? null
+}
+
+/** the machine stops on the workflow's yield, so a new profile has to bring its own target along */
+export function profileYield(profile: Profile | undefined) {
+  const target = profile?.target_weight ?? profile?.target_volume
+  return typeof target === 'number' && target > 0 ? { targetYield: target } : {}
+}
+
+/** the workflow carries the chosen id; shape matching is only a fallback for workflows saved before it did */
+export function activeProfileId(records: ProfileRecord[], workflow: Workflow | null | undefined) {
+  const stored = workflow?.context?.profileId
+  if (stored && records.some((r) => r.id === stored)) return stored
+  return matchRecord(records, workflow?.profile)?.id ?? null
 }
 
 export const profiles = {

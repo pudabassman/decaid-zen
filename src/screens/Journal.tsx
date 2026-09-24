@@ -5,6 +5,7 @@ import { Dots } from '../components/Dots'
 import { LastShotGraph } from '../components/LastShotGraph'
 import type { ShotRecord, ShotSummary } from '../api/types'
 import { useSwipe } from '../lib/useSwipe'
+import { useDemoMode } from '../lib/demoMode'
 import { useAction } from '../lib/useAction'
 
 const ratio = (shot: ShotSummary) => {
@@ -13,7 +14,14 @@ const ratio = (shot: ShotSummary) => {
   return dose && poured ? `1:${(poured / dose).toFixed(2)}` : '--'
 }
 
-export function Journal({ onBack }: { onBack: () => void }) {
+export function Journal({
+  onBack,
+  onReplay,
+}: {
+  onBack: () => void
+  onReplay: (shot: ShotRecord) => void
+}) {
+  const demo = useDemoMode()
   const [items, setItems] = useState<ShotSummary[]>([])
   const [total, setTotal] = useState(0)
   const [selected, setSelected] = useState<ShotRecord | null>(null)
@@ -167,9 +175,16 @@ export function Journal({ onBack }: { onBack: () => void }) {
       <div className="rule" style={{ margin: '12px 0' }} />
       <div className="row between">
         <span className="cap">Tap a shot to inspect it</span>
+        <div className="row" style={{ gap: 14 }}>
+          {demo.on && selected && (
+            <Button width={168} quiet onClick={() => onReplay(selected)}>
+              <span className="cap">Rerun this shot</span>
+            </Button>
+          )}
         <Button width={168} onClick={onBack}>
           <span className="display" style={{ fontSize: 24 }}>Back</span>
         </Button>
+        </div>
       </div>
     </div>
   )

@@ -2,12 +2,51 @@ import { useEffect, useRef, useState, type MutableRefObject } from 'react'
 import type { Sample } from '../api/useMachine'
 
 const GUTTER = 200
-/** the axis a step opens with when the profile does not say how long it runs */
-const MIN_WINDOW = 10
-/** never squeeze a step into less than this, however short the profile says it is */
-const MIN_STEP = 4
-/** how long the view takes to travel from one step to the next */
-const SLIDE_MS = 1000
+/** the axis moves a chunk at a time, so between chunks nothing already drawn shifts */
+const SPAN_CHUNK = 10
+/** an adaptive step declares its longest case, so trust the plan only this far */
+const SPAN_PLAN_CAP = 20
+const SPAN_GROW_MS = 760
+/** once the trace stops growing for this long the shot is over and the view fits it */
+const SETTLE_MS = 400
+/** seconds of the outgoing window the next one keeps, so the trace never restarts empty */
+const SLIDE_LEAD = 1.5
+/** where the predicted end of the shot should land on the plot */
+const FIT_TARGET = 0.95
+/** seconds of trace the weight rate is measured over */
+const RATE_WINDOW = 2
+/** the weight only predicts the end once this much of the target is in the cup */
+const POUR_ESTABLISHED = 0.25
+
+/**
+ * The step opens on a window wide enough for the whole step the profile describes, rounded
+ * up to a chunk, so a step that runs to plan never moves the axis once. Only a step that
+ * outlasts its plan widens, and then by a whole chunk.
+ */
+/**
+ * When the shot is expected to end, on the sample clock. Weight wins when the
+ * scale is pouring, because an adaptive profile's declared seconds are a ceiling;
+ * otherwise the remaining steps stand in.
+ */
+const endOf = (data: Sample[], targetYield: number, steps: number[], stable: number) => {
+  const last = data[data.length - 1]
+  if (targetYield > 0 && last.weight >= targetYield * POUR_ESTABLISHED) {
+    let first = last
+    for (let i = data.length - 1; i >= 0; i -= 1) {
+      first = data[i]
+      if (last.t - data[i].t >= RATE_WINDOW) break
+    }
+    const seconds = last.t - first.t
+    const rate = seconds > 0.4 ? (last.weight - first.weight) / seconds : 0
+    if (rate > 0.15) return capped(last.t, last.t + (targetYield - last.weight) / rate)
+  }
+  let remaining = 0
+  for (let i = stable + 1; i < steps.length; i += 1) remaining += Math.min(steps[i] ?? 0, SPAN_PLAN_CAP)
+  return capped(last.t, last.t + remaining)
+}
+
+/** An estimate made early is mostly noise; no shot doubles its length from here. */
+const capped = (now: number, estimate: number) => Math.min(Math.max(estimate, now), now * 2 + 4)
 
 const easeInOut = (p: number) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2)
 
@@ -21,18 +60,15 @@ const SERIES = [
 
 type SeriesKey = (typeof SERIES)[number]['key']
 
-export interface FrameMark {
-  t: number
-  label: string
-}
-
 interface Props {
   samples: MutableRefObject<Sample[]>
+  origin: MutableRefObject<number | null>
   live: boolean
   window: number
   /** how long the profile expects each step to run, in order */
   steps: number[]
-  marks: FrameMark[]
+  /** the yield the shot is aiming for, or 0 when nothing is set */
+  targetYield: number
   labels: { key: SeriesKey; value: string; caption: string }[]
 }
 
@@ -42,15 +78,15 @@ const yFor = (s: (typeof SERIES)[number], v: number, height: number) => {
   return s.band === 1 ? (1 - frac) * height : (1 - frac) * height * s.band
 }
 
-export function ShotGraph({ samples, live, window: seconds, steps, marks, labels }: Props) {
+export function ShotGraph({ samples, origin, live, window: seconds, steps, targetYield, labels }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const box = useRef<HTMLDivElement>(null)
   const [labelY, setLabelY] = useState<Record<string, number>>({})
 
   // the draw loop reads the latest props through a ref: rebuilding it on every
   // sample would reset the view it is animating ten times a second
-  const props = useRef({ live, seconds, steps, marks, labels })
-  props.current = { live, seconds, steps, marks, labels }
+  const props = useRef({ live, seconds, steps, targetYield, labels })
+  props.current = { live, seconds, steps, targetYield, labels }
 
   useEffect(() => {
     const el = canvas.current
@@ -59,16 +95,17 @@ export function ShotGraph({ samples, live, window: seconds, steps, marks, labels
 
     let raf = 0
     let phase = 0
-    // the view: its left edge and how many seconds it holds. Both glide together,
-    // so a step change is one smooth move rather than a pan and a snap.
+    // the view: its left edge sits on the step in play, so the step always starts at 0.
+    // only the span moves, and only once the trace has filled the plot
     let from = 0
-    let span = MIN_WINDOW
+    let span = SPAN_CHUNK
     let stable = 0
-    // a step change starts a one second glide from where the view is to where it belongs
+    let lastNow = -1
+    let lastGrewAt = performance.now()
     let slide: { from: number; span: number; toFrom: number; toSpan: number; at: number } | null = null
 
     const draw = () => {
-      const { live, seconds, steps, marks, labels } = props.current
+      const { live, seconds, steps, targetYield, labels } = props.current
       const dpr = globalThis.devicePixelRatio || 1
       const w = wrap.clientWidth
       const h = wrap.clientHeight
@@ -92,39 +129,61 @@ export function ShotGraph({ samples, live, window: seconds, steps, marks, labels
       if (latest === previous) stable = latest
 
       let stepStart = 0
-      for (let i = data.length - 1; i >= 0; i -= 1) {
-        if (data[i].frame !== stable) break
-        stepStart = data[i].t
+      let scan = data.length - 1
+      // the newest samples can already belong to the next frame, which is not stable
+      // yet; skipping them keeps the view on the step in play instead of snapping to 0
+      while (scan >= 0 && data[scan].frame !== stable) scan -= 1
+      for (; scan >= 0; scan -= 1) {
+        if (data[scan].frame !== stable) break
+        stepStart = data[scan].t
       }
 
       // a fresh shot starts the view over rather than easing in from the last one
       if (now + 0.5 < from) {
         from = 0
-        span = MIN_WINDOW
+        span = SPAN_CHUNK
       }
 
-      const targetFrom = Math.max(0, Math.min(stepStart, now - 0.1))
-      // the plan comes from the same step the left edge is using, so the scale
-      // never changes ahead of the pan
-      const planned = steps[stable - 1] ?? 0
-      // the step fills the plot by the time the profile says it ends, and only
-      // widens if it runs long
-      const targetSpan = Math.max(planned || MIN_WINDOW, MIN_STEP, now - targetFrom)
+      // While the trace still has room the view holds absolutely still: a step change
+      // on a half-empty plot moves nothing. Only a full plot earns a move, and then
+      // the finished steps drop off the left so the step in play starts at 0.
+      if (now !== lastNow) {
+        lastNow = now
+        lastGrewAt = performance.now()
+      }
 
-      // a new destination starts one glide; the same destination keeps the one running
-      if (Math.abs(targetFrom - (slide ? slide.toFrom : from)) > 0.05) {
+      let targetFrom = slide ? slide.toFrom : from
+      let targetSpan = slide ? slide.toSpan : span
+      const settled = data.length > 1 && performance.now() - lastGrewAt > SETTLE_MS
+      if (settled) {
+        // the shot is over: close the gap so the last step ends on the right edge
+        targetSpan = Math.max(now - targetFrom, 0.5)
+      } else if (data.length > 1 && now - targetFrom >= targetSpan) {
+        // The plot is full, so the view moves on by one window. If what is left of the
+        // shot would not fill that next window, this one stretches to the end instead,
+        // so the shot never finishes in the middle of a fresh window.
+        const end = endOf(data, targetYield, steps, stable)
+        if (end - now >= SPAN_CHUNK) {
+          // the new window opens just behind the live edge, so the trace restarts near
+          // the left; a step that began inside that lead-in anchors it instead
+          const lead = now - SLIDE_LEAD
+          targetFrom = stepStart > lead ? stepStart : Math.max(targetFrom, lead)
+          targetSpan = SPAN_CHUNK
+        } else {
+          targetSpan = Math.max(SPAN_CHUNK, (end - targetFrom) / FIT_TARGET)
+        }
+      }
+
+      if (Math.abs(targetFrom - (slide ? slide.toFrom : from)) > 0.05 || Math.abs(targetSpan - (slide ? slide.toSpan : span)) > 0.01) {
         slide = { from, span, toFrom: targetFrom, toSpan: targetSpan, at: performance.now() }
       }
 
       if (slide) {
-        const p = Math.min(1, (performance.now() - slide.at) / SLIDE_MS)
+        const p = Math.min(1, (performance.now() - slide.at) / SPAN_GROW_MS)
         const eased = easeInOut(p)
-        from = slide.from + (targetFrom - slide.from) * eased
-        span = slide.span + (targetSpan - slide.span) * eased
+        from = slide.from + (slide.toFrom - slide.from) * eased
+        span = slide.span + (slide.toSpan - slide.span) * eased
         if (p === 1) slide = null
-      } else {
-        from = targetFrom
-        span = targetSpan
       }
       const xFor = (t: number) => ((t - from) / span) * plot
 
@@ -143,11 +202,15 @@ export function ShotGraph({ samples, live, window: seconds, steps, marks, labels
       ctx.lineTo(plot, h - 0.5)
       ctx.stroke()
 
+      // a boundary is where a step actually changed, not where the profile said it would:
+      // an adaptive step that exits on pressure or flow still gets its rule in the right place
       ctx.strokeStyle = '#302d27'
       ctx.setLineDash([1, 5])
-      for (const mark of marks) {
-        if (mark.t <= from || mark.t >= from + span) continue
-        const x = Math.round(xFor(mark.t)) + 0.5
+      for (let i = 1; i < data.length; i += 1) {
+        if (data[i].frame === data[i - 1].frame) continue
+        const t = data[i].t
+        if (t <= from || t >= from + span) continue
+        const x = Math.round(xFor(t)) + 0.5
         ctx.beginPath()
         ctx.moveTo(x, 0)
         ctx.lineTo(x, h)
@@ -262,7 +325,8 @@ export function ShotGraph({ samples, live, window: seconds, steps, marks, labels
         ctx.fillText(`${tick}s`, xFor(from + tick), h + 20)
       }
       ctx.fillStyle = '#b8b1a2'
-      ctx.fillText(`${now.toFixed(1)}s`, plot, h + 20)
+      const clock = origin.current === null ? 0 : Math.max(0, now - origin.current)
+      ctx.fillText(`${clock.toFixed(1)}s`, plot, h + 20)
 
       setLabelY((prev) => {
         const changed = SERIES.some((s) => Math.abs((prev[s.key] ?? -99) - (positions[s.key] ?? -99)) > 0.75)
@@ -275,7 +339,7 @@ export function ShotGraph({ samples, live, window: seconds, steps, marks, labels
 
     raf = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(raf)
-  }, [samples])
+  }, [samples, origin])
 
   const spread = spreadLabels(labels.map((l) => labelY[l.key] ?? 0))
 
@@ -288,20 +352,24 @@ export function ShotGraph({ samples, live, window: seconds, steps, marks, labels
           style={{
             position: 'absolute',
             left: `calc(100% - ${GUTTER - 60}px)`,
-            top: spread[i] - 26,
+            top: spread[i] - 16,
             color: SERIES.find((s) => s.key === label.key)?.color,
             pointerEvents: 'none',
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: 7,
+            whiteSpace: 'nowrap',
           }}
         >
-          <div className="num" style={{ fontSize: 32, lineHeight: 1 }}>{label.value}</div>
-          <div style={{ fontSize: 9, letterSpacing: '0.22em', marginTop: 4 }}>{label.caption}</div>
+          <span className="num" style={{ fontSize: 32, lineHeight: 1 }}>{label.value}</span>
+          <span style={{ fontSize: 9, letterSpacing: '0.22em' }}>{label.caption}</span>
         </div>
       ))}
     </div>
   )
 }
 
-function spreadLabels(ys: number[], gap = 46) {
+function spreadLabels(ys: number[], gap = 38) {
   const order = ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y)
   let prev = -Infinity
   const out = new Array<number>(ys.length)

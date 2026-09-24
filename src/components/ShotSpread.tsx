@@ -17,6 +17,8 @@ const verdictLabel: Record<'steady' | 'long' | 'fast', string> = {
 }
 
 export function ShotSpread({ reading }: { reading: Reading }) {
+  if (!reading.spread) return <EmptySpread />
+
   const { times, center, band, latest, verdict } = reading.spread
   const single = times.length === 1
   const step = times.length > 1 ? (W - LEFT) / (times.length - 1) : 0
@@ -51,6 +53,25 @@ export function ShotSpread({ reading }: { reading: Reading }) {
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignSelf: 'stretch' }}>
             <span className="cap" style={{ color: 'var(--axis-label)' }}>&plusmn; {band}</span>
             <span className="cap">s &middot; {single ? 'one shot' : verdictLabel[verdict]}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EmptySpread() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9 }}>
+      <span className="cap">No shots yet &middot; this bean + profile</span>
+      <div className="row" style={{ alignItems: 'center', gap: 28 }}>
+        <svg className="spreadplot" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }} aria-hidden="true">
+          <line x1="0" y1={MID} x2={W} y2={MID} stroke="rgba(211,176,106,0.28)" strokeWidth="1" strokeDasharray="2 5" />
+        </svg>
+        <div className="row" style={{ gap: 10, alignItems: 'stretch', height: 44 }}>
+          <span className="num" style={{ fontSize: 44, lineHeight: 1, color: 'var(--axis-label)' }}>&ndash;&ndash;</span>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignSelf: 'stretch' }}>
+            <span className="cap">s</span>
           </div>
         </div>
       </div>

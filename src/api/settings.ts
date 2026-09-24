@@ -152,6 +152,13 @@ export interface MachineInfo {
   version?: string
   model?: string
   GHC?: boolean
+  serialNumber?: string
+  extra?: { refillKit?: boolean; voltage?: number }
+}
+
+export interface MachineCounts {
+  shots: number
+  steams: number
 }
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
@@ -235,6 +242,14 @@ export const settingsApi = {
   update: () => call<AppUpdateState>('/update'),
   buildInfo: () => call<BuildInfo>('/info'),
   machineInfo: () => call<MachineInfo>('/machine/info'),
+  // shots carry a total; steams only answer with a bare id list
+  counts: async (): Promise<MachineCounts> => {
+    const [shots, steamIds] = await Promise.all([
+      call<{ total?: number }>('/shots?limit=1').catch(() => ({ total: 0 })),
+      call<string[]>('/steams/ids').catch(() => []),
+    ])
+    return { shots: Number(shots?.total ?? 0), steams: steamIds.length }
+  },
 }
 
 /** Color16 is RRRRGGGGBBBB; the browser wants #rrggbb */

@@ -88,8 +88,8 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const holding = useRef(false)
   const previousSlot = useRef(0)
 
-  const activeIndex = Math.max(0, records.findIndex((r) => r.id === activeId))
-  const active = records[activeIndex]
+  const activeIndex = records.findIndex((r) => r.id === activeId)
+  const active = activeIndex < 0 ? undefined : records[activeIndex]
 
   const count = Math.max(1, records.length)
   const wrap = (n: number) => ((n % count) + count) % count
@@ -102,7 +102,7 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   }
   const seated = (signed: number) => signed >= -middle && signed <= visible - 1 - middle
   // seats run down the screen, so dragging down walks back up the ring
-  const slot = wrap(activeIndex - Math.round(pan / STEP))
+  const slot = wrap(Math.max(0, activeIndex) - Math.round(pan / STEP))
   const cameFrom = previousSlot.current
   const highlighted = candidate ?? records[slot]?.id ?? activeId
 

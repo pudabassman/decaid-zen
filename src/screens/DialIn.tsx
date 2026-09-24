@@ -9,9 +9,12 @@ import { Dots } from '../components/Dots'
 import { client } from '../api/client'
 import type { Grinder, Workflow } from '../api/types'
 import {
-  matchRecord,
+  activeProfileId,
+  grindKey,
   preferredRecords,
+  profileYield,
   profiles as profileApi,
+  rememberedGrind,
   type ProfileRecord,
 } from '../api/profiles'
 import { ProfileDeck } from '../components/ProfileDeck'
@@ -51,20 +54,21 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
   }, [])
 
   const pickProfile = (record: ProfileRecord) => {
-    const remembered = grinds[record.id]
     setDirty(true)
-    setDraft((prev) =>
-      prev
-        ? {
-            ...prev,
-            profile: record.profile,
-            context: {
-              ...prev.context,
-              ...(remembered ? { grinderSetting: remembered } : {}),
-            },
-          }
-        : prev,
-    )
+    setDraft((prev) => {
+      if (!prev) return prev
+      const remembered = rememberedGrind(grinds, record.id, prev.context?.coffeeName)
+      return {
+        ...prev,
+        profile: record.profile,
+        context: {
+          ...prev.context,
+          profileId: record.id,
+          grinderSetting: remembered ?? '',
+          ...profileYield(record.profile),
+        },
+      }
+    })
   }
 
 
@@ -99,6 +103,24 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
     setDirty(true)
     setDraft((prev) => (prev ? { ...prev, context: { ...prev.context, ...next } } : prev))
   }
+
+  const activeId = activeProfileId(records, draft)
+
+  const setGrind = (value: string) => {
+    patch({ grinderSetting: value })
+    if (!activeId) return
+    const next = { ...grinds, [grindKey(activeId, ctx.coffeeName)]: value }
+    setGrinds(next)
+    profileApi.saveGrindMemory(next).catch(() => undefined)
+  }
+
+  const pickCoffee = (coffeeName: string) => {
+    patch({ coffeeName, grinderSetting: rememberedGrind(grinds, activeId, coffeeName) ?? '' })
+  }
+
+  const deckGrinds = Object.fromEntries(
+    records.map((record) => [record.id, rememberedGrind(grinds, record.id, ctx.coffeeName) ?? '']),
+  )
 
   const save = () =>
     run('Save workflow', async () => {
@@ -154,7 +176,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
             value={ctx.coffeeName ?? ''}
             placeholder="No bean loaded"
             width={620}
-            onCommit={(next) => patch({ coffeeName: next })}
+            onCommit={pickCoffee}
           />
         </div>
 
@@ -217,7 +239,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
                   placeholder="--"
                   numeric
                   width={90}
-                  onCommit={(next) => patch({ grinderSetting: next })}
+                  onCommit={setGrind}
                 />
               </span>
               <span style={{ minWidth: 0 }}>
@@ -236,8 +258,8 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
           </div>
           <span style={{ marginLeft: 'auto' }}>
             <Stepper
-              onLess={() => patch({ grinderSetting: shift(ctx.grinderSetting, -0.1) })}
-              onMore={() => patch({ grinderSetting: shift(ctx.grinderSetting, 0.1) })}
+              onLess={() => setGrind(shift(ctx.grinderSetting, -0.1))}
+              onMore={() => setGrind(shift(ctx.grinderSetting, 0.1))}
             />
           </span>
         </div>
@@ -245,8 +267,8 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
           <div className="row between" style={{ marginBottom: 16 }}>
             <ProfileDeck
               records={preferredRecords(records, preferred)}
-              activeId={matchRecord(records, draft?.profile)?.id ?? null}
-              grinds={grinds}
+              activeId={activeId}
+              grinds={deckGrinds}
               onPick={pickProfile}
             />
           </div>
@@ -276,7 +298,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
           onClose={() => setPicking(false)}
           onPick={(name) => {
             setPicking(false)
-            patch({ coffeeName: name })
+            pickCoffee(name)
           }}
         />
       )}

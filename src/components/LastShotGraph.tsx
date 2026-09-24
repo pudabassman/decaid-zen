@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { stackLabels } from '../lib/labelStack'
 import type { ShotMeasurement, ShotRecord } from '../api/types'
+import { clockStart } from '../lib/shotClock'
 
 const baseSeries = (yieldByWeight: boolean) => [
   { pick: (m: ShotMeasurement) => m.machine.mixTemperature,
@@ -85,6 +86,8 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       const t0 = Date.parse(points[0].machine.timestamp)
       const tEnd = Date.parse(points[points.length - 1].machine.timestamp)
       const span = Math.max(1, (tEnd - t0) / 1000)
+      const origin = Math.min(span, Math.max(0, (clockStart(points) - t0) / 1000))
+      const shotSpan = span - origin
 
       const yieldByWeight = points.some((m) => (m.scale?.weight ?? 0) > 0)
       const column: Array<{ y: number; color: string; text: string; weight: number; tick: boolean }> = []
@@ -218,9 +221,9 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
 
       ctx.font = "10px 'Jost', sans-serif"
       ctx.textBaseline = 'alphabetic'
-      const tickEvery = span > 45 ? 20 : 10
-      for (let t = tickEvery; t <= span - 4; t += tickEvery) {
-        const x = Math.round(padLeft + (t / span) * plotSpan) + 0.5
+      const tickEvery = shotSpan > 45 ? 20 : 10
+      for (let t = tickEvery; t <= shotSpan - 4; t += tickEvery) {
+        const x = Math.round(padLeft + ((origin + t) / span) * plotSpan) + 0.5
         ctx.strokeStyle = '#45413a'
         ctx.beginPath()
         ctx.moveTo(x, h - PAD_BOTTOM + 6)
@@ -232,7 +235,7 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       }
       ctx.fillStyle = '#7d7669'
       ctx.textAlign = 'end'
-      ctx.fillText(`${span.toFixed(0)}s`, plotW - 1, h - 2)
+      ctx.fillText(`${shotSpan.toFixed(0)}s`, plotW - 1, h - 2)
     }
 
     draw()

@@ -1,4 +1,5 @@
 import type { ShotRecord } from '../api/types'
+import { clockStart } from './shotClock'
 
 export interface ShotStats {
   seconds: number
@@ -14,8 +15,7 @@ export function shotStats(shot: ShotRecord | null): ShotStats | null {
   const points = shot?.measurements ?? []
   if (points.length === 0) return null
 
-  const t0 = Date.parse(points[0].machine.timestamp)
-  const seconds = (Date.parse(points[points.length - 1].machine.timestamp) - t0) / 1000
+  const seconds = Math.max(0, (Date.parse(points[points.length - 1].machine.timestamp) - clockStart(points)) / 1000)
 
   const weights = points.map((m) => m.scale?.weight ?? 0)
   const byWeight = weights.some((w) => w > 0)

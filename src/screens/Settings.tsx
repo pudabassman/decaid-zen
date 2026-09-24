@@ -18,6 +18,7 @@ import {
   type DeviceEntry,
   type DisplayState,
   type LedStrip,
+  type MachineCounts,
   type MachineInfo,
   type MachineSettings,
   type PluginEntry,
@@ -33,6 +34,9 @@ import { bundledPlugin, installBundledPlugin, newerThan, type BundledPlugin } fr
 import { CupWarmerSection, ShotSettingsSection } from './settings/BrewSections'
 import { DevicesSection, LedSection, WaterSection } from './settings/HardwareSections'
 import { AboutSection, PluginsSection, SchedulesSection, SkinsSection } from './settings/SoftwareSections'
+import { useDemoMode } from '../lib/demoMode'
+
+declare const __SKIN_VERSION__: string
 
 const CHARGING_RULE: Record<string, string> = {
   disabled: 'never switched off',
@@ -42,6 +46,7 @@ const CHARGING_RULE: Record<string, string> = {
 }
 
 export function Settings({ onDone }: { onDone: () => void }) {
+  const demo = useDemoMode()
   const [app, setApp] = useState<AppSettings | null>(null)
   const [machine, setMachine] = useState<MachineSettings | null>(null)
   const [advanced, setAdvanced] = useState<AdvancedSettings | null>(null)
@@ -61,6 +66,7 @@ export function Settings({ onDone }: { onDone: () => void }) {
   const [plugins, setPlugins] = useState<PluginEntry[]>([])
   const [build, setBuild] = useState<BuildInfo | null>(null)
   const [machineInfo, setMachineInfo] = useState<MachineInfo | null>(null)
+  const [counts, setCounts] = useState<MachineCounts | null>(null)
   const [update, setUpdate] = useState<AppUpdateState | null>(null)
   const [bundled, setBundled] = useState<BundledPlugin | null>(null)
   const [workflow, setWorkflow] = useState<Workflow | null>(null)
@@ -90,6 +96,7 @@ export function Settings({ onDone }: { onDone: () => void }) {
     settingsApi.plugins().then(setPlugins).catch(() => setPlugins([]))
     settingsApi.buildInfo().then(setBuild).catch(() => setBuild(null))
     settingsApi.machineInfo().then(setMachineInfo).catch(() => setMachineInfo(null))
+    settingsApi.counts().then(setCounts).catch(() => setCounts(null))
     settingsApi.update().then(setUpdate).catch(() => setUpdate(null))
     bundledPlugin().then(setBundled).catch(() => setBundled(null))
     client.workflow().then(setWorkflow).catch(() => setWorkflow(null))
@@ -528,6 +535,10 @@ export function Settings({ onDone }: { onDone: () => void }) {
             update={update}
             theme={app?.themeMode}
             busy={busy}
+            demo={demo.on}
+            onDemo={demo.set}
+            counts={counts}
+            skinVersion={__SKIN_VERSION__}
             onTheme={(next) => patchApp({ themeMode: next })}
             onReset={() =>
               run('Reset machine settings', async () => {

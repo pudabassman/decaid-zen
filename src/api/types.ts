@@ -54,6 +54,7 @@ export interface Profile {
 }
 
 export interface WorkflowContext {
+  profileId?: string
   targetDoseWeight?: number
   targetYield?: number
   grinderId?: string

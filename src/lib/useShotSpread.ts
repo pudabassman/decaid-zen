@@ -17,7 +17,8 @@ async function durationOf(id: string): Promise<number | null> {
 export type Basis = 'bean' | 'profile'
 
 export interface Reading {
-  spread: Spread
+  /** null once a bean is picked and that bean and profile have no shots together yet */
+  spread: Spread | null
   /** how wide the net had to be cast to find enough shots */
   basis: Basis
 }
@@ -45,9 +46,11 @@ export function useShotSpread(coffeeName: string | undefined, profileTitle: stri
     }
 
     const load = async () => {
-      const onBean = spreadOf(coffeeName ? await durations({ coffeeName, profileTitle }) : [])
-      if (cancelled) return
-      if (onBean) {
+      // a picked bean answers for itself: with nothing on this profile yet the plot
+      // stays empty rather than quietly standing in the whole profile's history
+      if (coffeeName) {
+        const onBean = spreadOf(await durations({ coffeeName, profileTitle }))
+        if (cancelled) return
         setReading({ spread: onBean, basis: 'bean' })
         return
       }
