@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { Overlay } from '../components/Overlay'
+import { PaletteEditor } from '../components/PaletteEditor'
 import { Button } from '../components/Button'
-import { MultiSelect, NumberValue, Row, Section, SingleSelect, Toggle } from '../components/SettingControls'
+import { MultiSelect, NumberValue, Row, Section, SingleSelect, Toggle, SETTINGS_CATEGORIES, SettingsCategoryContext, SettingsSaveContext, type SettingsCategory } from '../components/SettingControls'
 import { EditableValue } from '../components/EditableValue'
 import { useSwipe } from '../lib/useSwipe'
 import { MAX_DECK, profiles as profileApi, type ProfileRecord } from '../api/profiles'
@@ -47,6 +49,12 @@ const CHARGING_RULE: Record<string, string> = {
 
 export function Settings({ onDone }: { onDone: () => void }) {
   const demo = useDemoMode()
+  const [category, setCategory] = useState<SettingsCategory>('Brewing')
+  const [resetOpen, setResetOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const [retry, setRetry] = useState(0)
+  const [loadErrors, setLoadErrors] = useState<string[]>([])
+  const [activeSetting, setActiveSetting] = useState('')
   const [app, setApp] = useState<AppSettings | null>(null)
   const [machine, setMachine] = useState<MachineSettings | null>(null)
   const [advanced, setAdvanced] = useState<AdvancedSettings | null>(null)
@@ -72,15 +80,17 @@ export function Settings({ onDone }: { onDone: () => void }) {
   const [workflow, setWorkflow] = useState<Workflow | null>(null)
   const shot = useShotSettings()
   const screen = useRef<HTMLDivElement>(null)
-  const { run, message, busy } = useAction()
+  const { run, message, busy, status } = useAction()
 
-  useSwipe(screen, { onLeft: (fromRightEdge) => fromRightEdge && onDone() })
+  useSwipe(screen, { onLeft: (fromRightEdge) => fromRightEdge && !busy && onDone() })
 
   useEffect(() => {
-    settingsApi.app().then(setApp).catch(() => setApp(null))
-    settingsApi.machine().then(setMachine).catch(() => setMachine(null))
-    settingsApi.advanced().then(setAdvanced).catch(() => setAdvanced(null))
-    settingsApi.display().then(setDisplay).catch(() => setDisplay(null))
+    setLoadErrors([])
+    const failed = (section: string) => setLoadErrors(prev => [...prev, section])
+    settingsApi.app().then(setApp).catch(() => failed('App'))
+    settingsApi.machine().then(setMachine).catch(() => failed('Machine'))
+    settingsApi.advanced().then(setAdvanced).catch(() => failed('Heating'))
+    settingsApi.display().then(setDisplay).catch(() => failed('Display'))
     settingsApi.presence().then(setPresence).catch(() => setPresence(null))
     profileApi.list().then(setRecords).catch(() => setRecords([]))
     profileApi.preferred().then((ids) => setPreferred(ids ?? [])).catch(() => undefined)
@@ -100,29 +110,25 @@ export function Settings({ onDone }: { onDone: () => void }) {
     settingsApi.update().then(setUpdate).catch(() => setUpdate(null))
     bundledPlugin().then(setBundled).catch(() => setBundled(null))
     client.workflow().then(setWorkflow).catch(() => setWorkflow(null))
-  }, [])
+  }, [retry])
 
   const togglePreferred = (id: string) => {
     const next = preferred.includes(id)
       ? preferred.filter((other) => other !== id)
       : [...preferred, id].slice(0, MAX_DECK)
-    setPreferred(next)
-    run('Save deck profiles', () => profileApi.savePreferred(next))
+    run('Save deck profiles', async () => { await profileApi.savePreferred(next); setPreferred(next) })
   }
 
   const patchApp = (patch: Partial<AppSettings>) => {
-    setApp((prev) => (prev ? { ...prev, ...patch } : prev))
-    run('Save setting', () => settingsApi.saveApp(patch))
+    run('Save setting', async () => { await settingsApi.saveApp(patch); setApp(prev => prev ? { ...prev, ...patch } : prev) })
   }
 
   const patchMachine = (patch: Partial<MachineSettings>) => {
-    setMachine((prev) => (prev ? { ...prev, ...patch } : prev))
-    run('Save machine setting', () => settingsApi.saveMachine(patch))
+    run('Save machine setting', async () => { await settingsApi.saveMachine(patch); setMachine(prev => prev ? { ...prev, ...patch } : prev) })
   }
 
   const patchAdvanced = (patch: Partial<AdvancedSettings>) => {
-    setAdvanced((prev) => (prev ? { ...prev, ...patch } : prev))
-    run('Save advanced setting', () => settingsApi.saveAdvanced(patch))
+    run('Save advanced setting', async () => { await settingsApi.saveAdvanced(patch); setAdvanced(prev => prev ? { ...prev, ...patch } : prev) })
   }
 
   /**
@@ -145,18 +151,15 @@ export function Settings({ onDone }: { onDone: () => void }) {
   }
 
   const patchWarmer = (patch: Partial<CupWarmer>) => {
-    setWarmer((prev) => (prev ? { ...prev, ...patch } : prev))
-    run('Save cup warmer', () => settingsApi.saveCupWarmer(patch))
+    run('Save cup warmer', async () => { await settingsApi.saveCupWarmer(patch); setWarmer(prev => prev ? { ...prev, ...patch } : prev) })
   }
 
   const patchPreheat = (patch: Partial<CupWarmerPreheat>) => {
-    setPreheat((prev) => (prev ? { ...prev, ...patch } : prev))
-    run('Save pre-warm', () => settingsApi.savePreheat(patch))
+    run('Save pre-warm', async () => { await settingsApi.savePreheat(patch); setPreheat(prev => prev ? { ...prev, ...patch } : prev) })
   }
 
   const saveLed = (next: LedStrip) => {
-    setLed(next)
-    run('Save lights', () => settingsApi.saveLedStrip(next))
+    run('Save lights', async () => { await settingsApi.saveLedStrip(next); setLed(next) })
   }
 
   const preferDevice = (device: DeviceEntry) => {
@@ -174,13 +177,11 @@ export function Settings({ onDone }: { onDone: () => void }) {
 
   const toggleSchedule = (schedule: WakeSchedule) => {
     const next = { ...schedule, enabled: !schedule.enabled }
-    setSchedules((prev) => prev.map((s) => (s.id === next.id ? next : s)))
-    run('Save schedule', () => settingsApi.saveSchedule(next))
+    run('Save schedule', async () => { await settingsApi.saveSchedule(next); setSchedules(prev => prev.map(s => s.id === next.id ? next : s)) })
   }
 
   const togglePlugin = (plugin: PluginEntry, on: boolean) => {
-    setPlugins((prev) => prev.map((p) => (p.id === plugin.id ? { ...p, enabled: on } : p)))
-    run(on ? 'Enable plugin' : 'Disable plugin', () => settingsApi.enablePlugin(plugin.id, on))
+    run(on ? 'Enable plugin' : 'Disable plugin', async () => { await settingsApi.enablePlugin(plugin.id, on); setPlugins(prev => prev.map(p => p.id === plugin.id ? { ...p, enabled: on } : p)) })
   }
 
   const installedBundled = plugins.find((plugin) => plugin.id === bundled?.id)
@@ -190,20 +191,25 @@ export function Settings({ onDone }: { onDone: () => void }) {
       : null
 
   const patchPresence = (patch: Partial<PresenceSettings>) => {
-    setPresence((prev) => (prev ? { ...prev, ...patch } : prev))
-    run('Save presence setting', () => settingsApi.savePresence(patch))
+    run('Save presence setting', async () => { await settingsApi.savePresence(patch); setPresence(prev => prev ? { ...prev, ...patch } : prev) })
   }
 
   return (
-    <div className="screen" ref={screen}>
-      <div className="row between" style={{ marginBottom: 26 }}>
+    <div className="screen settings-screen" ref={screen}>
+      <header className="page-header">
         <span className="display" style={{ fontSize: 42, letterSpacing: '-0.01em' }}>Settings</span>
         <span className="cap" style={{ color: message ? 'var(--temp)' : undefined }}>
-          {message ?? 'changes save as you make them'}
+          {busy ? 'Saving…' : 'Changes save automatically'}
         </span>
-      </div>
+      </header>
+      {loadErrors.length > 0 && <div className="notice" role="alert">Couldn’t load {loadErrors.join(', ')}. <button onClick={() => setRetry(v => v + 1)}>Retry</button></div>}
+      <div className="settings-layout grow">
+        <nav className="settings-nav" aria-label="Settings categories">{SETTINGS_CATEGORIES.map(name => <button key={name} aria-current={category === name ? 'page' : undefined} onClick={() => { setCategory(name); setActiveSetting('') }}>{name}</button>)}</nav>
+        <SettingsSaveContext.Provider value={{ busy, message }}><SettingsCategoryContext.Provider value={category}>
+        <div className="settings-pane" key={category}>
+        <div className="settings-category-heading"><span className="eyebrow">Preferences</span><h1>{category}</h1></div>
+        <fieldset disabled={busy} className="settingsbody" onFocusCapture={e => setActiveSetting((e.target as HTMLElement).closest<HTMLElement>('[data-setting]')?.dataset.setting ?? '')} onClickCapture={e => setActiveSetting((e.target as HTMLElement).closest<HTMLElement>('[data-setting]')?.dataset.setting ?? activeSetting)}>
 
-      <div className="grow settingsbody">
         <div className="settingscol">
           <Section title="Machine">
             {machine ? (
@@ -343,13 +349,11 @@ export function Settings({ onDone }: { onDone: () => void }) {
             flowMultiplier={flowMultiplier}
             onRefillLevel={(v) => {
               const next = Math.max(0, Math.round(v))
-              setRefillLevel(next)
-              run('Save refill warning', () => settingsApi.setRefillLevel(next))
+              run('Save refill warning', async () => { await settingsApi.setRefillLevel(next); setRefillLevel(next) })
             }}
             onFlowMultiplier={(v) => {
               const next = Math.max(0.13, Math.min(2, v))
-              setFlowMultiplier(next)
-              run('Save flow estimate', () => settingsApi.saveFlowCalibration(next))
+              run('Save flow estimate', async () => { await settingsApi.saveFlowCalibration(next); setFlowMultiplier(next) })
             }}
           />
 
@@ -407,11 +411,10 @@ export function Settings({ onDone }: { onDone: () => void }) {
           <Section title="Screen and sleep">
             {display && (
               <Row label="Brightness">
-                <NumberValue value={display.brightness} unit="%" digits={0} step={5}
+                <NumberValue value={display.brightness} unit="%" digits={0} step={5} min={1} max={100}
                   onCommit={(v) => {
                     const next = Math.max(1, Math.min(100, Math.round(v)))
-                    setDisplay((prev) => (prev ? { ...prev, brightness: next } : prev))
-                    run('Set brightness', () => settingsApi.setBrightness(next))
+                    run('Set brightness', async () => { await settingsApi.setBrightness(next); setDisplay(prev => prev ? { ...prev, brightness: next } : prev) })
                   }} />
               </Row>
             )}
@@ -454,6 +457,9 @@ export function Settings({ onDone }: { onDone: () => void }) {
           </Section>
 
           <Section title="Skin">
+            <Row label="Colours & theme" hint="Live colour editing, saved palettes and your protected Default">
+              <Button label="Customize palette" width={156} height={44} onClick={() => setPaletteOpen(true)}>Customize</Button>
+            </Row>
             <Row label="Profiles on the deck" hint={`up to ${MAX_DECK}; the badge turns through them`}>
               <MultiSelect
                 options={records.map((record) => ({
@@ -508,8 +514,7 @@ export function Settings({ onDone }: { onDone: () => void }) {
             current={defaultSkin}
             busy={busy}
             onChoose={(id) => {
-              setDefaultSkin(id)
-              run('Set default skin', () => settingsApi.setDefaultSkin(id))
+              run('Set default skin', async () => { await settingsApi.setDefaultSkin(id); setDefaultSkin(id) })
             }}
             onCheck={() => run('Check skins', settingsApi.checkSkinUpdates)}
           />
@@ -536,26 +541,26 @@ export function Settings({ onDone }: { onDone: () => void }) {
             theme={app?.themeMode}
             busy={busy}
             demo={demo.on}
-            onDemo={demo.set}
+            onDemo={next => run('Save demo setting', () => demo.set(next))}
             counts={counts}
             skinVersion={__SKIN_VERSION__}
             onTheme={(next) => patchApp({ themeMode: next })}
-            onReset={() =>
-              run('Reset machine settings', async () => {
-                await settingsApi.resetMachine()
-                setMachine(await settingsApi.machine())
-              })
-            }
+            onReset={() => setResetOpen(true)}
           />
         </div>
+        </fieldset>
+        </div>
+        </SettingsCategoryContext.Provider></SettingsSaveContext.Provider>
       </div>
-
-      <div className="row between" style={{ paddingTop: 14 }}>
-        <span className="cap">Swipe from the right edge to leave</span>
-        <Button width={168} height={52} onClick={onDone}>
+      <div className="action-feedback" role={message ? 'alert' : 'status'}>{message ?? (status ? `${activeSetting ? activeSetting + ' · ' : ''}${status}` : '')}</div>
+      <div className="page-footer">
+        <span className="hint">Your machine, your ritual.</span>
+        <Button width={168} height={52} disabled={busy} onClick={onDone}>
           <span className="display" style={{ fontSize: 24 }}>Done</span>
         </Button>
       </div>
+      {paletteOpen && <PaletteEditor onClose={() => setPaletteOpen(false)} />}
+      {resetOpen && <Overlay dismissible={!busy} title="Reset machine settings?" onClose={() => !busy && setResetOpen(false)} footer={<div className="row"><Button quiet disabled={busy} onClick={() => setResetOpen(false)}>Keep settings</Button><Button disabled={busy} onClick={() => run('Reset machine settings', async () => { await settingsApi.resetMachine(); setMachine(await settingsApi.machine()); setResetOpen(false) })}>Reset defaults</Button></div>}><p>This restores the DE1’s machine settings to their defaults. Your current machine configuration will be replaced.</p>{message && <p className="error-text" role="alert">{message}</p>}</Overlay>}
     </div>
   )
 }

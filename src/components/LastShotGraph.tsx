@@ -1,18 +1,23 @@
+import { useCssPalette } from '../lib/cssPalette'
+import { colorWithAlpha } from '../lib/paletteState'
+import type { Palette } from '../lib/paletteTokens'
 import { useEffect, useRef, useState } from 'react'
 import { stackLabels } from '../lib/labelStack'
 import type { ShotMeasurement, ShotRecord } from '../api/types'
+import { weightCeiling } from '../lib/validation'
+import { Overlay } from './Overlay'
 import { clockStart } from '../lib/shotClock'
 
-const baseSeries = (yieldByWeight: boolean) => [
+const baseSeries = (colors: Palette, yieldByWeight: boolean, weightMax = 50) => [
   { pick: (m: ShotMeasurement) => m.machine.mixTemperature,
-    target: (m: ShotMeasurement) => m.machine.targetMixTemperature, color: '#d9714f', min: 80, max: 100, band: 0.34, width: 1.6, unit: '°', digits: 1 },
+    target: (m: ShotMeasurement) => m.machine.targetMixTemperature, color: colors['temp'], min: 80, max: 100, band: 0.34, width: 1.6, unit: '°', digits: 1 },
   { pick: (m: ShotMeasurement) => m.machine.pressure,
-    target: (m: ShotMeasurement) => m.machine.targetPressure, color: '#9fb055', min: 0, max: 12, band: 1, width: 2.2, unit: ' bar', digits: 1 },
+    target: (m: ShotMeasurement) => m.machine.targetPressure, color: colors['bar'], min: 0, max: 12, band: 1, width: 2.2, unit: ' bar', digits: 1 },
   yieldByWeight
-    ? { pick: (m: ShotMeasurement) => m.scale?.weight ?? null, target: () => null, color: '#d3b06a', min: 0, max: 50, band: 1, width: 2.2, unit: ' g', digits: 1 }
-    : { pick: (m: ShotMeasurement) => m.volume ?? null, target: () => null, color: '#d3b06a', min: 0, max: 80, band: 1, width: 2.2, unit: ' ml', digits: 0 },
+    ? { pick: (m: ShotMeasurement) => m.scale?.weight ?? null, target: () => null, color: colors['weight'], min: 0, max: weightMax, band: 1, width: 2.2, unit: ' g', digits: 1 }
+    : { pick: (m: ShotMeasurement) => m.volume ?? null, target: () => null, color: colors['weight'], min: 0, max: 80, band: 1, width: 2.2, unit: ' ml', digits: 0 },
   { pick: (m: ShotMeasurement) => m.machine.flow,
-    target: (m: ShotMeasurement) => m.machine.targetFlow, color: '#4fbcc6', min: 0, max: 6, band: 1, width: 1.7, unit: ' ml/s', digits: 1 },
+    target: (m: ShotMeasurement) => m.machine.targetFlow, color: colors['flow'], min: 0, max: 6, band: 1, width: 1.7, unit: ' ml/s', digits: 1 },
 ]
 
 /** headroom kept clear at the top of the plot for the caption and swatches */
@@ -23,7 +28,8 @@ const PAD_BOTTOM = 18
 const PAD_RIGHT_MIN = 40
 const PAD_RIGHT_MAX = 84
 
-export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
+export function LastShotGraph({ shot, loading = false, error = false, onRetry, expanded = false }: { shot: ShotRecord | null; loading?: boolean; error?: boolean; onRetry?: () => void; expanded?: boolean }) {
+  const colors = useCssPalette()
   const canvas = useRef<HTMLCanvasElement>(null)
   const box = useRef<HTMLDivElement>(null)
   const [full, setFull] = useState(false)
@@ -49,8 +55,9 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
 
       // the gutter is only as wide as the widest value that has to live in it
       const measured = shot?.measurements ?? []
-      const sample = baseSeries(measured.some((m) => (m.scale?.weight ?? 0) > 0))
-      ctx.font = "11px 'Jost', sans-serif"
+      const ceiling = weightCeiling(shot?.workflow?.context?.targetYield ?? 0, Math.max(0, ...measured.map(m => m.scale?.weight ?? 0)), 50)
+      const sample = baseSeries(colors, measured.some((m) => (m.scale?.weight ?? 0) > 0), ceiling)
+      ctx.font = "11px 'Jost Variable', sans-serif"
       let widest = 0
       for (const s of sample) {
         for (let i = measured.length - 1; i >= 0; i--) {
@@ -93,9 +100,9 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
       const column: Array<{ y: number; color: string; text: string; weight: number; tick: boolean }> = []
 
       // what the profile asked for, drawn quietly behind what happened
-      for (const s of baseSeries(yieldByWeight)) {
+      for (const s of baseSeries(colors, yieldByWeight, ceiling)) {
         ctx.save()
-        ctx.strokeStyle = `${s.color}3d`
+        ctx.strokeStyle = colorWithAlpha(s.color, .24)
         ctx.lineWidth = 1.2
         ctx.setLineDash([5, 5])
         ctx.beginPath()
@@ -119,7 +126,7 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
         ctx.restore()
       }
 
-      for (const s of baseSeries(yieldByWeight)) {
+      for (const s of baseSeries(colors, yieldByWeight, ceiling)) {
         const drawn: Array<[number, number]> = []
         for (const point of points) {
           const raw = s.pick(point)
@@ -169,15 +176,15 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
           if (targets.length) {
             const first = targets[0]
             const last = targets[targets.length - 1]
-            ctx.font = "10px 'Jost', sans-serif"
+            ctx.font = "11px 'Jost Variable', sans-serif"
             ctx.textAlign = 'end'
             ctx.textBaseline = 'middle'
-            ctx.fillStyle = `${s.color}7a`
+            ctx.fillStyle = colorWithAlpha(s.color, .7)
             ctx.fillText(`${first.toFixed(s.digits)}${s.unit}`, padLeft - 6, yFor(first))
             ctx.textAlign = 'start'
             column.push({
               y: yFor(last),
-              color: `${s.color}7a`,
+              color: colorWithAlpha(s.color, .7),
               text: `${last.toFixed(s.digits)}${s.unit}`,
               weight: 0,
               tick: false,
@@ -214,26 +221,26 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
           ctx.lineTo(plotW + 7, Math.round(label.y) + 0.5)
           ctx.stroke()
         }
-        ctx.font = label.weight ? "11px 'Jost', sans-serif" : "9px 'Jost', sans-serif"
+        ctx.font = label.weight ? "11px 'Jost Variable', sans-serif" : "11px 'Jost Variable', sans-serif"
         ctx.fillStyle = label.color
         ctx.fillText(label.text, plotW + 11, label.y)
       }
 
-      ctx.font = "10px 'Jost', sans-serif"
+      ctx.font = "11px 'Jost Variable', sans-serif"
       ctx.textBaseline = 'alphabetic'
       const tickEvery = shotSpan > 45 ? 20 : 10
       for (let t = tickEvery; t <= shotSpan - 4; t += tickEvery) {
         const x = Math.round(padLeft + ((origin + t) / span) * plotSpan) + 0.5
-        ctx.strokeStyle = '#45413a'
+        ctx.strokeStyle = colors['grip']
         ctx.beginPath()
         ctx.moveTo(x, h - PAD_BOTTOM + 6)
         ctx.lineTo(x, h - PAD_BOTTOM)
         ctx.stroke()
-        ctx.fillStyle = '#7d7669'
+        ctx.fillStyle = colors['last-axis-label']
         ctx.textAlign = 'center'
         ctx.fillText(`${t}s`, x, h - 2)
       }
-      ctx.fillStyle = '#7d7669'
+      ctx.fillStyle = colors['last-axis-label']
       ctx.textAlign = 'end'
       ctx.fillText(`${shotSpan.toFixed(0)}s`, plotW - 1, h - 2)
     }
@@ -241,22 +248,17 @@ export function LastShotGraph({ shot }: { shot: ShotRecord | null }) {
     draw()
     const observer = new ResizeObserver(draw)
     observer.observe(wrap)
-    return () => observer.disconnect()
-  }, [shot])
+    let active = true
+    document.fonts.ready.then(() => { if (active) draw() })
+    return () => { active = false; observer.disconnect() }
+  }, [shot, colors])
 
   return (
-    <div
-      ref={box}
-      className={`grow shotplot${full ? ' full' : ''}`}
-      style={{ position: full ? 'fixed' : 'relative', minHeight: 120 }}
-      onClick={() => shot && setFull((was) => !was)}
-    >
-      <canvas ref={canvas} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
-      {!shot && (
-        <div className="cap" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
-          No shot data
-        </div>
-      )}
+    <div ref={box} className="grow shotplot" style={{ position: 'relative', minHeight: 120 }}>
+      <canvas ref={canvas} aria-label="Shot graph: brew temperature, pressure, yield and flow over time" role="img" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+      {shot && !expanded && <button className="plot-expand" aria-label="Expand shot graph" onClick={() => setFull(true)}>⤢</button>}
+      {!shot && <div className="graph-empty"><span>{loading ? 'Loading your last shot…' : error ? 'Couldn’t load the shot.' : 'Your next shot starts a new story.'}</span>{error && onRetry && <button className="text-button" onClick={onRetry}>Retry</button>}</div>}
+      {full && <Overlay className="graph-overlay" title="Shot details" onClose={() => setFull(false)} footer={<span className="hint">Solid lines: measured · Dashed lines: profile targets</span>}><LastShotGraph shot={shot} expanded /></Overlay>}
     </div>
   )
 }

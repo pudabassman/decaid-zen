@@ -15,7 +15,8 @@ export function Sleep({ onWake }: { onWake: () => void }) {
   const [now, setNow] = useState(clock)
   const [date, setDate] = useState(today)
   const restore = useRef<DisplayState | null>(null)
-  const waking = useRef(false)
+  const [waking, setWaking] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const tick = window.setInterval(() => {
@@ -45,25 +46,28 @@ export function Sleep({ onWake }: { onWake: () => void }) {
     }
   }, [])
 
-  const wake = () => {
-    if (waking.current) return
-    waking.current = true
-    onWake()
-    client.requestState('idle').catch(() => undefined)
-    if (MOCK) return
-    const previous = restore.current
-    settingsApi
-      .setBrightness(previous?.brightness ?? 100)
-      .then(() => (previous?.wakeLockEnabled ? settingsApi.holdScreenAwake() : undefined))
-      .catch(() => undefined)
+  const wake = async () => {
+    if (waking) return
+    setWaking(true); setError('')
+    try {
+      await client.requestState('idle')
+      if (!MOCK) {
+        const previous = restore.current
+        await settingsApi.setBrightness(previous?.brightness ?? 100)
+        if (previous?.wakeLockEnabled) await settingsApi.holdScreenAwake()
+      }
+      onWake()
+    } catch { setError('Couldn’t wake the machine. Tap to retry.') }
+    finally { setWaking(false) }
   }
 
   return (
-    <div className="sleepscreen" onPointerDown={wake} role="button" tabIndex={0} aria-label="Tap to wake">
+    <button type="button" className="sleepscreen" onClick={() => void wake()} disabled={waking} aria-label="Tap to wake">
       <div className="sleepdrift">
         <div className="num sleepclock">{now}</div>
         <div className="cap sleepdate">{date}</div>
+        <div className="sleep-hint" role="status">{error || (waking ? 'Waking your machine…' : 'Tap anywhere to wake')}</div>
       </div>
-    </div>
+    </button>
   )
 }

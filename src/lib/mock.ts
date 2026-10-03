@@ -173,7 +173,7 @@ export const mockShot = (span = 30): ShotRecord => ({
         groupTemperature: 92.8,
         targetMixTemperature: 92.5,
         targetGroupTemperature: 92,
-        profileFrame: t < 6 ? 1 : t < 20 ? 2 : t < 26 ? 3 : 4,
+        profileFrame: t < 6 ? 0 : t < 20 ? 1 : t < 26 ? 2 : 3,
         steamTemperature: 148.6,
       },
       scale: { timestamp: at(t, span), weight, weightFlow: t < 6 ? 0 : 1.6 },

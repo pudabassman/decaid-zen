@@ -11,11 +11,11 @@ export function useShotSettings() {
   })
 
   // the machine parses the whole object, so a partial patch would fail on the missing keys
-  const patch = (next: Partial<ShotSettings>) => {
+  const patch = async (next: Partial<ShotSettings>) => {
     if (!settings) return Promise.resolve()
     const merged = { ...settings, ...next }
+    await settingsApi.saveShotSettings(merged)
     setSettings(merged)
-    return settingsApi.saveShotSettings(merged)
   }
 
   return { settings, patch }

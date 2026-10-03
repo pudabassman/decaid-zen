@@ -18,7 +18,7 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = init?.body ? { 'content-type': 'application/json', ...init?.headers } : init?.headers
-  const res = await fetch(api(path), { ...init, headers })
+  const res = await fetch(api(path), { signal: AbortSignal.timeout(12000), ...init, headers })
   if (!res.ok) throw new ApiError(res.status, await res.text().catch(() => ''))
   const text = await res.text()
   return (text ? JSON.parse(text) : undefined) as T

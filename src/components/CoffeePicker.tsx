@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
-import { catalog, type CatalogCoffee } from '../api/catalog'
-import { client } from '../api/client'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { coffeeMenu } from '../lib/coffeeMenu'
+import { Overlay } from './Overlay'
 import { Button } from './Button'
 import { Dots } from './Dots'
 
@@ -19,65 +19,49 @@ const age = (fetchedAt: number | null) => {
   return ` · ${hours}h ago`
 }
 
-export function CoffeePicker({ roaster, onPick, onClose }: Props) {
-  const [coffees, setCoffees] = useState<CatalogCoffee[] | null>(null)
+export function CoffeePicker(props: Props) {
+  return <CoffeePickerContent key={props.roaster.trim().toLowerCase()} {...props} />
+}
+
+function CoffeePickerContent({ roaster, onPick, onClose }: Props) {
+  const [snapshot, setSnapshot] = useState(() => coffeeMenu.peek(roaster))
+  const coffees = snapshot?.coffees
+  const fetchedAt = snapshot?.fetchedAt ?? null
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [fetchedAt, setFetchedAt] = useState<number | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [pours, setPours] = useState<Record<string, number>>({})
+  const [busy, setBusy] = useState(() => !snapshot)
+  const [entered, setEntered] = useState(false)
+  const request = useRef(0)
+  const load = useCallback(async (refresh: boolean) => {
+    const id = ++request.current
+    const cached = coffeeMenu.peek(roaster)
+    if (!refresh && cached) {
+      setSnapshot(cached)
+      setBusy(false)
+      return
+    }
+    setBusy(true)
+    setError(null)
+    try {
+      const next = await coffeeMenu.load(roaster, refresh)
+      if (id === request.current) setSnapshot(next)
+    } catch (error) {
+      if (id === request.current) setError(error instanceof Error ? error.message : 'Could not reach the roaster')
+    } finally {
+      if (id === request.current) setBusy(false)
+    }
+  }, [roaster])
 
-  const load = useCallback(
-    (refresh: boolean) => {
-      setBusy(true)
-      setError(null)
-      return catalog
-        .coffees(roaster, refresh)
-        .then((result) => {
-          setBusy(false)
-          if (!result.available) setError(`Nothing listed for ${roaster}`)
-          setCoffees(result.coffees ?? [])
-          setFetchedAt(result.fetchedAt ?? null)
-        })
-        .catch(() => {
-          setBusy(false)
-          setError('Could not reach the roaster')
-        })
-    },
-    [roaster],
-  )
-
+  useEffect(() => () => { request.current++ }, [])
   useEffect(() => {
-    void load(false)
-  }, [load])
-
-  // how often each coffee has actually been brewed, newest history first
-  useEffect(() => {
-    client
-      .shots(100, 0)
-      .then((page) => {
-        const counts: Record<string, number> = {}
-        for (const shot of page.items) {
-          const name = shot.workflow?.context?.coffeeName?.trim().toLowerCase()
-          if (name) counts[name] = (counts[name] ?? 0) + 1
-        }
-        setPours(counts)
-      })
-      .catch(() => undefined)
-  }, [])
+    if (entered) void load(false)
+  }, [entered, load])
 
   const needle = query.trim().toLowerCase()
-  const shown = (coffees ?? [])
-    .filter((coffee) => !needle || coffee.name.toLowerCase().includes(needle))
-    .sort((a, b) => {
-      const used = (pours[b.name.trim().toLowerCase()] ?? 0) - (pours[a.name.trim().toLowerCase()] ?? 0)
-      return used !== 0 ? used : a.name.localeCompare(b.name)
-    })
+  const shown = (coffees ?? []).filter(coffee => !needle || coffee.name.toLowerCase().includes(needle))
 
   return (
-    <>
-      <div className="drawerveil" onPointerDown={onClose} />
-      <aside className="drawer" style={{ width: 560 }}>
+    <Overlay title={roaster} onClose={onClose} onEntered={() => setEntered(true)} footer={<div className="row between"><span className="hint">Tap a coffee to load it</span><Button width={130} height={44} quiet onClick={onClose}>Close</Button></div>}>
       <div className="row between" style={{ paddingBottom: 16 }}>
         <span className="cap strong">{roaster}</span>
         <div className="row" style={{ gap: 14 }}>
@@ -90,7 +74,7 @@ export function CoffeePicker({ roaster, onPick, onClose }: Props) {
               <>loading<Dots /></>
             )}
           </span>
-          <Button width={130} quiet disabled={busy} onClick={() => void load(true)}>
+          <Button width={130} quiet disabled={busy || !entered} onClick={() => void load(true)}>
             <span className="cap">{busy ? <>Reading<Dots /></> : 'Refresh'}</span>
           </Button>
         </div>
@@ -98,6 +82,7 @@ export function CoffeePicker({ roaster, onPick, onClose }: Props) {
 
       <input
         className="search"
+        aria-label="Search coffees"
         value={query}
         placeholder="Search coffees"
         enterKeyHint="search"
@@ -106,8 +91,11 @@ export function CoffeePicker({ roaster, onPick, onClose }: Props) {
         style={{ marginBottom: 16 }}
       />
 
-      <div style={{ flex: '1 1 auto', overflowY: 'auto', maxHeight: 620 }}>
-        {error && <div className="cap">{error}</div>}
+      <div className="coffee-list" aria-busy={busy}>
+        {!coffees && busy && <div className="coffee-skeleton" aria-hidden="true">
+          {Array.from({ length: 6 }, (_, index) => <div key={index}><span style={{ width: `${[78, 62, 86, 70, 56, 74][index]}%` }} /></div>)}
+        </div>}
+        {error && <div className="cap" role="alert">{error}{coffees ? ' · Showing the saved list' : ''}</div>}
         {shown.map((coffee) => (
           <button
             key={coffee.url}
@@ -132,13 +120,6 @@ export function CoffeePicker({ roaster, onPick, onClose }: Props) {
         )}
       </div>
 
-      <div className="row between" style={{ paddingTop: 18 }}>
-        <span className="cap">Tap a coffee to load it</span>
-        <Button width={150} quiet onClick={onClose}>
-          <span className="cap">Close</span>
-        </Button>
-      </div>
-      </aside>
-    </>
+    </Overlay>
   )
 }

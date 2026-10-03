@@ -18,7 +18,7 @@ type View = 'home' | 'journal' | 'dialin' | 'settings'
 const FIRST_FRAME_GRACE_MS = 1500
 
 const opening = (): View =>
-  MOCK && window.location.search.includes('settings') ? 'settings' : 'home'
+  MOCK && new URLSearchParams(window.location.search).has('settings') ? 'settings' : 'home'
 
 export function App() {
   const machine = useMachine()
@@ -26,11 +26,11 @@ export function App() {
   const [graceOver, setGraceOver] = useState(false)
 
   const state = machine.snapshot?.state.state
-  const asleep = state === 'sleeping' || state === 'booting'
+  const asleep = state === 'sleeping'
 
   // the scale sleeps with the machine; waking is the moment to go looking for it
   useScaleRevive(asleep, machine.scaleConnected, machine.pouring)
-  useShotTare(machine.snapshot, machine.scaleConnected)
+  useShotTare(machine.replay ? null : machine.snapshot, machine.scaleConnected)
 
   useEffect(() => {
     const id = window.setTimeout(() => setGraceOver(true), FIRST_FRAME_GRACE_MS)
@@ -58,7 +58,7 @@ export function App() {
     if (machine.pouring) setView('home')
   }, [machine.pouring])
 
-  if (!MOCK && !machine.snapshot && !graceOver) return null
+  if (!MOCK && !machine.snapshot && !graceOver) return <div className="screen empty-state"><span className="eyebrow">Decaid Zen</span><h1>Welcome back.</h1><p>Connecting to your machine…</p></div>
 
   if (machine.pouring) return <LiveShot machine={machine} />
 

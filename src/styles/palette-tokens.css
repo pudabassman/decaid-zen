@@ -1,0 +1,113 @@
+/* The single source of skin colour defaults. All screens, SVGs and canvas charts
+   consume these variables. The palette drawer overrides them on :root at runtime. */
+:root {
+  /* Surfaces */
+  --ground: #131210;
+  --panel: #1c1a16;
+  --ground-glow: #191713;
+  --ground-glow-end: #19171300;
+  --overlay-veil: #0a0907a8;
+  --overlay-border: #464035;
+  --overlay-shadow: #00000055;
+  --drawer-shadow: #000000a6;
+  --popover-shadow: #000000d9;
+  --secondary-veil: #13121080;
+
+  /* Text & lines */
+  --ink: #f0ebe0;
+  --ink-soft: #c4bdaf;
+  --muted: #a49b8c;
+  --rule: #38342c;
+  --rule-soft: #2b2822;
+  --grip: #45413a;
+  --edge: #ffffff0b;
+
+  /* Charts & water */
+  --grid: #201e1a;
+  --axis: #35322b;
+  --axis-label: #938877;
+  --target: #4a463d;
+  --water: #8fc9e8;
+  --water-track: #8fc9e821;
+  --water-low: #e0a15c;
+  --temp: #d9714f;
+  --bar: #9fb055;
+  --weight: #d3b06a;
+  --flow: #4fbcc6;
+  --spread-band: #d3b06a38;
+  --spread-line: #d3b06a8c;
+  --spread-empty: #d3b06a47;
+  --last-axis-label: #7d7669;
+  --live-cursor: #ece7db38;
+  --live-clock: #b8b1a2;
+
+  /* Buttons & controls */
+  --button-border: #60584a;
+  --button-fill: #242119;
+  --button-hover: #302b21;
+  --button-hover-border: #a99a80;
+  --hot-fill: #69422e;
+  --hot-border: #b48562;
+  --hot-text: #fff2dc;
+  --hot-hover: #805338;
+  --edit-border: #625947;
+  --edit-hover: #fff9ec;
+  --input-fill: #211e18;
+  --select-border: #514a3e;
+  --toggle-border: #a9b677;
+  --toggle-fill: #393f26;
+  --toggle-thumb: #c3ce9d;
+  --base-button-border: #ece7db42;
+  --base-button-fill: #ece7db0d;
+  --base-button-text: #ece7db9e;
+  --pressed-fill: #ece7db21;
+  --quiet-border: #ece7db24;
+  --quiet-text: #ece7db6b;
+  --field-fill: #ece7db0a;
+
+  /* Status & feedback */
+  --error-text: #efa581;
+  --notice-border: #785237;
+  --notice-fill: #302218;
+  --ready-border: #72794e;
+  --ready-fill: #282c1e;
+  --ready-glow: #aab87818;
+  --offline-fill: #34251e;
+  --water-notice-border: #d9714f59;
+  --water-notice-fill: #d9714f0f;
+
+  /* Selections */
+  --coffee-hover: #ffffff06;
+  --category-fill: #29271e;
+  --category-border: #514a38;
+  --selection-fill: #ffffff05;
+  --journal-selected: #28251c;
+  --journal-border: #5d5136;
+  --journal-hover: #ffffff04;
+  --phase-fill: #303322;
+  --row-highlight: #ece7db0f;
+  --choice-fill: #ece7db14;
+
+  /* Profiles */
+  --profile-border: #494333;
+  --profile-fill-start: #26241a;
+  --profile-fill-end: #1b1914;
+  --card-border: #484133;
+  --card-selected: #29291d;
+  --card-selected-border: #a1ad72;
+  --card-highlight: #ffffff0c;
+  --card-shadow: #00000044;
+  --profile-veil: #131210e0;
+  --card-fill: #12110f;
+  --profile-shadow: #000000f2;
+  --card-active-border: #3c3830;
+  --card-muted: #5d574c;
+
+  /* Sleep */
+  --sleep-clock: #a39b8966;
+  --sleep-date: #a39b8988;
+  --sleep-hint: #a39b8977;
+  --sleep-fill: #0b0a09;
+  --sleep-clock-base: #ece7db4c;
+  --sleep-date-base: #ece7db29;
+}

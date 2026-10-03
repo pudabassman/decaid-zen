@@ -1,0 +1,41 @@
+/* Recovery controls retain Default colors even when experimenting with low contrast. */
+.palette-editor .overlay-panel { width: min(580px, 100%); background: var(--editor-bg); color: var(--editor-fg); }
+.palette-editor .overlay-header, .palette-editor .overlay-footer { border-color: var(--editor-line); }
+.palette-editor .overlay-header h2, .palette-editor .icon-button { color: var(--editor-fg); }
+.palette-editor .eyebrow { color: var(--editor-muted); }
+.palette-editor .icon-button { border-color: var(--editor-line); }
+.palette-editor .overlay-body { padding: 20px 24px; }
+.palette-editor .overlay-header { padding: 14px 24px; }
+.palette-editor .overlay-header h2 { margin: 0; }
+.palette-controls { color: var(--editor-fg); }
+.palette-intro, .palette-contrast p { color: var(--editor-muted); font-size: 14px; line-height: 1.5; margin-bottom: 12px; }
+.palette-controls input, .palette-controls select, .palette-controls button, .palette-recovery button { color: var(--editor-fg); background: var(--editor-input); border: 1px solid var(--editor-line); border-radius: 9px; font: 400 14px var(--sans); min-height: 44px; padding: 9px 12px; }
+.palette-controls button, .palette-recovery button { cursor: pointer; }
+.palette-controls button:disabled, .palette-recovery button:disabled { opacity: .4; cursor: default; }
+.palette-controls input:focus-visible, .palette-controls select:focus-visible, .palette-controls button:focus-visible, .palette-recovery button:focus-visible { outline: 2px solid var(--editor-fg); }
+.palette-label { display: grid; grid-template-columns: 100px minmax(0, 1fr); align-items: center; gap: 8px; font-size: 14px; }
+.palette-save { display: flex; gap: 10px; margin-top: 8px; }
+.palette-save input { min-width: 0; flex: 1; }
+.palette-save button { flex-shrink: 0; }
+.palette-message { min-height: 22px; margin: 8px 0; color: var(--editor-muted); font-size: 13px; }
+.palette-contrast { margin: 4px 0; color: var(--editor-muted); font-size: 13px; }
+.palette-controls summary { cursor: pointer; min-height: 44px; align-content: center; }
+.palette-search { width: 100%; margin-bottom: 12px; }
+.palette-group { border-top: 1px solid var(--editor-line); }
+.palette-group > summary { font-size: 16px; padding: 10px 0; }
+.palette-group > summary span { float: right; font-size: 12px; color: var(--editor-muted); }
+.palette-color-row { display: grid; grid-template-columns: minmax(0,1fr) 44px 108px; align-items: center; gap: 8px 12px; padding: 13px 0; border-top: 1px solid var(--editor-line); }
+.palette-color-name { font-size: 14px; }
+.palette-color-row input[type=color] { width: 44px; height: 44px; padding: 3px; cursor: pointer; }
+.palette-hex { width: 108px; font-variant-numeric: tabular-nums; }
+.palette-opacity { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; color: var(--editor-muted); font-size: 12px; }
+.palette-opacity input[type=range] { flex: 1; min-width: 0; min-height: 28px; padding: 0; accent-color: var(--editor-fg); }
+.palette-opacity span { width: 36px; text-align: right; font-variant-numeric: tabular-nums; }
+.palette-recovery { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: var(--editor-fg); }
+.palette-recovery span { color: var(--editor-muted); font-size: 12px; margin-left: auto; }
+@media(max-width:420px) {
+  .palette-editor .overlay-body { padding: 14px; }
+  .palette-color-row { grid-template-columns: minmax(0,1fr) 44px 94px; gap: 8px; }
+  .palette-hex { width: 94px; padding: 8px !important; }
+  .palette-save { flex-wrap: wrap; }
+}

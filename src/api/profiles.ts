@@ -18,7 +18,7 @@ export const DECK_WINDOW = 5
 
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = init?.body ? { 'content-type': 'application/json', ...init?.headers } : init?.headers
-  const res = await fetch(api(path), { ...init, headers })
+  const res = await fetch(api(path), { signal: AbortSignal.timeout(12000), ...init, headers })
   if (!res.ok) throw new Error(`${res.status}`)
   const text = await res.text()
   return (text ? JSON.parse(text) : undefined) as T

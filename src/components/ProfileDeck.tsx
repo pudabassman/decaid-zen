@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { DECK_WINDOW, type ProfileRecord } from '../api/profiles'
 import type { Profile } from '../api/types'
 import { MOCK } from '../lib/mock'
+import { CAROUSEL_STEP as STEP, cardAppearance, carouselSeats, restingPan, wrapIndex } from '../lib/carouselMotion'
 
 interface Props {
   records: ProfileRecord[]
@@ -11,9 +13,7 @@ interface Props {
   onPick: (record: ProfileRecord) => void
 }
 
-const CARD_W = 232
-/** the carousel runs down the screen: one seat every STEP pixels */
-const STEP = 106
+const CARD_W = 292
 const VIEW_W = 110
 const VIEW_H = 50
 
@@ -79,6 +79,10 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const [candidate, setCandidate] = useState<string | null>(null)
   const [anchor, setAnchor] = useState({ top: 0, right: 0, height: 0 })
   const [pan, setPan] = useState(0)
+  const [viewport, setViewport] = useState({ width: window.innerWidth, height: window.innerHeight })
+  const shell = useRef<HTMLDivElement>(null)
+  const closeTimer = useRef<number | undefined>(undefined)
+  const dialogId = useId()
   const rotation = useRef(0)
   const dragging = useRef(false)
   const moved = useRef(false)
@@ -86,40 +90,71 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   const badge = useRef<HTMLButtonElement>(null)
   /** true while the finger that opened the deck is still down */
   const holding = useRef(false)
-  const previousSlot = useRef(0)
+  const originProfile = useRef<string | null>(null)
+  const panRef = useRef(0)
+  const targetPan = useRef(0)
+  const paintFrame = useRef(0)
+  const settleFrame = useRef(0)
+  const wheelTimer = useRef<number | undefined>(undefined)
+  const velocity = useRef(0)
+  const lastMove = useRef({ y: 0, time: 0 })
+  const contents = useMemo(() => records.map(record => ({ curve: profileCurve(record.profile), facts: profileFacts(record.profile) })), [records])
 
   const activeIndex = records.findIndex((r) => r.id === activeId)
   const active = activeIndex < 0 ? undefined : records[activeIndex]
 
   const count = Math.max(1, records.length)
-  const wrap = (n: number) => ((n % count) + count) % count
-  const visible = Math.min(DECK_WINDOW, count)
+  const wrap = (value: number) => wrapIndex(value, count)
+  const visible = Math.min(viewport.height < 720 ? 3 : DECK_WINDOW, count)
   const middle = Math.floor((visible - 1) / 2)
-  /** where a record sits relative to the one in play, negative to the left */
-  const offset = (i: number, from: number) => {
-    const raw = wrap(i - from)
-    return raw > count / 2 ? raw - count : raw
-  }
-  const seated = (signed: number) => signed >= -middle && signed <= visible - 1 - middle
-  // seats run down the screen, so dragging down walks back up the ring
-  const slot = wrap(Math.max(0, activeIndex) - Math.round(pan / STEP))
-  const cameFrom = previousSlot.current
+  const openingIndex = records.findIndex(record => record.id === originProfile.current)
+  const baseIndex = Math.max(0, openingIndex < 0 ? activeIndex : openingIndex)
+  const center = baseIndex - pan / STEP
+  const slot = wrap(Math.round(center))
   const highlighted = candidate ?? records[slot]?.id ?? activeId
+  const currentChoice = () => candidate ?? records[wrap(Math.round(baseIndex - panRef.current / STEP))]?.id ?? activeId
+
+  const cancelMotion = () => {
+    cancelAnimationFrame(paintFrame.current)
+    cancelAnimationFrame(settleFrame.current)
+    window.clearTimeout(wheelTimer.current)
+  }
+  const queuePan = (value: number) => {
+    panRef.current = count > 1 ? value : 0
+    targetPan.current = panRef.current
+    cancelAnimationFrame(paintFrame.current)
+    paintFrame.current = requestAnimationFrame(() => setPan(panRef.current))
+  }
+  const settle = (destination = restingPan(panRef.current)) => {
+    cancelMotion()
+    targetPan.current = count > 1 ? destination : 0
+    const from = panRef.current, to = targetPan.current
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || Math.abs(from - to) < .1) {
+      panRef.current = to; setPan(to); return
+    }
+    const started = performance.now()
+    const duration = Math.min(460, 260 + Math.abs(to - from) * .45)
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - started) / duration)
+      const eased = 1 - (1 - progress) ** 4
+      panRef.current = from + (to - from) * eased
+      setPan(panRef.current)
+      if (progress < 1) settleFrame.current = requestAnimationFrame(tick)
+    }
+    settleFrame.current = requestAnimationFrame(tick)
+  }
 
   useEffect(() => {
     if (!open) {
       setCandidate(null)
       return
     }
+    if (!originProfile.current) originProfile.current = activeId
     const rect = badge.current?.getBoundingClientRect()
     if (rect) setAnchor({ top: rect.top, right: rect.left, height: rect.height })
-  }, [open, records.length])
+  }, [open, records.length, activeId])
 
-  useEffect(() => {
-    previousSlot.current = slot
-  }, [slot])
 
-  if (!records.length) return null
 
   const cardAt = (clientX: number, clientY: number) => {
     const target = document.elementFromPoint(clientX, clientY)
@@ -128,37 +163,49 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   }
 
   const close = () => {
+    if (closing) return
+    cancelMotion()
     dragging.current = false
     holding.current = false
     setClosing(true)
-    window.setTimeout(() => {
+    closeTimer.current = window.setTimeout(() => {
       setClosing(false)
       setOpen(false)
       setCandidate(null)
       setPan(0)
       rotation.current = 0
-      previousSlot.current = 0
-    }, 190)
+      panRef.current = 0
+      targetPan.current = 0
+      originProfile.current = null
+      badge.current?.focus({ preventScroll: true })
+    }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 190)
   }
 
   const startDrag = (e: ReactPointerEvent, el: HTMLElement | null) => {
+    if (!e.isPrimary || e.button !== 0 || closing) return
     const rect = badge.current?.getBoundingClientRect()
     if (rect) setAnchor({ top: rect.top, right: rect.left, height: rect.height })
+    cancelMotion()
+    velocity.current = 0
+    lastMove.current = { y: e.clientY, time: e.timeStamp }
     el?.setPointerCapture?.(e.pointerId)
     dragging.current = true
     moved.current = false
     origin.current = { x: e.clientX, y: e.clientY }
-    rotation.current = pan
+    rotation.current = panRef.current
   }
 
   const moveDrag = (e: ReactPointerEvent) => {
-    if (!dragging.current) return
+    if (!dragging.current || closing) return
     const dx = e.clientX - origin.current.x
     const dy = e.clientY - origin.current.y
     if (!moved.current && Math.hypot(dx, dy) < 8) return
     moved.current = true
     if (Math.abs(dy) >= Math.abs(dx)) {
-      setPan(rotation.current + dy)
+      const elapsed = e.timeStamp - lastMove.current.time
+      if (elapsed > 0) velocity.current = .65 * velocity.current + .35 * (e.clientY - lastMove.current.y) / elapsed
+      lastMove.current = { y: e.clientY, time: e.timeStamp }
+      queuePan(rotation.current + dy)
       setCandidate(null)
       return
     }
@@ -173,10 +220,65 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
   }
 
 
+  useEffect(() => {
+    const resize = () => setViewport({ width: window.innerWidth, height: window.innerHeight })
+    window.addEventListener('resize', resize)
+    return () => { window.removeEventListener('resize', resize); window.clearTimeout(closeTimer.current); cancelMotion() }
+  }, [])
+
+  useEffect(() => {
+    if (!open) return
+    const element = shell.current
+    const wheel = (event: WheelEvent) => {
+      if (closing || dragging.current) return
+      event.preventDefault()
+      cancelMotion()
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1
+      setCandidate(null)
+      queuePan(panRef.current - event.deltaY * unit)
+      wheelTimer.current = window.setTimeout(() => settle(), 120)
+    }
+    element?.addEventListener('wheel', wheel, { passive: false })
+    return () => { element?.removeEventListener('wheel', wheel); window.clearTimeout(wheelTimer.current) }
+  }, [open, closing, count])
+
+  useEffect(() => {
+    if (open) shell.current?.focus({ preventScroll: true })
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const key = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); close() }
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault()
+        setCandidate(null)
+        settle(restingPan(targetPan.current) + (event.key === 'ArrowDown' ? -STEP : STEP))
+        shell.current?.focus({ preventScroll: true })
+      }
+      if ((event.key === 'Enter' || event.key === ' ') && event.target === shell.current) {
+        event.preventDefault(); commit(currentChoice())
+      }
+      if (event.key === 'Tab') {
+        const buttons = Array.from(shell.current?.querySelectorAll<HTMLButtonElement>('button:not([tabindex="-1"])') ?? [])
+        const first = buttons[0], last = buttons[buttons.length - 1]
+        if (event.shiftKey && (document.activeElement === first || document.activeElement === shell.current || !shell.current?.contains(document.activeElement))) {
+          event.preventDefault(); last?.focus()
+        } else if (!event.shiftKey && (document.activeElement === last || !shell.current?.contains(document.activeElement))) {
+          event.preventDefault(); first?.focus()
+        }
+      }
+    }
+    document.addEventListener('keydown', key)
+    return () => document.removeEventListener('keydown', key)
+  })
+
+  if (!records.length) return <span className="hint">No profiles available</span>
+
   return (
     <div className="deckwrap">
-      {open && (
-        <>
+      {open && createPortal(
+        <div ref={shell} className="deckoverlay" id={dialogId} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Profile carousel">
           <div
             className={`deckveil${closing ? ' closing' : ''}`}
             onPointerUp={() => commit(null)}
@@ -186,9 +288,10 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
             style={{
               top: '50%',
               transform: 'translateY(-50%)',
-              right: Math.max(6, window.innerWidth - anchor.right / 2 - CARD_W / 2),
+              right: Math.min(viewport.width - CARD_W - 16, Math.max(16, viewport.width - anchor.right / 2 - CARD_W / 2)),
             }}
             onPointerDown={(e) => startDrag(e, e.currentTarget)}
+            onPointerCancel={() => { dragging.current = false; holding.current = false; moved.current = false; settle() }}
             onPointerMove={moveDrag}
             onPointerUp={(e) => {
               e.currentTarget.releasePointerCapture?.(e.pointerId)
@@ -199,31 +302,35 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
                 if (tapped) commit(tapped)
                 return
               }
-              // a held finger picks on release; after a tap the wheel keeps spinning
-              if (holding.current) commit(highlighted)
+              // A held opening gesture selects; browsing settles without selecting.
+              if (holding.current) commit(currentChoice())
+              else settle(restingPan(panRef.current, !matchMedia('(prefers-reduced-motion: reduce)').matches && e.timeStamp - lastMove.current.time < 100 ? velocity.current : 0))
             }}
           >
             <div className="decktrack">
-              {records.map((record, i) => {
-                // the profile in play holds the middle seat; up to four more ring around it
-                const signed = offset(i, slot)
-                if (!seated(signed)) return null
-                const seat = signed + middle
+              {carouselSeats(center, count, visible).map(({ index, recordIndex, distance, accessible }) => {
+                const record = records[recordIndex]
+                const appearance = cardAppearance(distance, visible)
                 const on = record.id === highlighted
-                // a card that wraps round the back fades in there rather than sliding across
-                const before = offset(i, cameFrom)
-                const warped = !seated(before) || Math.abs(seat - (before + middle)) > 1
+                const content = contents[recordIndex]
                 return (
                   <button
-                    key={record.id}
+                    type="button"
+                    key={index}
+                    tabIndex={accessible ? 0 : -1}
+                    aria-hidden={!accessible}
+                    aria-label={`Select ${record.profile?.title ?? 'Untitled'}`}
+                    aria-pressed={record.id === activeId}
+                    onClick={event => { if (event.detail === 0) commit(record.id) }}
                     data-profile={record.id}
-                    className={`deckcard${on ? ' on' : ''}${warped ? ' warp' : ''}`}
+                    className={`deckcard${on ? ' on' : ''}`}
                     style={{
-                      top: (seat - middle) * STEP,
-                      zIndex: 60 - Math.abs(seat - middle),
-                      transform: `translateY(-50%) scale(${seat === middle ? 1 : 0.94})`,
-                      opacity: seat === middle ? 1 : 0.72,
-                      animationDelay: `${Math.min(i, 4) * 22}ms`,
+                      top: 0,
+                      zIndex: 60 - Math.round(Math.abs(distance) * 10),
+                      transform: `translate3d(0, ${distance * STEP}px, 0) translateY(-50%) scale(${appearance.scale})`,
+                      opacity: appearance.opacity,
+                      pointerEvents: appearance.opacity > .08 ? 'auto' : 'none',
+                      ['--deck-detail-opacity' as string]: appearance.detailOpacity,
                     }}
                     onPointerUp={(e) => {
                       if (moved.current) return
@@ -233,17 +340,17 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
                   >
                     <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} width={CARD_W - 32} height={54} aria-hidden="true">
                       <path
-                        d={profileCurve(record.profile)}
+                        d={content.curve}
                         fill="none"
-                        stroke={on ? 'var(--bar)' : 'var(--grip)'}
-                        strokeWidth={on ? 2.2 : 1.6}
+                        stroke={on ? 'var(--bar)' : 'var(--muted)'}
+                        strokeWidth={2.2}
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       />
                     </svg>
                     <span className="display deckname">{record.profile?.title ?? 'Untitled'}</span>
                     <span className="deckfacts">
-                      {profileFacts(record.profile).map((fact) => (
+                      {content.facts.map((fact) => (
                         <span key={fact.value} className="num" style={{ color: fact.color }}>
                           {fact.value}
                         </span>
@@ -255,13 +362,21 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
               })}
             </div>
           </div>
-        </>
+          <button type="button" className="icon-button deck-close" aria-label="Close profile carousel" onClick={close}>×</button>
+          <div className="deck-guidance"><span className="eyebrow">{slot + 1} / {records.length} profiles</span><span>Scroll or drag · tap to select</span><span className="sr-only">Use up and down arrow keys to browse, Enter to select, and Escape to close.</span></div>
+        </div>, document.body,
       )}
 
       <button
+        type="button"
         className="deckbadge"
         ref={badge}
+        aria-label={`Choose profile: ${active?.profile?.title ?? 'No profile'}`}
+        aria-expanded={open}
+        aria-controls={open ? dialogId : undefined}
+        onClick={event => { if (event.detail === 0) setOpen(true) }}
         onPointerDown={(e) => {
+          if (!e.isPrimary || e.button !== 0 || closing) return
           startDrag(e, badge.current)
           holding.current = true
           setOpen(true)
@@ -273,14 +388,16 @@ export function ProfileDeck({ records, activeId, grinds, onPick }: Props) {
             // a plain tap leaves the wheel open to spin; the next tap picks
             dragging.current = false
             holding.current = false
+            shell.current?.focus({ preventScroll: true })
             return
           }
-          commit(cardAt(e.clientX, e.clientY) ?? highlighted)
+          commit(cardAt(e.clientX, e.clientY) ?? currentChoice())
         }}
         onPointerCancel={() => {
           dragging.current = false
           moved.current = false
           holding.current = false
+          settle()
         }}
       >
         <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} width={74} height={30} aria-hidden="true">

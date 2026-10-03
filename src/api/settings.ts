@@ -163,7 +163,7 @@ export interface MachineCounts {
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = init?.body ? { 'content-type': 'application/json', ...init?.headers } : init?.headers
-  const res = await fetch(api(path), { ...init, headers })
+  const res = await fetch(api(path), { signal: AbortSignal.timeout(12000), ...init, headers })
   if (!res.ok) throw new Error(`${res.status}`)
   const text = await res.text()
   return (text ? JSON.parse(text) : undefined) as T
@@ -248,7 +248,7 @@ export const settingsApi = {
       call<{ total?: number }>('/shots?limit=1').catch(() => ({ total: 0 })),
       call<string[]>('/steams/ids').catch(() => []),
     ])
-    return { shots: Number(shots?.total ?? 0), steams: steamIds.length }
+    return { shots: Number(shots?.total ?? 0), steams: Array.isArray(steamIds) ? steamIds.length : 0 }
   },
 }
 

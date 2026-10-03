@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import { Overlay } from '../components/Overlay'
 import { Button } from '../components/Button'
 import { EditableValue } from '../components/EditableValue'
-import { BeanIcon } from '../components/icons'
 import { useRoasterCatalog } from '../lib/useRoasterCatalog'
-import { CoffeePicker } from '../components/CoffeePicker'
+import { CoffeeMenuButton } from '../components/CoffeeMenuButton'
 import { RoasterSite } from '../components/RoasterSite'
 import { Dots } from '../components/Dots'
 import { client } from '../api/client'
@@ -21,12 +21,12 @@ import { ProfileDeck } from '../components/ProfileDeck'
 import { useSwipe } from '../lib/useSwipe'
 import { useAction } from '../lib/useAction'
 
-const Stepper = ({ onLess, onMore }: { onLess: () => void; onMore: () => void }) => (
+const Stepper = ({ label, onLess, onMore }: { label: string; onLess: () => void; onMore: () => void }) => (
   <div className="row" style={{ gap: 12 }}>
-    <Button round height={60} onClick={onLess}>
+    <Button label={`Decrease ${label}`} round height={52} onClick={onLess}>
       <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4} fill="none"><path d="M5 12h14" /></svg>
     </Button>
-    <Button round height={60} onClick={onMore}>
+    <Button label={`Increase ${label}`} round height={52} onClick={onMore}>
       <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4} fill="none"><path d="M12 5v14M5 12h14" /></svg>
     </Button>
   </div>
@@ -34,15 +34,16 @@ const Stepper = ({ onLess, onMore }: { onLess: () => void; onMore: () => void })
 
 export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: () => void }) {
   const [draft, setDraft] = useState<Workflow | null>(initial)
+  const [leaveOpen, setLeaveOpen] = useState(false)
   const [dirty, setDirty] = useState(false)
-  const [picking, setPicking] = useState(false)
   const [grinders, setGrinders] = useState<Grinder[]>([])
   const [records, setRecords] = useState<ProfileRecord[]>([])
   const [preferred, setPreferred] = useState<string[]>([])
   const [grinds, setGrinds] = useState<Record<string, string>>({})
   const { run, message, busy } = useAction()
   const screen = useRef<HTMLDivElement>(null)
-  useSwipe(screen, { onLeft: (fromRightEdge) => fromRightEdge && onDone() })
+  const leave = () => { if (busy) return; if (dirty) setLeaveOpen(true); else onDone() }
+  useSwipe(screen, { onLeft: (fromRightEdge) => fromRightEdge && leave() })
 
   useEffect(() => setDraft(initial), [initial])
 
@@ -80,13 +81,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
       patch({ grinderId: known.id, grinderModel: known.model })
       return
     }
-    try {
-      const created = await client.createGrinder(name)
-      setGrinders((prev) => [...prev, created])
-      patch({ grinderId: created.id, grinderModel: created.model })
-    } catch {
-      patch({ grinderModel: name })
-    }
+    patch({ grinderId: undefined, grinderModel: name })
   }
 
   const ctx = draft?.context ?? {}
@@ -111,7 +106,6 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
     if (!activeId) return
     const next = { ...grinds, [grindKey(activeId, ctx.coffeeName)]: value }
     setGrinds(next)
-    profileApi.saveGrindMemory(next).catch(() => undefined)
   }
 
   const pickCoffee = (coffeeName: string) => {
@@ -125,19 +119,29 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
   const save = () =>
     run('Save workflow', async () => {
       if (!draft) return
-      await client.saveWorkflow(draft)
+      let next = draft
+      const name = draft.context?.grinderModel?.trim()
+      if (name && !draft.context?.grinderId) {
+        const existing = grinders.find(g => g.model.toLowerCase() === name.toLowerCase())
+        const grinder = existing ?? await client.createGrinder(name)
+        next = { ...draft, context: { ...draft.context, grinderId: grinder.id, grinderModel: grinder.model } }
+        setDraft(next)
+      }
+      await client.saveWorkflow(next)
+      try { await profileApi.saveGrindMemory(grinds) }
+      catch { throw new Error('Saved workflow, but could not save remembered grind. Please retry Save workflow.') }
       setDirty(false)
       onDone()
     })
 
   return (
-    <div className="screen" ref={screen}>
-      <div className="row between" style={{ marginBottom: 34 }}>
+    <div className="screen dialin-screen" ref={screen}>
+      <div className="page-header">
         <span className="display" style={{ fontSize: 42, letterSpacing: '-0.01em' }}>Dial in</span>
         <span className="cap">{draft?.name ?? 'workflow'}{dirty ? ' · unsaved' : ''}</span>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      <div inert={busy} style={{ marginBottom: 16 }}>
         <div className="row between" style={{ marginBottom: 10 }}>
           <div className="row" style={{ gap: 14 }}>
             <span className="cap">
@@ -151,14 +155,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
               />
             </span>
             {listing.status === 'available' && (
-              <button
-                className="beanpill"
-                aria-label={`${listing.count} coffees from ${ctx.coffeeRoaster}`}
-                onClick={() => setPicking(true)}
-              >
-                <BeanIcon size={13} />
-                <span className="num">{listing.count}</span>
-              </button>
+            <CoffeeMenuButton roaster={ctx.coffeeRoaster ?? ''} count={listing.count} onPick={pickCoffee} />
             )}
             {listing.status === 'checking' && (
               <span className="cap">
@@ -187,7 +184,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
         )}
       </div>
 
-      <div className="grow" style={{ overflowY: 'auto' }}>
+      <fieldset className="grow dialin-body" disabled={busy || !draft}>
         <Field
           label="Dose"
           value={dose.toFixed(1)}
@@ -195,7 +192,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
           numeric
           onCommit={(next) => patch({ targetDoseWeight: num(next, dose) })}
         >
-          <Stepper
+          <Stepper label="Dose"
             onLess={() => patch({ targetDoseWeight: Math.max(1, +(dose - 0.1).toFixed(1) ) })}
             onMore={() => patch({ targetDoseWeight: +(dose + 0.1).toFixed(1) })}
           />
@@ -208,7 +205,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
           color="var(--weight)"
           onCommit={(next) => patch({ targetYield: num(next, target) })}
         >
-          <Stepper
+          <Stepper label="Target yield"
             onLess={() => patch({ targetYield: Math.max(1, +(target - 0.5).toFixed(1)) })}
             onMore={() => patch({ targetYield: +(target + 0.5).toFixed(1) })}
           />
@@ -257,7 +254,7 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
             </div>
           </div>
           <span style={{ marginLeft: 'auto' }}>
-            <Stepper
+            <Stepper label="Grind"
               onLess={() => setGrind(shift(ctx.grinderSetting, -0.1))}
               onMore={() => setGrind(shift(ctx.grinderSetting, 0.1))}
             />
@@ -275,16 +272,16 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
 
         </div>
 
-      </div>
+      </fieldset>
 
       <div className="rule" style={{ margin: '12px 0' }} />
-      <div className="row between">
-        <span className="cap" style={{ color: message ? 'var(--temp)' : undefined }}>
+      <div className="page-footer">
+        <span className="cap" role={message ? 'alert' : 'status'} style={{ color: message ? 'var(--temp)' : undefined }}>
           {message ?? draft?.profile?.title ?? 'no profile'}
         </span>
         <div className="row" style={{ gap: 16 }}>
-          <Button width={164} quiet onClick={onDone}>
-            <span className="cap">Discard</span>
+          <Button width={164} quiet disabled={busy} onClick={leave}>
+            <span className="cap">{dirty ? 'Discard' : 'Back'}</span>
           </Button>
           <Button width={260} onClick={save} disabled={!dirty || busy}>
             <span className="display" style={{ fontSize: 23 }}>{busy ? 'Saving…' : 'Save workflow'}</span>
@@ -292,23 +289,15 @@ export function DialIn({ initial, onDone }: { initial: Workflow | null; onDone: 
         </div>
       </div>
 
-      {picking && ctx.coffeeRoaster && (
-        <CoffeePicker
-          roaster={ctx.coffeeRoaster}
-          onClose={() => setPicking(false)}
-          onPick={(name) => {
-            setPicking(false)
-            pickCoffee(name)
-          }}
-        />
-      )}
+      {leaveOpen && <Overlay dismissible={!busy} title="Keep your changes?" onClose={() => setLeaveOpen(false)} footer={<div className="row"><Button quiet disabled={busy} onClick={onDone}>Discard changes</Button><Button disabled={busy} onClick={save}>Save workflow</Button></div>}><p>You’ve adjusted this recipe. Save it for your next shot, or close this panel to keep editing.</p>{message && <p className="error-text" role="alert">{message}</p>}</Overlay>}
+
     </div>
   )
 }
 
 const shift = (value: string | undefined, delta: number) => {
   const n = Number.parseFloat(value ?? '')
-  return (Number.isFinite(n) ? n + delta : delta).toFixed(1)
+  return Math.max(0, Number.isFinite(n) ? n + delta : delta).toFixed(1)
 }
 
 function Field({
@@ -347,6 +336,7 @@ function Field({
             placeholder={placeholder}
             suffix={suffix}
             numeric={numeric}
+            min={numeric ? 1 : undefined}
             options={options}
             width={valueIsText ? 520 : 150}
             onCommit={onCommit}

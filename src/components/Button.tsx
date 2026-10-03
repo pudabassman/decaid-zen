@@ -1,6 +1,8 @@
-import { useCallback, useRef, useState, type ReactNode } from 'react'
+import { BorderTrace } from './BorderTrace'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 
 interface Props {
+  label?: string
   children: ReactNode
   onClick?: () => void | Promise<void>
   width?: number
@@ -18,12 +20,11 @@ interface Props {
 }
 
 export function Button({
-  children, onClick, width = 168, height = 56, round, quiet, disabled, hot,
+  label, children, onClick, width = 168, height = 56, round, quiet, disabled, hot,
   onHold, holdMs = 3000, tapWindowMs, onHoldChange,
 }: Props) {
-  const [tracing, setTracing] = useState(false)
+  const button = useRef<HTMLButtonElement>(null)
   const [holding, setHolding] = useState(false)
-  const timer = useRef<number | undefined>(undefined)
   const holdTimer = useRef<number | undefined>(undefined)
   const pressedAt = useRef(0)
   const completed = useRef(false)
@@ -52,47 +53,33 @@ export function Button({
     endHold(true)
   }, [endHold, onHold])
 
-  const fire = useCallback(() => {
+  useEffect(() => () => window.clearTimeout(holdTimer.current), [])
+  const fire = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) return
-    if (completed.current) return
-    if (onHold && tapWindowMs !== undefined && Date.now() - pressedAt.current >= tapWindowMs) return
-    setTracing(false)
-    window.clearTimeout(timer.current)
-    requestAnimationFrame(() => setTracing(true))
-    timer.current = window.setTimeout(() => setTracing(false), 1200)
+    if (event.detail !== 0 && (completed.current || (onHold && tapWindowMs !== undefined && Date.now() - pressedAt.current >= tapWindowMs))) return
     void onClick?.()
-  }, [disabled, onClick])
+  }
 
   const size = round ? { width: height, height } : { width, height }
-  const classes = ['btn', round && 'round', quiet && 'quiet', hot && 'hot', tracing && 'tracing', holding && 'holding']
+  const classes = ['btn', round && 'round', quiet && 'quiet', hot && 'hot', holding && 'holding']
     .filter(Boolean)
     .join(' ')
 
   return (
     <button
+      ref={button}
+      type="button"
+      aria-label={label}
       className={classes}
       style={{ ...size, ...(onHold ? { ['--hold-ms' as string]: `${holdMs}ms` } : {}) }}
       onClick={fire}
       disabled={disabled}
-      onPointerDown={beginHold}
+      onPointerDown={(event) => { if (event.button === 0) beginHold() }}
       onPointerUp={releaseHold}
       onPointerLeave={releaseHold}
       onPointerCancel={releaseHold}
     >
-      <svg className="trace" viewBox={`0 0 ${size.width} ${size.height}`}>
-        {round ? (
-          <circle cx={size.width / 2} cy={height / 2} r={height / 2 - 1} pathLength={100} />
-        ) : (
-          <rect
-            x={0.75}
-            y={0.75}
-            width={size.width - 1.5}
-            height={height - 1.5}
-            rx={(height - 1.5) / 2}
-            pathLength={100}
-          />
-        )}
-      </svg>
+      {onHold && <BorderTrace target={button} />}
       {children}
     </button>
   )

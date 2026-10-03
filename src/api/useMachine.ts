@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { profileStepIndex } from '../lib/validation'
 import { client } from './client'
 import { MOCK, mockScale, mockSnapshot, mockWater, mockWorkflow } from '../lib/mock'
 import { MOCK_SHOT, pourAt } from '../lib/mockPour'
@@ -27,6 +28,8 @@ const ENDED = new Set(['pouringDone'])
 const PREP_FRAME = -1
 
 export function useMachine() {
+  const lastFrameAt = useRef(0)
+  const [stale, setStale] = useState(false)
   const [snapshot, setSnapshot] = useState<MachineSnapshot | null>(null)
   const [scale, setScale] = useState<ScaleSnapshot | null>(null)
   const [scaleConnected, setScaleConnected] = useState(false)
@@ -45,20 +48,33 @@ export function useMachine() {
   const replayTail = useRef(0)
   const live = useRef<MachineSnapshot | null>(null)
   const [replay, setReplay] = useState(false)
+  const [replayWorkflow, setReplayWorkflow] = useState<Workflow | null>(null)
+  const [replayHasScale, setReplayHasScale] = useState(false)
+  const liveScale = useRef<ScaleSnapshot | null>(null)
 
   useEffect(() => {
     if (!MOCK) return
     setSnapshot(mockSnapshot())
     setScale(mockScale())
+    liveScale.current = mockScale()
     setScaleConnected(!window.location.search.includes('noscale'))
     client.workflow().then(setWorkflow).catch(() => setWorkflow(mockWorkflow()))
     client.waterLevels().then(setWater).catch(() => setWater(mockWater()))
 
-    if (!MOCK_SHOT) return
+    let stopped = false
+    const change = (event: Event) => {
+      stopped = true
+      const state = (event as CustomEvent).detail as MachineSnapshot['state']['state']
+      setSnapshot({ ...mockSnapshot(), state: { state, substate: 'ready' } })
+      setElapsed(0)
+    }
+    window.addEventListener('zen:mock-state', change)
+    if (!MOCK_SHOT) return () => window.removeEventListener('zen:mock-state', change)
     const startedAt = Date.now()
     samples.current = []
     shotOrigin.current = 2
     const id = window.setInterval(() => {
+      if (stopped) return
       const raw = (Date.now() - startedAt) / 1000
       const preparing = raw < 2
       const t = Math.max(0, raw - 2)
@@ -77,12 +93,12 @@ export function useMachine() {
         targetPressure: pour.targetPressure,
         targetFlow: pour.targetFlow,
         targetMixTemperature: pour.targetMix,
-        profileFrame: t < 6 ? 1 : t < 20 ? 2 : 3,
+        profileFrame: t < 6 ? 0 : t < 20 ? 1 : 2,
       })
       setScale({ timestamp: new Date().toISOString(), weight: pour.weight })
       samples.current.push({
         t: raw,
-        frame: preparing ? PREP_FRAME : t < 6 ? 1 : t < 20 ? 2 : 3,
+        frame: preparing ? PREP_FRAME : t < 6 ? 0 : t < 20 ? 1 : 2,
         steam: 138 + Math.min(12, t * 0.6),
         pressure: pour.pressure,
         flow: pour.flow,
@@ -94,11 +110,13 @@ export function useMachine() {
       })
       setElapsed(t)
     }, 100)
-    return () => window.clearInterval(id)
+    return () => { window.clearInterval(id); window.removeEventListener('zen:mock-state', change) }
   }, [])
 
-  const machineStatus = useSocket<MachineSnapshot>('/machine/snapshot', (frame) => {
+  const machineStatus = useSocket<MachineSnapshot>(MOCK ? '' : '/machine/snapshot', (frame) => {
     if (MOCK) return
+    lastFrameAt.current = Date.now()
+    setStale(false)
     live.current = frame
     if (replaying.current) return
     setSnapshot(frame)
@@ -138,7 +156,7 @@ export function useMachine() {
     if (traceStart.current !== null && (running || preparing)) {
       samples.current.push({
         t: (now - traceStart.current) / 1000,
-        frame: preparing ? PREP_FRAME : frame.profileFrame,
+        frame: preparing ? PREP_FRAME : profileStepIndex(frame.profileFrame, 100),
         steam: frame.steamTemperature,
         pressure: frame.pressure,
         flow: frame.flow,
@@ -154,24 +172,24 @@ export function useMachine() {
   })
 
   // the app exposes water levels on a socket only; there is no REST GET for them
-  useSocket<WaterLevels>('/machine/waterLevels', (frame) => {
+  useSocket<WaterLevels>(MOCK ? '' : '/machine/waterLevels', (frame) => {
     if (MOCK) return
     if (frame && typeof frame.currentLevel === 'number') setWater(frame)
   })
 
-  useSocket<ScaleFrame>('/scale/snapshot', (frame) => {
+  useSocket<ScaleFrame>(MOCK ? '' : '/scale/snapshot', (frame) => {
     if (MOCK) return
-    if (replaying.current) return
     if ('status' in frame) {
       setScaleConnected(frame.status === 'connected')
       return
     }
+    liveScale.current = frame
     weight.current = frame.weight
-    setScale(frame)
+    if (!replaying.current) setScale(frame)
   })
 
   const refreshWorkflow = useCallback(() => {
-    client.workflow().then(setWorkflow).catch(() => setWorkflow(null))
+    client.workflow().then(setWorkflow).catch(() => undefined)
   }, [])
 
   useEffect(() => {
@@ -186,9 +204,12 @@ export function useMachine() {
     replayTail.current = 0
     replaying.current = false
     setReplay(false)
+    setReplayWorkflow(null)
+    setScale(liveScale.current)
     shotStart.current = null
     setElapsed(0)
     if (live.current) setSnapshot(live.current)
+    else if (MOCK) setSnapshot(mockSnapshot())
   }, [])
 
   const replayShot = useCallback((shot: ShotRecord) => {
@@ -198,6 +219,8 @@ export function useMachine() {
 
     replaying.current = true
     setReplay(true)
+    setReplayWorkflow(shot.workflow ?? null)
+    setReplayHasScale(points.some(point => !!point.scale))
     samples.current = []
     shotStart.current = 0
     const base = Date.parse(points[0].machine.timestamp)
@@ -215,7 +238,7 @@ export function useMachine() {
         setScale({ timestamp: point.machine.timestamp, weight: point.scale?.weight ?? 0 })
         samples.current.push({
           t,
-          frame: isPreparing(point) ? PREP_FRAME : point.machine.profileFrame,
+          frame: isPreparing(point) ? PREP_FRAME : profileStepIndex(point.machine.profileFrame, 100),
           steam: point.machine.steamTemperature,
           pressure: point.machine.pressure,
           flow: point.machine.flow,
@@ -245,19 +268,26 @@ export function useMachine() {
     if (replayTail.current) window.clearTimeout(replayTail.current)
   }, [])
 
+  useEffect(() => {
+    if (MOCK) return
+    const id = window.setInterval(() => setStale(lastFrameAt.current > 0 && Date.now() - lastFrameAt.current > 5000), 1000)
+    return () => window.clearInterval(id)
+  }, [])
+
   const pouring = snapshot ? POURING.has(snapshot.state.state) : false
 
   return {
     snapshot,
     scale,
-    scaleConnected,
-    workflow,
+    scaleConnected: replay ? replayHasScale : scaleConnected,
+    workflow: replay ? replayWorkflow : workflow,
     water,
     pouring,
     elapsed: pouring ? elapsed : 0,
     samples,
     shotOrigin,
-    connection: machineStatus,
+    connection: MOCK ? 'open' as const : machineStatus,
+    stale,
     refreshWorkflow,
     replay,
     replayShot,

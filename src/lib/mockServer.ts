@@ -32,6 +32,7 @@ const state = {
     { id: 'grinder:ek43', model: 'Mahlkönig EK43' },
   ],
   notes: {} as Record<string, string>,
+  store: {} as Record<string, unknown>,
   app: {
     gatewayMode: 'tracking',
     themeMode: 'dark',
@@ -72,8 +73,8 @@ const state = {
   },
   calibration: { flowMultiplier: 1.02 } as Record<string, unknown>,
   schedules: [
-    { id: 'wake-1', enabled: true, time: '06:20', days: [1, 2, 3, 4, 5] },
-    { id: 'wake-2', enabled: false, time: '08:10', days: [6, 7] },
+    { id: 'wake-1', enabled: true, time: '06:20', daysOfWeek: [1, 2, 3, 4, 5] },
+    { id: 'wake-2', enabled: false, time: '08:10', daysOfWeek: [6, 7] },
   ],
   devices: [
     { id: 'FA:78:82:BA:6B:06', name: 'DE1', type: 'machine', state: 'connected', available: true },
@@ -104,8 +105,9 @@ const RECENT: Array<[string, string, string, number]> = [
   ['Peony', 'Kenya Kirinyaga Kabingara Washed', 'Blooming Espresso', 27.9],
 ]
 
+const shotFixtures = [...RECENT, ...BEANS.map((bean) => [...bean, 30] as [string, string, string, number])]
 const shots = (): ShotRecord[] =>
-  [...RECENT, ...BEANS.map((bean) => [...bean, 30] as [string, string, string, number])].map(([roaster, bean, profile, span], i) => {
+  (new URLSearchParams(window.location.search).has('history') ? [...shotFixtures, ...shotFixtures, ...shotFixtures] : shotFixtures).map(([roaster, bean, profile, span], i) => {
     const base = mockShot(span)
     const workflow: Workflow = {
       ...base.workflow,
@@ -132,6 +134,8 @@ function route(path: string, method: string, body: unknown): Response | null {
   const [pathname, query] = path.split('?')
   const params = new URLSearchParams(query ?? '')
 
+  if (pathname.includes('/machine/state/') && method === 'PUT') { window.dispatchEvent(new CustomEvent('zen:mock-state', { detail: pathname.split('/').pop() })); return ok({}) }
+  if (pathname.endsWith('/steams/ids')) return ok([])
   if (pathname.endsWith('/workflow')) {
     if (method === 'PUT') {
       state.workflow = body as Workflow
@@ -178,11 +182,12 @@ function route(path: string, method: string, body: unknown): Response | null {
     if (method === 'POST') {
       if (key === 'grindByProfile') state.grinds = body as Record<string, string>
       if (key === 'waterUse') state.waterUse = body as typeof state.waterUse
+      if (key) state.store[key] = body
       return ok({})
     }
     if (key === 'grindByProfile') return ok(state.grinds)
     if (key === 'waterUse') return ok(state.waterUse)
-    return ok(null)
+    return ok(key ? state.store[key] ?? null : null)
   }
 
   if (pathname.endsWith('/shots/latest')) return ok(shots()[0])
@@ -199,8 +204,9 @@ function route(path: string, method: string, body: unknown): Response | null {
         (!coffeeName || shot.workflow?.context?.coffeeName === coffeeName) &&
         (!profileTitle || shot.workflow?.profile?.title === profileTitle),
     )
-    const items = matching.slice(0, limit)
-    return ok({ items, total: matching.length, limit, offset: 0 })
+    const offset = Number(params.get('offset') ?? 0)
+    const items = matching.slice(offset, offset + limit)
+    return ok({ items, total: matching.length, limit, offset })
   }
   if (pathname.includes('/shots/')) {
     const id = decodeURIComponent(pathname.split('/').pop() ?? '')
@@ -260,7 +266,7 @@ function route(path: string, method: string, body: unknown): Response | null {
   if (pathname.endsWith('/devices')) return ok(state.devices)
   if (pathname.endsWith('/devices/forget')) return ok({})
   if (pathname.endsWith('/webui/skins/default')) {
-    if (method === 'POST') {
+    if (method === 'PUT') {
       state.defaultSkin = (body as { skinId: string }).skinId
       return ok({})
     }
@@ -271,8 +277,8 @@ function route(path: string, method: string, body: unknown): Response | null {
   if (pathname.endsWith('/plugins/update')) return ok({ checked: state.plugins.length })
   if (pathname.includes('/plugins/') && (pathname.endsWith('/enable') || pathname.endsWith('/disable'))) return ok({})
   if (pathname.endsWith('/plugins')) return ok(state.plugins)
-  if (pathname.endsWith('/info')) return ok({ version: '0.8.5', buildNumber: '2624', commitShort: 'a08bc41e', localIp: '192.168.68.72' })
   if (pathname.endsWith('/machine/info')) return ok({ model: 'DE1 Pro', version: '1.6', GHC: true })
+  if (pathname.endsWith('/info')) return ok({ version: '0.8.5', buildNumber: '2624', commitShort: 'a08bc41e', localIp: '192.168.68.72' })
   if (pathname.endsWith('/update')) return ok({ phase: 'idle', currentVersion: '0.8.5', latestVersion: null, installable: false })
 
   if (pathname.endsWith('/machine/state')) return ok({ state: { state: 'idle', substate: 'ready' } })
@@ -296,7 +302,17 @@ export function installMockServer() {
       }
     }
     const path = url.split('/api/v1')[1] ?? ''
-    const response = route(path, method, body)
+    // Preview fixtures for the first-open loading trace and retry UI.
+    const preview = new URLSearchParams(window.location.search)
+    if (path.includes('coffee-catalog.reaplugin/coffees') && !path.includes('probe=1')) {
+      const delay = Math.min(5000, Math.max(0, Number(preview.get('coffeeDelay')) || 0))
+      if (delay) await new Promise(resolve => setTimeout(resolve, delay))
+      if (preview.has('coffeeError')) return new Response('Preview: coffee catalog unavailable', { status: 503 })
+    }
+    const failure = new URLSearchParams(window.location.search).get('failSave')
+    const response = failure && method !== 'GET' && path.includes(failure)
+      ? new Response('Preview: this save failed. Please try again.', { status: 503 })
+      : route(path, method, body)
     await new Promise((resolve) => setTimeout(resolve, 140))
     return response ?? ok({})
   }

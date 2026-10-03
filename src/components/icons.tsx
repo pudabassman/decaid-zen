@@ -39,3 +39,10 @@ export const GearIcon = ({ size = 18 }: { size?: number }) => (
     <path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2 5.5 5.5" />
   </svg>
 )
+
+export const PaletteIcon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" stroke="currentColor" {...stroke}>
+    <path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1.4-3.4 1.5 1.5 0 0 1 1.1-2.6H18a3 3 0 0 0 3-3 9 9 0 0 0-9-9Z" />
+    <circle cx="7.5" cy="10" r="1" /><circle cx="11" cy="6.8" r="1" /><circle cx="16" cy="8" r="1" />
+  </svg>
+)

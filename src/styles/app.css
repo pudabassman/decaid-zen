@@ -7,7 +7,7 @@ html, body, #root {
   height: 100lvh;
   overflow: hidden;
   background: var(--ground);
-  background-image: radial-gradient(118% 88% at 50% -8%, #191713 0%, rgba(25, 23, 19, 0) 62%);
+  background-image: radial-gradient(118% 88% at 50% -8%, var(--ground-glow) 0%, var(--ground-glow-end) 62%);
   background-attachment: fixed;
   color: var(--ink);
   font-family: var(--sans);
@@ -74,9 +74,9 @@ a { color: var(--flow); }
 
 .btn {
   position: relative;
-  border: 1px solid rgba(236, 231, 219, 0.26);
-  background: rgba(236, 231, 219, 0.05);
-  color: rgba(236, 231, 219, 0.62);
+  border: 1px solid var(--base-button-border);
+  background: var(--base-button-fill);
+  color: var(--base-button-text);
   border-radius: 999px;
   font-family: inherit;
   cursor: pointer;
@@ -84,15 +84,15 @@ a { color: var(--flow); }
 }
 .btn:disabled { opacity: 0.4; cursor: default; }
 .btn.hot, .btn:active {
-  background: rgba(236, 231, 219, 0.13);
+  background: var(--pressed-fill);
   border-color: var(--ink);
   color: var(--ink);
 }
-.btn.quiet { border-color: rgba(236, 231, 219, 0.14); color: rgba(236, 231, 219, 0.42); }
+.btn.quiet { border-color: var(--quiet-border); color: var(--quiet-text); }
 .btn.round { border-radius: 50%; display: grid; place-items: center; }
 
-.btn .trace { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
-.btn .trace rect, .btn .trace circle {
+.trace { position: absolute; inset: -1px; width: calc(100% + 2px); height: calc(100% + 2px); overflow: visible; pointer-events: none; }
+.trace rect, .trace circle {
   fill: none;
   /* no stroke at rest: a round cap on a fully offset dash paints a dot at the path start */
   stroke: none;
@@ -119,7 +119,7 @@ a { color: var(--flow); }
   padding: 20px 40px;
   background: var(--panel);
   border-left: 1px solid var(--rule);
-  box-shadow: -40px 0 80px -50px rgba(0, 0, 0, 0.65);
+  box-shadow: -40px 0 80px -50px var(--drawer-shadow);
   overflow-y: auto;
   animation: drawerIn 460ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
@@ -169,7 +169,7 @@ a { color: var(--flow); }
   padding: 14px 16px;
   border: 1px solid var(--rule);
   border-radius: 14px;
-  background: rgba(236, 231, 219, 0.04);
+  background: var(--field-fill);
   color: var(--ink);
   font-family: inherit;
   font-size: 19px;
@@ -206,7 +206,7 @@ a { color: var(--flow); }
   background: var(--panel);
   border: 1px solid var(--rule);
   border-radius: 16px;
-  box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 30px 70px -40px var(--popover-shadow);
 }
 .suggest-row {
   appearance: none;
@@ -226,14 +226,14 @@ a { color: var(--flow); }
 .suggest-row:first-child { border-top: 0; }
 .suggest-row.on, .suggest-row:hover, .suggest-row:active {
   color: var(--ink);
-  background: rgba(236, 231, 219, 0.06);
+  background: var(--row-highlight);
 }
 
 .search {
   width: 100%;
   border: 1px solid var(--rule);
   border-radius: 999px;
-  background: rgba(236, 231, 219, 0.04);
+  background: var(--field-fill);
   color: var(--ink);
   font-family: inherit;
   font-size: 18px;
@@ -328,7 +328,7 @@ a { color: var(--flow); }
   animation: veilIn 180ms ease-out both;
   position: fixed;
   inset: 0;
-  background: rgba(19, 18, 16, 0.88);
+  background: var(--profile-veil);
   z-index: 60;
 }
 .deckfan {
@@ -342,27 +342,24 @@ a { color: var(--flow); }
   height: 0;
 }
 .deckcard {
-  animation: cardIn 240ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  transition: top 260ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 260ms ease,
-    opacity 260ms ease, border-color 240ms ease;
   position: absolute;
   right: 0;
   width: 232px;
   padding: 18px 16px 16px;
   border-radius: 18px;
   border: 1px solid var(--rule-soft);
-  background: #12110f;
+  background: var(--card-fill);
   color: inherit;
   font: inherit;
   text-align: start;
   cursor: pointer;
   transform-origin: right center;
-  box-shadow: -26px 0 46px -24px rgba(0, 0, 0, 0.95);
+  box-shadow: -26px 0 46px -24px var(--profile-shadow);
 }
-.deckcard.on { border-color: #3c3830; background: var(--panel); }
+.deckcard.on { border-color: var(--card-active-border); background: var(--panel); }
 .deckbadge { position: relative; z-index: 62; }
 .deckcard .deckname { color: var(--ink); }
-.deckcard:not(.on) .cap { color: #5d574c; }
+.deckcard:not(.on) .cap { color: var(--card-muted); }
 .deckcard .deckname {
   display: block;
   margin-top: 14px;
@@ -388,13 +385,13 @@ a { color: var(--flow); }
   transition: color 260ms ease, border-color 260ms ease;
 }
 .beanpill:hover, .beanpill:active { color: var(--ink); border-color: var(--ink); }
-.beanpill.on { color: var(--ink); border-color: var(--ink); background: rgba(236, 231, 219, 0.06); }
+.beanpill.on { color: var(--ink); border-color: var(--ink); background: var(--row-highlight); }
 .beanpill .num { font-size: 12px; letter-spacing: 0.02em; }
 
 .drawerveil {
   position: fixed;
   inset: 0;
-  background: rgba(19, 18, 16, 0.5);
+  background: var(--secondary-veil);
   z-index: 71;
 }
 
@@ -410,9 +407,6 @@ a { color: var(--flow); }
   from { opacity: 0; }
   to { opacity: 1; }
 }
-@keyframes cardIn {
-  from { opacity: 0; transform: translateY(16px) scale(0.94); }
-}
 .deckfan.closing, .deckfan.closing + .deckveil { animation: none; }
 .deckfan.closing { opacity: 0; transform: translateY(10px); transition: opacity 180ms ease, transform 180ms ease; }
 .deckveil.closing { opacity: 0; transition: opacity 180ms ease; }
@@ -421,16 +415,7 @@ a { color: var(--flow); }
   .deckfan.closing { transition: none; }
 }
 
-.deckcard.warp {
-  transition: transform 260ms ease, opacity 200ms ease, border-color 240ms ease;
-  animation: warpIn 220ms ease-out both;
-}
-@keyframes warpIn {
-  from { opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .deckcard.warp { animation: none; }
-}
+
 
 .gear {
   width: 52px;
@@ -474,7 +459,7 @@ a { color: var(--flow); }
   background: var(--grip);
   transition: transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1), background-color 240ms ease;
 }
-.toggle.on { border-color: var(--ink); background: rgba(236, 231, 219, 0.08); }
+.toggle.on { border-color: var(--ink); background: var(--choice-fill); }
 .toggle.on span { transform: translateX(22px); background: var(--ink); }
 
 .choice {
@@ -492,7 +477,7 @@ a { color: var(--flow); }
   cursor: pointer;
   transition: color 240ms ease, background-color 240ms ease;
 }
-.choice button.on { color: var(--ink); background: rgba(236, 231, 219, 0.08); }
+.choice button.on { color: var(--ink); background: var(--choice-fill); }
 
 .nudge {
   width: 30px;
@@ -553,7 +538,7 @@ a { color: var(--flow); }
   background: var(--panel);
   border: 1px solid var(--rule);
   border-radius: 16px;
-  box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 30px 70px -40px var(--popover-shadow);
 }
 .multirow {
   display: flex;
@@ -571,7 +556,7 @@ a { color: var(--flow); }
   transition: color 220ms ease, background-color 220ms ease;
 }
 .multirow:first-child { border-top: 0; }
-.multirow.on { color: var(--ink); background: rgba(236, 231, 219, 0.06); }
+.multirow.on { color: var(--ink); background: var(--row-highlight); }
 .multirow:disabled { opacity: 0.35; cursor: default; }
 .multitick {
   width: 7px;
@@ -616,7 +601,7 @@ a { color: var(--flow); }
 .sleepscreen {
   position: fixed;
   inset: 0;
-  background: #0b0a09;
+  background: var(--sleep-fill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -641,9 +626,9 @@ a { color: var(--flow); }
 .sleepclock {
   font-size: 168px;
   line-height: 1;
-  color: rgba(236, 231, 219, 0.3);
+  color: var(--sleep-clock-base);
 }
-.sleepdate { color: rgba(236, 231, 219, 0.16); }
+.sleepdate { color: var(--sleep-date-base); }
 
 @media (prefers-reduced-motion: reduce) {
   .sleepdrift { animation: none; }
@@ -707,9 +692,9 @@ a { color: var(--flow); }
   align-items: center;
   margin: clamp(2px, 0.6vh, 8px) 0;
   padding: 8px clamp(10px, 1.4vw, 18px);
-  border: 1px solid rgba(217, 113, 79, 0.35);
+  border: 1px solid var(--water-notice-border);
   border-radius: 16px;
-  background: rgba(217, 113, 79, 0.06);
+  background: var(--water-notice-fill);
 }
 
 /* one layer of light: a raised surface catches it on its top edge */
@@ -717,7 +702,7 @@ a { color: var(--flow); }
   box-shadow: inset 0 1px 0 var(--edge);
 }
 .drawer {
-  box-shadow: inset 1px 0 0 var(--edge), -40px 0 80px -50px rgba(0, 0, 0, 0.65);
+  box-shadow: inset 1px 0 0 var(--edge), -40px 0 80px -50px var(--drawer-shadow);
 }
 
 .waternote {

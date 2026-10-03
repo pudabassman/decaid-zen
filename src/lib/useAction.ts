@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError } from '../api/client'
 
 const describe = (label: string, error: unknown) => {
@@ -6,34 +6,37 @@ const describe = (label: string, error: unknown) => {
     if (error.body.includes('block_no_scale')) return 'No scale connected — espresso is blocked in settings'
     if (error.body.includes('block_tare_during_shot')) return 'Tare is blocked while a shot is running'
     try {
-      const parsed = JSON.parse(error.body) as { details?: string; type?: string }
+      const parsed = JSON.parse(error.body) as { details?: string }
       if (parsed.details) return parsed.details
-    } catch {
-      /* fall through to the generic message */
-    }
-    return `${label} failed (${error.status})`
+    } catch { /* use the action label below */ }
+    return `${label} failed (${error.status}). Please try again.`
   }
-  return `${label} failed — no response from the machine`
+  return error instanceof Error && error.message.startsWith('Saved workflow')
+    ? error.message : `${label} failed. Check the connection and try again.`
 }
 
 export function useAction() {
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const timer = useRef<number | undefined>(undefined)
-
+  const [status, setStatus] = useState('')
+  const lock = useRef(false)
+  const mounted = useRef(true)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const run = useCallback(async (label: string, fn: () => Promise<unknown>) => {
-    window.clearTimeout(timer.current)
+    if (lock.current) return
+    lock.current = true
     setBusy(true)
+    setMessage(null)
+    setStatus(`${label}…`)
     try {
       await fn()
-      setMessage(null)
+      if (mounted.current) setStatus(`${label} · done`)
     } catch (error) {
-      setMessage(describe(label, error))
-      timer.current = window.setTimeout(() => setMessage(null), 6000)
+      if (mounted.current) { setMessage(describe(label, error)); setStatus('') }
     } finally {
-      setBusy(false)
+      lock.current = false
+      if (mounted.current) setBusy(false)
     }
   }, [])
-
-  return { run, message, busy }
+  return { run, message, busy, status }
 }

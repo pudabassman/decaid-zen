@@ -1,7 +1,11 @@
+import { useCssPalette } from '../lib/cssPalette'
+import { colorWithAlpha } from '../lib/paletteState'
 import { useEffect, useRef, useState, type MutableRefObject } from 'react'
+import { weightCeiling } from '../lib/validation'
+import { stackLabels } from '../lib/labelStack'
 import type { Sample } from '../api/useMachine'
 
-const GUTTER = 200
+const GUTTER = 156
 /** the axis moves a chunk at a time, so between chunks nothing already drawn shifts */
 const SPAN_CHUNK = 10
 /** an adaptive step declares its longest case, so trust the plan only this far */
@@ -51,11 +55,11 @@ const capped = (now: number, estimate: number) => Math.min(Math.max(estimate, no
 const easeInOut = (p: number) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2)
 
 const SERIES = [
-  { key: 'mix', target: 'targetMix', color: '#d9714f', min: 80, max: 100, band: 0.34, width: 2 },
-  { key: 'pressure', target: 'targetPressure', color: '#9fb055', min: 0, max: 12, band: 1, width: 2.4 },
-  { key: 'weight', target: null, color: '#d3b06a', min: 0, max: 40, band: 1, width: 2.4 },
-  { key: 'flow', target: 'targetFlow', color: '#4fbcc6', min: 0, max: 6, band: 1, width: 2 },
-  { key: 'steam', target: null, color: '#d9714f', min: 100, max: 170, band: 1, width: 2.4 },
+  { key: 'mix', target: 'targetMix', color: 'temp', min: 80, max: 100, band: 0.34, width: 2 },
+  { key: 'pressure', target: 'targetPressure', color: 'bar', min: 0, max: 12, band: 1, width: 2.4 },
+  { key: 'weight', target: null, color: 'weight', min: 0, max: 40, band: 1, width: 2.4 },
+  { key: 'flow', target: 'targetFlow', color: 'flow', min: 0, max: 6, band: 1, width: 2 },
+  { key: 'steam', target: null, color: 'temp', min: 100, max: 170, band: 1, width: 2.4 },
 ] as const
 
 type SeriesKey = (typeof SERIES)[number]['key']
@@ -72,13 +76,14 @@ interface Props {
   labels: { key: SeriesKey; value: string; caption: string }[]
 }
 
-const yFor = (s: (typeof SERIES)[number], v: number, height: number) => {
+const yFor = (s: { min: number; max: number; band: number }, v: number, height: number) => {
   const clamped = Math.max(s.min, Math.min(s.max, v))
   const frac = (clamped - s.min) / (s.max - s.min)
   return s.band === 1 ? (1 - frac) * height : (1 - frac) * height * s.band
 }
 
 export function ShotGraph({ samples, origin, live, window: seconds, steps, targetYield, labels }: Props) {
+  const colors = useCssPalette()
   const canvas = useRef<HTMLCanvasElement>(null)
   const box = useRef<HTMLDivElement>(null)
   const [labelY, setLabelY] = useState<Record<string, number>>({})
@@ -93,6 +98,8 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
     const wrap = box.current
     if (!el || !wrap) return
 
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
+    let ceiling = weightCeiling(props.current.targetYield, 0)
     let raf = 0
     let phase = 0
     // the view: its left edge sits on the step in play, so the step always starts at 0.
@@ -108,18 +115,23 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
       const { live, seconds, steps, targetYield, labels } = props.current
       const dpr = globalThis.devicePixelRatio || 1
       const w = wrap.clientWidth
-      const h = wrap.clientHeight
-      if (el.width !== Math.round(w * dpr) || el.height !== Math.round(h * dpr)) {
+      const bitmapHeight = wrap.clientHeight
+      const h = Math.max(40, bitmapHeight - 42)
+      if (el.width !== Math.round(w * dpr) || el.height !== Math.round(bitmapHeight * dpr)) {
         el.width = Math.round(w * dpr)
-        el.height = Math.round(h * dpr)
+        el.height = Math.round(bitmapHeight * dpr)
       }
       const ctx = el.getContext('2d')
       if (!ctx) return
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.clearRect(0, 0, w, h)
+      ctx.clearRect(0, 0, w, bitmapHeight)
+      ctx.translate(16, 12)
 
-      const plot = Math.max(60, w - GUTTER)
+      const plot = Math.max(60, w - GUTTER - 16)
       const data = samples.current
+      const latestWeight = data[data.length - 1]?.weight ?? 0
+      ceiling = Math.max(ceiling, weightCeiling(targetYield, latestWeight))
+      const series = SERIES.map(s => ({ ...s, color: colors[s.color], max: s.key === 'weight' ? ceiling : s.max }))
       const now = data.length ? data[data.length - 1].t : seconds
 
       // the view holds the step in play: its first sample sits on the left edge.
@@ -179,7 +191,7 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
       }
 
       if (slide) {
-        const p = Math.min(1, (performance.now() - slide.at) / SPAN_GROW_MS)
+        const p = reducedMotion.matches ? 1 : Math.min(1, (performance.now() - slide.at) / SPAN_GROW_MS)
         const eased = easeInOut(p)
         from = slide.from + (slide.toFrom - slide.from) * eased
         span = slide.span + (slide.toSpan - slide.span) * eased
@@ -187,7 +199,7 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
       }
       const xFor = (t: number) => ((t - from) / span) * plot
 
-      ctx.strokeStyle = '#201e1a'
+      ctx.strokeStyle = colors['grid']
       ctx.lineWidth = 1
       for (const frac of [0, 0.25, 0.5, 0.75]) {
         const y = Math.round(h * frac) + 0.5
@@ -196,7 +208,7 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
         ctx.lineTo(plot, y)
         ctx.stroke()
       }
-      ctx.strokeStyle = '#35322b'
+      ctx.strokeStyle = colors['axis']
       ctx.beginPath()
       ctx.moveTo(0, h - 0.5)
       ctx.lineTo(plot, h - 0.5)
@@ -204,7 +216,7 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
 
       // a boundary is where a step actually changed, not where the profile said it would:
       // an adaptive step that exits on pressure or flow still gets its rule in the right place
-      ctx.strokeStyle = '#302d27'
+      ctx.strokeStyle = colors['rule']
       ctx.setLineDash([1, 5])
       for (let i = 1; i < data.length; i += 1) {
         if (data[i].frame === data[i - 1].frame) continue
@@ -228,10 +240,10 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
       ctx.rect(0, -20, plot, h + 40)
       ctx.clip()
 
-      for (const s of SERIES) {
+      for (const s of series) {
         if (data.length < 2 || !s.target || !visible.has(s.key)) continue
         ctx.save()
-        ctx.strokeStyle = `${s.color}3d`
+        ctx.strokeStyle = colorWithAlpha(s.color, .24)
         ctx.lineWidth = 1.3
         ctx.setLineDash([5, 5])
         ctx.beginPath()
@@ -252,7 +264,7 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
         ctx.restore()
       }
 
-      for (const s of SERIES) {
+      for (const s of series) {
         if (data.length < 2 || !visible.has(s.key)) continue
         const drawn: Array<[number, number]> = []
         for (const point of data) {
@@ -284,7 +296,7 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
         const lastT = data[data.length - 1].t
         const edge = Math.min(plot, xFor(lastT))
 
-        ctx.strokeStyle = 'rgba(236,231,219,0.22)'
+        ctx.strokeStyle = colors['live-cursor']
         ctx.lineWidth = 1
         ctx.beginPath()
         ctx.moveTo(edge + 0.5, 0)
@@ -292,11 +304,11 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
         ctx.stroke()
 
         // every end point breathes on the same beat, so none looks stalled
-        const shown = SERIES.filter((s) => positions[s.key] !== undefined && visible.has(s.key))
+        const shown = series.filter((s) => positions[s.key] !== undefined && visible.has(s.key))
         shown.forEach((s) => {
           const y = positions[s.key]
           if (y === undefined) return
-          if (live) {
+          if (live && !reducedMotion.matches) {
             const local = phase
             const eased = 1 - Math.pow(1 - local, 3)
             ctx.globalAlpha = 0.45 * (1 - local)
@@ -313,20 +325,21 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
         })
       }
 
-      ctx.fillStyle = '#5d574c'
-      ctx.font = "9px 'Jost', sans-serif"
-      ctx.textAlign = 'end'
-      ctx.fillText('12', -14, 4)
-      ctx.fillText('6', -14, h * 0.5 + 4)
-      ctx.fillText('0', -14, h + 2)
+      ctx.fillStyle = colors['muted']
+      ctx.font = "11px 'Jost Variable', sans-serif"
       ctx.textAlign = 'center'
       const every = span > 40 ? 20 : span > 20 ? 10 : 5
-      for (let tick = every; tick < span * 0.93; tick += every) {
-        ctx.fillText(`${tick}s`, xFor(from + tick), h + 20)
+      const zero = origin.current ?? 0
+      const clockX = Math.max(20, Math.min(plot - 20, xFor(now)))
+      const firstTick = Math.max(0, Math.ceil((from - zero) / every) * every)
+      for (let tick = firstTick; tick + zero <= from + span; tick += every) {
+        const x = xFor(tick + zero)
+        if (x < 12 || x > plot - 12 || Math.abs(x - clockX) < 48) continue
+        ctx.fillText(`${tick}s`, x, h + 20)
       }
-      ctx.fillStyle = '#b8b1a2'
+      ctx.fillStyle = colors['live-clock']
       const clock = origin.current === null ? 0 : Math.max(0, now - origin.current)
-      ctx.fillText(`${clock.toFixed(1)}s`, plot, h + 20)
+      ctx.fillText(`${clock.toFixed(1)}s`, clockX, h + 20)
 
       setLabelY((prev) => {
         const changed = SERIES.some((s) => Math.abs((prev[s.key] ?? -99) - (positions[s.key] ?? -99)) > 0.75)
@@ -339,9 +352,10 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
 
     raf = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(raf)
-  }, [samples, origin])
+  }, [samples, origin, colors])
 
-  const spread = spreadLabels(labels.map((l) => labelY[l.key] ?? 0))
+  const bounds = Math.max(60, (box.current?.clientHeight ?? 300) - 48)
+  const spread = stackLabels(labels.map((l, index) => ({ y: labelY[l.key] ?? 0, index })), 38, 18, bounds).sort((a, b) => a.index - b.index).map(l => l.y)
 
   return (
     <div ref={box} className="grow" style={{ position: 'relative' }}>
@@ -352,8 +366,8 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
           style={{
             position: 'absolute',
             left: `calc(100% - ${GUTTER - 60}px)`,
-            top: spread[i] - 16,
-            color: SERIES.find((s) => s.key === label.key)?.color,
+            top: spread[i] - 4,
+            color: colors[SERIES.find((s) => s.key === label.key)?.color ?? 'ink'],
             pointerEvents: 'none',
             display: 'flex',
             alignItems: 'baseline',
@@ -362,21 +376,9 @@ export function ShotGraph({ samples, origin, live, window: seconds, steps, targe
           }}
         >
           <span className="num" style={{ fontSize: 32, lineHeight: 1 }}>{label.value}</span>
-          <span style={{ fontSize: 9, letterSpacing: '0.22em' }}>{label.caption}</span>
+          <span style={{ fontSize: 11, letterSpacing: '0.08em' }}>{label.caption}</span>
         </div>
       ))}
     </div>
   )
-}
-
-function spreadLabels(ys: number[], gap = 38) {
-  const order = ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y)
-  let prev = -Infinity
-  const out = new Array<number>(ys.length)
-  for (const entry of order) {
-    const y = Math.max(entry.y, prev + gap)
-    out[entry.i] = y
-    prev = y
-  }
-  return out
 }

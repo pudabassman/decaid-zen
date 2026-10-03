@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Overlay } from '../components/Overlay'
+import { MachineStatus } from '../components/MachineStatus'
 import { Button } from '../components/Button'
 import { EditableValue } from '../components/EditableValue'
 import { useRoasterCatalog } from '../lib/useRoasterCatalog'
-import { CoffeePicker } from '../components/CoffeePicker'
+import { CoffeeMenuButton } from '../components/CoffeeMenuButton'
 import { RoasterSite } from '../components/RoasterSite'
 import { Dots } from '../components/Dots'
-import { BeanIcon, GearIcon } from '../components/icons'
+import { GearIcon } from '../components/icons'
 import { client } from '../api/client'
 import type { useMachine } from '../api/useMachine'
 import type { ShotRecord } from '../api/types'
@@ -47,8 +49,11 @@ export function Idle({
   onSettings: () => void
 }) {
   const { snapshot, scale, workflow, water } = machine
+  const [lastLoading, setLastLoading] = useState(true)
+  const [lastError, setLastError] = useState(false)
+  const [scaleOverride, setScaleOverride] = useState(false)
+  const [loadKey, setLoadKey] = useState(0)
   const [last, setLast] = useState<ShotRecord | null>(null)
-  const [picking, setPicking] = useState(false)
   const [records, setRecords] = useState<ProfileRecord[]>([])
   const [grinds, setGrinds] = useState<Record<string, string>>({})
   const [preferred, setPreferred] = useState<string[] | null>(null)
@@ -56,9 +61,8 @@ export function Idle({
   const [seeking, setSeeking] = useState(false)
   const [blocking, setBlocking] = useState(false)
   const exitLabel = useRef<number | undefined>(undefined)
-  const loaded = useRef(false)
   const screen = useRef<HTMLDivElement>(null)
-  const { run, message, busy } = useAction()
+  const { run, message, busy, status } = useAction()
 
   useSwipe(screen, {
     onLeft: (fromRightEdge) => fromRightEdge && onJournal(),
@@ -73,14 +77,15 @@ export function Idle({
   }, [])
 
   useEffect(() => {
-    if (loaded.current) return
-    loaded.current = true
+    setLastLoading(true)
+    setLastError(false)
     client
       .latestShot()
       .then((summary) => (summary?.id ? client.shot(summary.id) : null))
       .then(setLast)
-      .catch(() => setLast(null))
-  }, [])
+      .catch(() => setLastError(true))
+      .finally(() => setLastLoading(false))
+  }, [loadKey])
 
   useEffect(() => {
     if (machine.scaleConnected) setSeeking(false)
@@ -141,11 +146,11 @@ export function Idle({
       machine.refreshWorkflow()
     })
 
-  const rememberGrind = (value: string) => {
+  const rememberGrind = async (value: string) => {
     if (!activeId) return
     const next = { ...grinds, [grindKey(activeId, ctx?.coffeeName)]: value }
+    await profileApi.saveGrindMemory(next)
     setGrinds(next)
-    profileApi.saveGrindMemory(next).catch(() => undefined)
   }
 
   /** a new coffee brings its own grind for the profile in play */
@@ -168,9 +173,8 @@ export function Idle({
   const waterFill = Math.max(0, Math.min(100, tankPercent ?? 0))
 
   return (
-    <div className="screen" ref={screen}>
-
-      <div className="row between" style={{ alignItems: 'flex-start', gap: 'clamp(16px, 2.6vw, 40px)' }}>
+    <div className="screen home-screen" ref={screen}>
+      <div inert={busy} className="row between home-header" style={{ alignItems: 'flex-start', gap: 'clamp(16px, 2.6vw, 40px)' }}>
         <div className="headercol" style={{ minWidth: 0 }}>
           <div className="row" style={{ gap: 14, marginBottom: 'clamp(6px, 1.4vh, 18px)' }}>
           <span className="cap strong">
@@ -178,20 +182,13 @@ export function Idle({
               className="cap strong"
               label="Roaster"
               value={ctx?.coffeeRoaster ?? ''}
-              placeholder="No roaster"
+              placeholder={workflow ? 'Add a roaster' : 'Connecting…'}
               width={260}
               onCommit={(next) => patchWorkflow({ coffeeRoaster: next })}
             />
           </span>
           {listing.status === 'available' && (
-            <button
-              className="beanpill"
-              aria-label={`${listing.count} coffees from ${roaster}`}
-              onClick={() => setPicking(true)}
-            >
-              <BeanIcon size={13} />
-              <span className="num">{listing.count}</span>
-            </button>
+            <CoffeeMenuButton roaster={roaster} count={listing.count} onPick={pickCoffee} />
           )}
             {listing.status === 'checking' && (
               <span className="cap">
@@ -213,14 +210,14 @@ export function Idle({
               className="clamp2 bare"
               label="Bean"
               value={ctx?.coffeeName ?? ''}
-              placeholder="No bean loaded"
+              placeholder={workflow ? 'Choose your coffee' : 'Loading your recipe…'}
               width={620}
               onCommit={pickCoffee}
             />
           </div>
           </div>
           <div
-            className="row baseline"
+            className="row baseline recipe-readings"
             style={{ gap: 'clamp(16px, 2.6vw, 40px)', marginTop: 'clamp(6px, 1.4vh, 16px)' }}
           >
           <EditableReading
@@ -244,15 +241,19 @@ export function Idle({
             placeholder="--"
             numeric
               onCommit={(next) => {
-                rememberGrind(next)
-                patchWorkflow({ grinderSetting: next })
+                run('Save grind', async () => {
+                  if (!workflow) return
+                  await client.saveWorkflow({ ...workflow, context: { ...workflow.context, grinderSetting: next } })
+                  try { await rememberGrind(next) } finally { machine.refreshWorkflow() }
+                })
               }}
             />
           </div>
         </div>
 
         <div className="headerright">
-          <div className="row baseline" style={{ gap: 'clamp(14px, 2.2vw, 34px)', opacity: asleep ? 0.45 : 1 }}>
+          <div className="row machine-overview">
+          <div className="machine-readings" style={{ opacity: asleep ? 0.45 : 1 }}>
             <Reading inline label="Group" value={`${fmt(snapshot?.groupTemperature)}°`} />
             <Reading inline label="Steam" value={`${fmt(snapshot?.steamTemperature)}°`} />
             {machine.scaleConnected ? (
@@ -270,6 +271,8 @@ export function Idle({
               </button>
             )}
           </div>
+            <MachineStatus machine={machine} />
+          </div>
           {reading && <ShotSpread reading={reading} />}
           <ProfileDeck
             records={preferredRecords(records, preferred)}
@@ -283,7 +286,7 @@ export function Idle({
       {blocking && !machine.scaleConnected && (
         <div className="noscale row" style={{ gap: 18 }}>
           <span className="cap" style={{ color: 'var(--temp)' }}>
-            No scale · the machine will not pull without one
+            Connect a scale before your next shot
           </span>
           <Button
             width={150}
@@ -301,14 +304,9 @@ export function Idle({
             width={150}
             height={40}
             quiet
-            onClick={() =>
-              run('Allow shots without a scale', async () => {
-                await settingsApi.saveApp({ blockOnNoScale: false })
-                setBlocking(false)
-              })
-            }
+            onClick={() => setScaleOverride(true)}
           >
-            <span className="cap">pull anyway</span>
+            <span className="cap">Allow no scale</span>
           </Button>
         </div>
       )}
@@ -363,13 +361,13 @@ export function Idle({
         )}
       </div>
 
-      <LastShotGraph shot={last} />
+      <LastShotGraph shot={last} loading={lastLoading} error={lastError} onRetry={() => setLoadKey(v => v + 1)} />
       </div>
 
       <div style={{ height: 'clamp(4px, 1vh, 18px)' }} />
 
-      <div className="row between">
-        <div className="row" style={{ gap: 14 }}>
+      <div className="page-footer home-footer">
+        <nav className="row" aria-label="Main navigation" style={{ gap: 14 }}>
           <Button width={150} height={52} onClick={onJournal}>
             <span className="display" style={{ fontSize: 22 }}>Journal</span>
           </Button>
@@ -395,15 +393,15 @@ export function Idle({
           <button className="gear" aria-label="Settings" onClick={onSettings}>
             <GearIcon size={17} />
           </button>
-        </div>
-        <div className="row" style={{ gap: 16 }}>
+        </nav>
+        <div className="row home-sleep" style={{ gap: 16 }}>
           <span className="cap" style={{ color: message ? 'var(--temp)' : undefined, marginRight: 6 }}>
-            {message ?? tankLabel}
+            {message ?? (busy ? status : tankLabel)}
           </span>
           <Button
             width={196}
             height={52}
-            hot
+            quiet
             disabled={busy}
             holdMs={1000}
             tapWindowMs={500}
@@ -427,23 +425,15 @@ export function Idle({
                 : run('Sleep', () => client.requestState('sleeping'))
             }
           >
-            <span className="display" style={{ fontSize: 24, letterSpacing: '0.03em' }}>
+            <span className="display" title="Tap to sleep · hold to leave the app" style={{ fontSize: 24, letterSpacing: '0.03em' }}>
               {asleep ? 'Wake' : exiting ? 'Exit' : 'Sleep'}
             </span>
           </Button>
         </div>
       </div>
 
-      {picking && (
-        <CoffeePicker
-          roaster={roaster}
-          onClose={() => setPicking(false)}
-          onPick={(name) => {
-            setPicking(false)
-            pickCoffee(name)
-          }}
-        />
-      )}
+      {scaleOverride && <Overlay title="Allow shots without a scale?" onClose={() => setScaleOverride(false)} footer={<div className="row"><Button quiet onClick={() => setScaleOverride(false)}>Keep scale required</Button><Button disabled={busy} onClick={() => run('Allow shots without a scale', async () => { await settingsApi.saveApp({ blockOnNoScale: false }); setBlocking(false); setScaleOverride(false) })}>Allow without scale</Button></div>}><p>This changes your machine settings for future shots, until you turn the scale requirement back on in Settings → Machine &amp; devices.</p><p>It does not start a shot.</p><p className="error-text" role="alert">{message}</p></Overlay>}
+
     </div>
   )
 }
@@ -479,6 +469,7 @@ function EditableReading({
         placeholder={placeholder}
         suffix={suffix}
         numeric={numeric}
+        min={label === 'Grind' ? 0 : 1}
         width={110}
         onCommit={onCommit}
       />

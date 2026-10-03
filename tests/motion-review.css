@@ -1,0 +1,7 @@
+.review { padding: 48px; }
+.review p, .review label { color: var(--ink-soft); }
+.review label { display: block; margin: 24px 0; }
+.review select { margin-left: 16px; padding: 8px; }
+.sample { margin: 50px 0; }
+.sample .btn { width: var(--review-width) !important; }
+.trace-visible .btn:not(.holding) .trace rect { stroke: var(--ink); animation: traceRun 1s linear both paused; animation-delay: -.75s; }

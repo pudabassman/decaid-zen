@@ -22,7 +22,7 @@ export function useSwipe(ref: RefObject<HTMLElement | null>, options: Options) {
     let tracking = false
 
     const down = (event: PointerEvent) => {
-      if (!event.isPrimary) return
+      if (!event.isPrimary || (event.target as Element).closest('button, input, textarea, select, [role=dialog], [role=button]')) return
       tracking = true
       startX = event.clientX
       startY = event.clientY

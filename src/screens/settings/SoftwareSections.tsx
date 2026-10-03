@@ -141,9 +141,10 @@ export function AboutSection({
   skinVersion: string
 }) {
   return (
+    <>
     <Section title="About">
       {theme !== undefined && (
-        <Row label="Theme">
+        <Row label="Decaid app theme" hint="Zen keeps its warm, dark palette">
           <SingleSelect
             value={theme}
             options={[
@@ -191,11 +192,14 @@ export function AboutSection({
       <Row label="Demo" hint="replay a stored shot on the live screen">
         <Toggle on={demo} onChange={onDemo} />
       </Row>
+    </Section>
+    <Section title="Reset machine">
       <Row label="Reset machine settings" hint="puts the DE1 back to its defaults">
         <Button width={130} height={42} quiet disabled={busy} onClick={onReset}>
           <span className="cap">reset</span>
         </Button>
       </Row>
     </Section>
+    </>
   )
 }
